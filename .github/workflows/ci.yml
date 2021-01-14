@@ -1,0 +1,451 @@
+name: ci
+
+# https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions
+# https://github.com/HashNuke/heroku-buildpack-elixir-otp-builds/blob/master/otp-versions
+# https://github.com/elixir-lang/elixir/releases
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ "v*.*.*" ]
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches: [ master ]
+
+env:
+  ELIXIRC_OPTS: "--warnings-as-errors"
+  ERLC_OPTS: "warnings_as_errors"
+  HEX_USERNAME: ${{ github.repository_owner }}
+  CI_EMAIL: actions@github.com
+  LANG: C.UTF-8
+  MIX_ENV: test
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    name: Build and test (OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}})
+    if: (!contains(github.event.head_commit.message, 'dependabot') && !contains(github.event.head_commit.message, 'skip-ci') && !startsWith(github.event.head_commit.message, ';'))
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        elixir: ["1.11.3"]
+        otp: [23.2.1]
+    steps:
+      - name: Init
+        uses: logflare/action@v1
+        id: init
+        with:
+          api_key: ${{ secrets.LOGFLARE_API_KEY }}
+          source_id: ${{ secrets.LOGFLARE_SOURCE_ID }}
+          message: ${{ github.event.head_commit.message || 'unknown' }}
+          metadata: |
+            {
+              "sha": "${{ github.sha }}"
+            }
+      - name: Run id
+        id: get_run_id
+        run: |
+          echo ::set-output name=JOB::${{ github.job }}
+          echo ::set-output name=RUN_ID::${{ github.run_id }}
+          echo ::set-output name=RUN_NUMBER::${{ github.run_number }}
+          START_TIME=$(date +%s)
+          echo ::set-output name=START_TIME::$START_TIME
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get tag version
+        id: get_tag_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      - name: Modify version
+        if: contains(github.ref, 'tags/v')
+        run: |
+          NEW_VERSION=$(echo $VERSION | sed -e 's/^v//')
+          echo $NEW_VERSION
+          cat VERSION
+          echo $NEW_VERSION > VERSION
+        env:
+          VERSION: ${{ steps.get_tag_version.outputs.VERSION }}
+      - name: Set up Elixir
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+      - name: Build info
+        run: elixir -v
+      - name: Print env
+        run: env
+      - name: Restore dependencies cache
+        uses: actions/cache@v2
+        id: mix-cache
+        with:
+          path: deps
+          key: deps-${{ secrets.CACHE_VERSION }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          restore-keys: |
+            deps-${{ secrets.CACHE_VERSION }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix
+            deps-${{ secrets.CACHE_VERSION }}-${{ runner.os }}-${{ matrix.otp }}
+            deps-${{ secrets.CACHE_VERSION }}-${{ runner.os }}
+      - name: Restore build cache
+        id: build-cache
+        uses: actions/cache@v2
+        with:
+          path: _build
+          key: build-${{ secrets.CACHE_VERSION }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          restore-keys: |
+            build-${{ secrets.CACHE_VERSION }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix
+            build-${{ secrets.CACHE_VERSION }}-${{ runner.os }}-${{ matrix.otp }}
+            build-${{ secrets.CACHE_VERSION }}-${{ runner.os }}
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Compile
+        run: mix compile --warnings-as-errors
+      - name: Check Formatting
+        run: mix format --check-formatted
+      - name: Run Credo
+        run: mix credo --strict
+      - name: Run tests
+        run: mix test
+      - name: Retrieve PLT Cache
+        uses: actions/cache@v2
+        id: plt-cache
+        with:
+          path: priv/plts
+          key: plts-${{ secrets.CACHE_VERSION }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          restore-keys: |
+            plts-${{ secrets.CACHE_VERSION }}-${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix
+      - name: Create PLTs
+        if: steps.plt-cache.outputs.cache-hit != 'true'
+        run: mix dialyzer --plt
+      - name: Run dialyzer
+        run: mix dialyzer --no-check
+      - name: Check Doc
+        run: mix docs -f html && ! mix docs -f html 2>&1 | grep -q "warning:"
+        env:
+          MIX_ENV: prod
+      - name: Deploy doc
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./doc
+          force_orphan: true
+          commit_message: ${{ github.event.head_commit.message || 'unknown' }}
+      - name: Set version
+        id: get_version
+        run: |
+          VERSION=$(cat VERSION | tr -s '\n' ' ')
+          echo ::set-output name=VERSION::$VERSION
+      - name: CI failed
+        if: failure() && contains(github.ref, 'refs/heads')
+        uses: clszzyh/github-script@main
+        env:
+          RUN_ID: ${{ steps.get_run_id.outputs.RUN_ID }}
+          RUN_NUMBER: ${{ steps.get_run_id.outputs.RUN_NUMBER }}
+          JOB: ${{ steps.get_run_id.outputs.JOB }}
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          personal-token: ${{secrets.PERSONAL_TOKEN}}
+          script: |
+            commit_message = context.payload.commits[0].message.split("\n")[0]
+            const check_runs = await github.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha
+            })
+
+            const check_run_id = check_runs.data.check_runs[0].id
+
+            title = `[CI FAIL] ${commit_message}`
+            body = `
+              <table><tbody><tr><td><details><summary>
+
+              | Context | Value |
+              | - | -: |
+              | sha | ${context.sha} |
+              | ref | ${context.ref} |
+              | event | ${context.eventName} |
+              | workflow | ${context.workflow} |
+              | action | ${context.action} |
+              | job | ${process.env.JOB} |
+              | number | ${process.env.RUN_NUMBER} |
+              | jid | [${process.env.RUN_ID}](${context.payload.repository.url}/actions/runs/${process.env.RUN_ID}) |
+              | check_id | [${check_run_id}](${context.payload.repository.url}/runs/${check_run_id}?check_suite_focus=true) |
+              | timestamp | ${context.payload.commits[0].timestamp} |
+              | before | ${context.payload.before} |
+
+              </summary><hr>
+
+              ## Payload
+
+              \`\`\`json
+              ${JSON.stringify(context.payload, null, 2)}
+              \`\`\`
+              </details></td></tr></tbody>
+              </table>
+            `
+
+            result = await github.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['ci']
+            })
+
+            github.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: result.data.number,
+              content: "eyes"
+            })
+
+            comment = await github.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: "Related #" + result.data.number
+            })
+
+            const workflows_resp = await github.actions.listRepoWorkflows({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+
+            const workflows = workflows_resp.data.workflows
+            workflow_id = null
+            for (workflow of workflows) {
+              if (workflow.name === "append_annotations") {
+                workflow_id = workflow.id
+              }
+            }
+
+            if (!workflow_id) {
+              throw("Not found workflow")
+            }
+
+            console.log(process.env)
+
+            dispatch_result = await personal_github.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: workflow_id,
+              ref: context.ref,
+              inputs: {"issue_number": result.data.number + ""}
+            })
+            console.log(dispatch_result)
+
+      - name: Complete time
+        id: cost
+        if: always() && contains(github.ref, 'refs/heads')
+        run: |
+          END_TIME=$(date +%s)
+          ELAPSE=$(( $END_TIME - $START_TIME ))
+          echo "$(($ELAPSE/60))m$(($ELAPSE%60))s"
+          COST="$(($ELAPSE/60))m$(($ELAPSE%60))s"
+          echo ::set-output name=COST::$COST
+        env:
+          START_TIME: ${{ steps.get_run_id.outputs.START_TIME }}
+      - name: Notify logflare
+        uses: logflare/action@v1
+        id: notify
+        if: always()
+        with:
+          api_key: ${{ secrets.LOGFLARE_API_KEY }}
+          source_id: ${{ secrets.LOGFLARE_SOURCE_ID }}
+          message: ${{ github.event.head_commit.message || 'unknown' }}
+          metadata: |
+            {
+              "cost": "${{ steps.cost.outputs.COST }}",
+              "sha": "${{ github.sha }}"
+            }
+      - name: CI Success
+        if: success() && contains(github.ref, 'refs/heads')
+        uses: actions/github-script@v3.1
+        env:
+          RUN_ID: ${{ steps.get_run_id.outputs.RUN_ID }}
+          RUN_NUMBER: ${{ steps.get_run_id.outputs.RUN_NUMBER }}
+          JOB: ${{ steps.get_run_id.outputs.JOB }}
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const opts = github.issues.listForRepo.endpoint.merge({
+              ...context.issue,
+              state: 'open',
+              labels: 'ci'
+            })
+            const issues = await github.paginate(opts)
+            commit_message = context.payload.commits[0].message.split("\n")[0]
+
+            issue_body = `
+            ## Closing this.
+
+            | Context | Value |
+            | - | -: |
+            | sha | ${context.sha} |
+            | ref | ${context.ref} |
+            | event | ${context.eventName} |
+            | workflow | ${context.workflow} |
+            | action | ${context.action} |
+            | job | ${process.env.JOB} |
+            | number | ${process.env.RUN_NUMBER} |
+            | jid | [${process.env.RUN_ID}](${context.payload.repository.url}/actions/runs/${process.env.RUN_ID}) |
+            | timestamp | ${context.payload.commits[0].timestamp} |
+            | before | ${context.payload.before} |
+            `
+
+            commit_body = []
+            for (const issue of issues) {
+              commit_body.push("#" + issue.number)
+            }
+            if(commit_body.length > 0) {
+              github.repos.createCommitComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: context.sha,
+                body: "Close " + commit_body.join(", ")
+              })
+            }
+
+            for (const issue of issues) {
+              comment = await github.issues.createComment({
+                issue_number: issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: issue_body
+              })
+              github.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: comment.data.id,
+                content: "hooray"
+              })
+              github.issues.update({
+                issue_number: issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'closed',
+                title: issue.title + ` [Fixed by ${commit_message}]`
+              })
+            }
+
+
+  release:
+    name: Release and publish
+    if: contains(github.ref, 'tags/v')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        elixir: ["1.11.3"]
+        otp: [23.2.1]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Elixir
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+      - name: Build info
+        run: elixir -v
+      - name: Print env
+        run: env
+      - name: Restore dependencies cache
+        uses: actions/cache@v2
+        id: mix-cache
+        with:
+          path: deps
+          key: release-${{ secrets.CACHE_VERSION }}-deps-${{ runner.os }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+      - name: Restore build cache
+        id: build-cache
+        uses: actions/cache@v2
+        with:
+          path: _build
+          key: release-${{ secrets.CACHE_VERSION }}-build-${{ runner.os }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+      - name: Install dependencies
+        if: steps.mix-cache.outputs.cache-hit != 'true'
+        run: |
+          mix local.rebar --force
+          mix local.hex --force
+          mix deps.get
+      - name: Compile
+        run: mix compile --warnings-as-errors
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      - name: Changelog
+        id: Changelog
+        uses: charmixer/auto-changelog-action@v1.1
+        # uses: heinrichreimer/github-changelog-generator-action@v2.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Modify version and changelog
+        run: |
+          git config --local user.email "$CI_EMAIL"
+          git config --local user.name "$GITHUB_REPOSITORY_OWNER"
+          NEW_VERSION=$(echo $VERSION | sed -e 's/^v//')
+          echo $NEW_VERSION
+          cat VERSION
+          echo $NEW_VERSION > VERSION
+          git add VERSION && git commit -m "Update version" || echo "No changes to VERSION"
+          git push "https://$GITHUB_REPOSITORY_OWNER:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git" HEAD:master
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+      - name: Create Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: ${{ steps.Changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+      - name: Check Doc
+        run: mix docs -f html && ! mix docs -f html 2>&1 | grep -q "warning:"
+        env:
+          MIX_ENV: prod
+      - name: Deploy doc
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./doc
+          force_orphan: true
+          commit_message: ${{ github.event.head_commit.message || 'unknown' }}
+      - name: Publish on hex.pm
+        run: mix hex.publish --yes
+        env:
+          MIX_ENV: prod
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+      - name: Delete old releases
+        uses: dev-drprasad/delete-older-releases@v0.2.0
+        with:
+          keep_latest: 5
+      - name: Release failed
+        if: failure()
+        uses: actions/github-script@v3.1
+        env:
+          RUN_ID: ${{ steps.get_run_id.outputs.RUN_ID }}
+          RUN_NUMBER: ${{ steps.get_run_id.outputs.RUN_NUMBER }}
+          JOB: ${{ steps.get_run_id.outputs.JOB }}
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            title = `[RELEASE FAIL] ${commit_message}`
+            body = `
+              | Context | Value |
+              | - | -: |
+              | sha | ${context.sha} |
+              | ref | ${context.ref} |
+              | event | ${context.eventName} |
+              | workflow | ${context.workflow} |
+              | action | ${context.action} |
+              | job | ${process.env.JOB} |
+              | number | ${process.env.RUN_NUMBER} |
+              | jid | [${process.env.RUN_ID}](${context.payload.repository.url}/actions/runs/${process.env.RUN_ID}) |
+              | timestamp | ${context.payload.commits[0].timestamp} |
+              | before | ${context.payload.before} |
+            `
+            github.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['release', 'ci']
+            })

@@ -1,0 +1,110 @@
+# https://octokit.github.io/rest.js/v18#checks-create
+
+name: append_annotations
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number'
+        required: true
+
+jobs:
+  append_issue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v3.1
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const issue_res = await github.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.inputs.issue_number }}
+            })
+            const issue = issue_res.data
+            sha_result = issue.body.match(/sha \| (\w+) \|/)
+            if (!sha_result) {
+              return 0
+            }
+            jid_result = issue.body.match(/jid \| \[(\w+)\]/)
+            if (!jid_result) {
+              return 0
+            }
+            jid = jid_result[1]
+            sha = sha_result[1]
+
+            console.log(sha)
+            const check_runs = await github.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: sha
+            })
+            cr = null
+            for (const check_run of check_runs.data.check_runs) {
+              if (check_run.conclusion === "failure") {
+                cr = check_run
+              }
+            }
+            if (!cr){
+              return 0
+            }
+            console.log(cr)
+            const annotations = await github.checks.listAnnotations({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              check_run_id: cr.id
+            })
+            console.log(annotations.data)
+            const run_result = await github.actions.getJobForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              job_id: cr.id
+            })
+            failed_steps = []
+            for (step of run_result.data.steps) {
+              if (step.conclusion === "failure") {
+                failed_steps.push("- [" + step.number + "] **" + step.name + "**")
+              }
+            }
+            console.log(run_result.data)
+            annotation_str = ""
+            for (a of annotations.data) {
+              annotation_str += "<tr><td> " + a.annotation_level + " </td><td> <a href='" + a.blob_href + "'>" + a.title + "</a> </td><td> " + a.message + " </td></tr>\n"
+            }
+
+            issue_body = `
+            ## **${cr.output.title}**
+            > ${cr.output.summary}
+
+            ${failed_steps.join("\n")}
+
+            <table><tbody><tr><td><details><summary>
+
+            <table><tr>
+            <th>level</th>
+            <th>title</th>
+            <th>message</th>
+            </tr>
+            ${annotation_str}
+            </table>
+
+            </summary><hr>
+
+            \`\`\`json
+            ${JSON.stringify(annotations.data, null, 2)}
+            \`\`\`
+
+            \`\`\`json
+            ${JSON.stringify(run_result.data, null, 2)}
+            \`\`\`
+            </details></td></tr></tbody>
+            </table>
+            `
+
+            await github.issues.createComment({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: issue_body
+            })

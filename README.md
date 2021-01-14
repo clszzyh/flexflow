@@ -1,21 +1,17 @@
 # Flexflow
 
-**TODO: Add description**
+[![ci](https://github.com/clszzyh/flexflow/workflows/ci/badge.svg)](https://github.com/clszzyh/flexflow/actions)
+[![Hex.pm](https://img.shields.io/hexpm/v/flexflow)](http://hex.pm/packages/flexflow)
+[![Hex.pm](https://img.shields.io/hexpm/dt/flexflow)](http://hex.pm/packages/flexflow)
+[![Documentation](https://img.shields.io/badge/hexdocs-latest-blue.svg)](https://hexdocs.pm/flexflow/readme.html)
 
-## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `flexflow` to your list of dependencies in `mix.exs`:
+<!-- MDOC -->
+
+## Usage
 
 ```elixir
-def deps do
-  [
-    {:flexflow, "~> 0.1.0"}
-  ]
-end
+## TODO
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/flexflow](https://hexdocs.pm/flexflow).
-
+<!-- MDOC -->

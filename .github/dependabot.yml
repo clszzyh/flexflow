@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "mix"
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "daily"
+      time: "02:34"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "02:34"
+    commit-message:
+      prefix: dependabot
