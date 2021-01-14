@@ -15,3 +15,7 @@
 ```
 
 <!-- MDOC -->
+
+## See Also
+
+* [BPMN document](https://www.omg.org/spec/BPMN/2.0/PDF)

@@ -3,7 +3,7 @@ defmodule Flexflow.MixProject do
 
   @version String.trim(File.read!("VERSION"))
   @github_url "https://github.com/clszzyh/flexflow"
-  @description "Lightweight and flexible workflow engine."
+  @description "Lightweight and Flexible Workflow Engine based on the BPMN 2.0 standard."
 
   def project do
     [
@@ -45,7 +45,8 @@ defmodule Flexflow.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      mod: {Flexflow.Application, []},
+      extra_applications: [:logger, :mix]
     ]
   end
 

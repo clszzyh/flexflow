@@ -4,4 +4,6 @@ defmodule Flexflow do
 
   @version Mix.Project.config()[:version]
   def version, do: @version
+
+  @type name :: atom()
 end
