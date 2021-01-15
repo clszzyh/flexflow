@@ -5,4 +5,9 @@ defmodule Flexflow.Events.End do
   Choreography will end.
 
   """
+
+  use Flexflow.Event
+
+  @impl true
+  def name, do: :end
 end

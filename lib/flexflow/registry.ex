@@ -9,21 +9,7 @@ defmodule Flexflow.Registry do
   defstruct event: %{}
 
   def register(module) do
-    case GenServer.call(__MODULE__, {:register, module}) do
-      {:error, reason} -> raise ArgumentError, reason
-      :ok -> :ok
-    end
-  end
-
-  def register_all do
-    [_ | _] =
-      modules =
-      for module <- :erlang.loaded(),
-          Util.local_behaviour?(module) do
-        module
-      end
-
-    Enum.each(modules, &register/1)
+    GenServer.cast(__MODULE__, {:register, module})
   end
 
   def state, do: GenServer.call(__MODULE__, :state)
@@ -34,7 +20,7 @@ defmodule Flexflow.Registry do
 
   @impl true
   def init(_) do
-    {:ok, %__MODULE__{}}
+    {:ok, %__MODULE__{}, {:continue, :register_all}}
   end
 
   @impl true
@@ -42,22 +28,37 @@ defmodule Flexflow.Registry do
     {:reply, state, state}
   end
 
-  def handle_call({:register, module}, _from, state) do
+  @impl true
+  def handle_cast({:register, module}, state) do
     kind = Util.main_behaviour(module).name
     name = module.name()
 
     case Map.get(state, kind) do
       nil ->
-        {:reply, {:error, "Undefined kind #{module.kind()}"}, state}
+        {:stop, "Undefined kind #{module.kind()}", state}
 
       %{} = map ->
         case Map.get(map, name) do
-          nil ->
-            {:reply, :ok, %{state | kind => Map.put(map, name, module)}}
-
-          exists ->
-            {:reply, {:error, "Already exists #{name}, #{exists}"}, state}
+          nil -> {:noreply, %{state | kind => Map.put(map, name, module)}}
+          exists -> {:stop, "Already exists #{name}, #{exists}", state}
         end
     end
+  end
+
+  @impl true
+  def handle_continue(:register_all, state) do
+    [_ | _] =
+      modules = for module <- Util.local_modules(), Util.local_behaviour?(module), do: module
+
+    :ok = Enum.each(modules, &register/1)
+
+    {:noreply, state}
+  end
+
+  @impl true
+  def terminate(reason, state) do
+    IO.puts(inspect({:terminate, reason, state}))
+    System.stop(1)
+    # :ok
   end
 end

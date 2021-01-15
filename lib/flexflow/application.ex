@@ -6,11 +6,6 @@ defmodule Flexflow.Application do
   def start(_type, _args) do
     children = [Flexflow.Registry]
 
-    {:ok, pid} =
-      Supervisor.start_link(children, strategy: :one_for_one, name: Flexflow.Supervisor)
-
-    :ok = Flexflow.Registry.register_all()
-
-    {:ok, pid}
+    Supervisor.start_link(children, strategy: :one_for_one, name: Flexflow.Supervisor)
   end
 end

@@ -46,7 +46,7 @@ defmodule Flexflow.MixProject do
   def application do
     [
       mod: {Flexflow.Application, []},
-      extra_applications: [:logger, :mix]
+      extra_applications: [:logger]
     ]
   end
 
