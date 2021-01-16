@@ -18,7 +18,7 @@ defmodule P1 do
   @moduledoc false
   use Flexflow.Process
 
-  defevent E1
+  defevent E1, foo: :bar
   defevent E2
   defevent E3
   deftransition T1, {E1, E2}

@@ -30,9 +30,8 @@ defmodule Flexflow.Transition do
 
     if from == to, do: raise(ArgumentError, "#{inspect(from)} cannot target to self!")
 
-    for vert <- [from, to], vert not in events do
-      raise(ArgumentError, "#{inspect(vert)} is not defined!")
-    end
+    from = events[from] || raise(ArgumentError, "#{inspect(from)} is not defined!")
+    to = events[to] || raise(ArgumentError, "#{inspect(to)} is not defined!")
 
     Graph.Edge.new(from, to, label: o)
   end

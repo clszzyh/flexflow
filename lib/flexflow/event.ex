@@ -6,11 +6,13 @@ defmodule Flexflow.Event do
   alias Flexflow.Util
 
   @type t :: %__MODULE__{
-          id: Flexflow.id()
+          module: module(),
+          id: Flexflow.id(),
+          opts: keyword()
         }
 
-  @enforce_keys [:id]
-  defstruct @enforce_keys
+  @enforce_keys [:id, :module]
+  defstruct @enforce_keys ++ [opts: []]
 
   @callback name :: Flexflow.name()
 
@@ -22,19 +24,20 @@ defmodule Flexflow.Event do
 
   def define({o, opts}) when is_atom(o), do: define({Util.normalize_module(o), opts})
 
-  def define({{o, id}, _opts}) do
+  def define({{o, id}, opts}) do
     unless Util.main_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
 
-    {o, id}
+    %__MODULE__{module: o, id: id, opts: opts}
   end
 
   def validate(events) do
     if Enum.empty?(events), do: raise(ArgumentError, "Event is empty!")
 
-    for o <- events, reduce: [] do
+    for %__MODULE__{module: module, id: id} <- events, reduce: [] do
       ary ->
+        o = {module, id}
         if o in ary, do: raise(ArgumentError, "#{inspect(o)} is defined twice!")
         ary ++ [o]
     end

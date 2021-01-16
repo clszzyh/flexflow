@@ -53,11 +53,13 @@ defmodule Flexflow.Process do
       |> Enum.map(&Event.define/1)
       |> Event.validate()
 
+    event_map = for e <- events, into: %{}, do: {{e.module, e.id}, e}
+
     transitions =
       env.module
       |> Module.get_attribute(:__transitions__)
       |> Enum.reverse()
-      |> Enum.map(&Transition.define(&1, events))
+      |> Enum.map(&Transition.define(&1, event_map))
       |> Transition.validate()
 
     graph = new_graph(events, transitions)
