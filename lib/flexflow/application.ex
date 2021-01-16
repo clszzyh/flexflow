@@ -3,8 +3,14 @@ defmodule Flexflow.Application do
 
   use Application
 
+  alias Flexflow.Config
+
   def start(_type, _args) do
     children = [Flexflow.Registry]
+
+    if Config.get(:telemetry_logger) do
+      :ok = Flexflow.Telemetry.attach_default_logger(Config.get(:telemetry_logger_level))
+    end
 
     Supervisor.start_link(children, strategy: :one_for_one, name: Flexflow.Supervisor)
   end
