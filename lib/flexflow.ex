@@ -6,4 +6,5 @@ defmodule Flexflow do
   def version, do: @version
 
   @type name :: atom()
+  @type id :: binary()
 end

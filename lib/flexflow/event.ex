@@ -5,6 +5,13 @@ defmodule Flexflow.Event do
 
   alias Flexflow.Util
 
+  @type t :: %__MODULE__{
+          id: Flexflow.id()
+        }
+
+  @enforce_keys [:id]
+  defstruct @enforce_keys
+
   @callback name :: Flexflow.name()
 
   defmacro __using__(_) do

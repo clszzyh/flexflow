@@ -59,22 +59,25 @@ defmodule Flexflow.Process do
       raise(ArgumentError, "#{inspect(vert)} is not defined!")
     end
 
+    for {from, to} <- transitions, from == to do
+      raise(ArgumentError, "#{inspect(from)} cannot target to self!")
+    end
+
     graph =
       Graph.new()
       |> Graph.add_vertices(events)
       |> Graph.add_edges(transitions)
-      |> Macro.escape()
 
-    quote do
+    quote bind_quoted: [module: __MODULE__, graph: Macro.escape(graph)] do
       unless Module.get_attribute(__MODULE__, :moduledoc) do
         @moduledoc """
-        See `#{unquote(__MODULE__)}`
+        See `#{module}`
 
-        #{inspect(unquote(graph))}
+        #{inspect(graph)}
         """
       end
 
-      @__self__ struct!(unquote(__MODULE__), graph: unquote(graph))
+      @__self__ struct!(module, graph: graph)
 
       def __self__, do: @__self__
 
