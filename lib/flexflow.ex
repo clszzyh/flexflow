@@ -6,5 +6,8 @@ defmodule Flexflow do
   def version, do: @version
 
   @type name :: atom()
-  @type id :: binary()
+  @type id :: atom()
+
+  @type event_key :: event_key_normalize | module()
+  @type event_key_normalize :: {module(), id()}
 end

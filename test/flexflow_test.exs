@@ -21,9 +21,11 @@ defmodule FlexflowTest do
     e2 = %V{module: E2, id: nil}
     e3 = %V{module: E3, id: nil}
 
+    t = %T{module: T1, opts: [foo: :baz], from: {E1, nil}, to: {E2, nil}}
+
     assert graph ==
              Graph.new()
              |> Graph.add_vertices([e1, e2, e3])
-             |> Graph.add_edges([Graph.Edge.new(e1, e2, label: %T{module: T1, opts: [foo: :baz]})])
+             |> Graph.add_edges([Graph.Edge.new(e1, e2, label: t)])
   end
 end
