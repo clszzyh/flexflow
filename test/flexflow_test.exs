@@ -3,6 +3,7 @@ defmodule FlexflowTest do
   doctest Flexflow
 
   alias Flexflow.Event, as: V
+  alias Flexflow.Transition, as: T
 
   test "version" do
     assert Flexflow.version()
@@ -23,6 +24,6 @@ defmodule FlexflowTest do
     assert graph ==
              Graph.new()
              |> Graph.add_vertices([e1, e2, e3])
-             |> Graph.add_edges([Graph.Edge.new(e1, e2, label: T1)])
+             |> Graph.add_edges([Graph.Edge.new(e1, e2, label: %T{module: T1, opts: [foo: :baz]})])
   end
 end

@@ -6,11 +6,12 @@ defmodule Flexflow.Transition do
   alias Flexflow.Util
 
   @type t :: %__MODULE__{
-          name: String.t()
+          module: module(),
+          opts: keyword()
         }
 
-  @enforce_keys [:name]
-  defstruct @enforce_keys
+  @enforce_keys [:module]
+  defstruct @enforce_keys ++ [opts: []]
 
   @callback name :: Flexflow.name()
 
@@ -20,7 +21,7 @@ defmodule Flexflow.Transition do
     end
   end
 
-  def define({o, {from, to}}, events) do
+  def define({o, {from, to}, opts}, events) do
     unless Util.main_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
@@ -33,7 +34,7 @@ defmodule Flexflow.Transition do
     from = events[from] || raise(ArgumentError, "#{inspect(from)} is not defined!")
     to = events[to] || raise(ArgumentError, "#{inspect(to)} is not defined!")
 
-    Graph.Edge.new(from, to, label: o)
+    Graph.Edge.new(from, to, label: %__MODULE__{module: o, opts: opts})
   end
 
   def validate(transitions) do

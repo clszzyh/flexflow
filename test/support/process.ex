@@ -21,7 +21,7 @@ defmodule P1 do
   defevent E1, foo: :bar
   defevent E2
   defevent E3
-  deftransition T1, {E1, E2}
+  deftransition T1, {E1, E2}, foo: :baz
 end
 
 defmodule P2 do

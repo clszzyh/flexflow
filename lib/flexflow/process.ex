@@ -16,7 +16,8 @@ defmodule Flexflow.Process do
 
   defmacro __using__(_opt) do
     quote do
-      import unquote(__MODULE__), only: [defevent: 1, defevent: 2, deftransition: 2]
+      import unquote(__MODULE__),
+        only: [defevent: 1, defevent: 2, deftransition: 2, deftransition: 3]
 
       Module.register_attribute(__MODULE__, :__events__, accumulate: true)
       Module.register_attribute(__MODULE__, :__transitions__, accumulate: true)
@@ -33,9 +34,11 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro deftransition(module_or_name, tuple) do
-    quote bind_quoted: [module_or_name: module_or_name, tuple: tuple] do
-      @__transitions__ {module_or_name, tuple}
+  defmacro deftransition(module_or_name, tuple, opts \\ [])
+
+  defmacro deftransition(module_or_name, tuple, opts) do
+    quote bind_quoted: [module_or_name: module_or_name, tuple: tuple, opts: opts] do
+      @__transitions__ {module_or_name, tuple, opts}
     end
   end
 
