@@ -3,13 +3,13 @@ defmodule Flexflow.Process do
   Process
   """
 
+  alias Flexflow.Event
+  alias Flexflow.Transition
+
   @type t :: %__MODULE__{
           graph: Graph.t(),
           name: String.t()
         }
-
-  alias Flexflow.Event
-  alias Flexflow.Transition
 
   @enforce_keys [:graph]
   defstruct @enforce_keys ++ [:name]
@@ -74,10 +74,7 @@ defmodule Flexflow.Process do
       @__self__ struct!(module, graph: graph)
 
       def __self__, do: @__self__
-
-      def new(args \\ %{}) do
-        struct!(@__self__, args)
-      end
+      def new(args \\ %{}), do: struct!(@__self__, args)
 
       Module.delete_attribute(__MODULE__, :__events__)
       Module.delete_attribute(__MODULE__, :__transitions__)

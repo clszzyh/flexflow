@@ -34,7 +34,7 @@ defmodule Flexflow.Transition do
       raise(ArgumentError, "#{inspect(vert)} is not defined!")
     end
 
-    {from, to}
+    Graph.Edge.new(from, to, label: o)
   end
 
   def validate(transitions) do
