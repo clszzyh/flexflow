@@ -16,7 +16,7 @@ defmodule FlexflowTest do
 
     assert graph ==
              Graph.new()
-             |> Graph.add_vertices([E1, E2, E3])
-             |> Graph.add_edges([{E1, E2}])
+             |> Graph.add_vertices([{E1, nil}, {E2, nil}, {E3, nil}])
+             |> Graph.add_edges([{{E1, nil}, {E2, nil}}])
   end
 end

@@ -20,11 +20,26 @@ defmodule Flexflow.Transition do
     end
   end
 
-  def define({o, tuple}) do
+  def define({o, {from, to}}, events) do
     unless Util.main_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
 
-    tuple
+    from = Util.normalize_module(from)
+    to = Util.normalize_module(to)
+
+    if from == to, do: raise(ArgumentError, "#{inspect(from)} cannot target to self!")
+
+    for vert <- [from, to], vert not in events do
+      raise(ArgumentError, "#{inspect(vert)} is not defined!")
+    end
+
+    {from, to}
+  end
+
+  def validate(transitions) do
+    if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
+
+    transitions
   end
 end

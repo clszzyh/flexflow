@@ -20,11 +20,25 @@ defmodule Flexflow.Event do
     end
   end
 
-  def define({o, _opts}) do
+  def define({o, opts}) when is_atom(o), do: define({Util.normalize_module(o), opts})
+
+  def define({{o, id}, _opts}) do
     unless Util.main_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
 
-    o
+    {o, id}
+  end
+
+  def validate(events) do
+    if Enum.empty?(events), do: raise(ArgumentError, "Event is empty!")
+
+    for o <- events, reduce: [] do
+      ary ->
+        if o in ary, do: raise(ArgumentError, "#{inspect(o)} is defined twice!")
+        ary ++ [o]
+    end
+
+    events
   end
 end

@@ -39,34 +39,28 @@ defmodule Flexflow.Process do
     end
   end
 
+  def new_graph(vertices, edges) do
+    Graph.new()
+    |> Graph.add_vertices(vertices)
+    |> Graph.add_edges(edges)
+  end
+
   defmacro __before_compile__(env) do
     events =
       env.module
       |> Module.get_attribute(:__events__)
       |> Enum.reverse()
       |> Enum.map(&Event.define/1)
+      |> Event.validate()
 
     transitions =
       env.module
       |> Module.get_attribute(:__transitions__)
       |> Enum.reverse()
-      |> Enum.map(&Transition.define/1)
+      |> Enum.map(&Transition.define(&1, events))
+      |> Transition.validate()
 
-    if Enum.empty?(events), do: raise(ArgumentError, "Event is empty!")
-    if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
-
-    for {from, to} <- transitions, vert <- [from, to], vert not in events do
-      raise(ArgumentError, "#{inspect(vert)} is not defined!")
-    end
-
-    for {from, to} <- transitions, from == to do
-      raise(ArgumentError, "#{inspect(from)} cannot target to self!")
-    end
-
-    graph =
-      Graph.new()
-      |> Graph.add_vertices(events)
-      |> Graph.add_edges(transitions)
+    graph = new_graph(events, transitions)
 
     quote bind_quoted: [module: __MODULE__, graph: Macro.escape(graph)] do
       unless Module.get_attribute(__MODULE__, :moduledoc) do

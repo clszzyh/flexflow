@@ -1,6 +1,9 @@
 defmodule Flexflow.Util do
   @moduledoc false
 
+  def normalize_module({o, id}) when is_atom(o), do: {o, id}
+  def normalize_module(o) when is_atom(o), do: {o, nil}
+
   def local_modules do
     {:ok, [_ | _] = modules} = :application.get_key(:flexflow, :modules)
     modules

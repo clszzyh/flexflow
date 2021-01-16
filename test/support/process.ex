@@ -17,6 +17,7 @@ end
 defmodule P1 do
   @moduledoc false
   use Flexflow.Process
+
   defevent E1
   defevent E2
   defevent E3
@@ -26,10 +27,11 @@ end
 defmodule P2 do
   @moduledoc false
   use Flexflow.Process
+
   defevent E1
   defevent E2
   defevent E3
-  defevent E2
+  defevent {E2, :two}
   deftransition T1, {E1, E2}
   deftransition T2, {E2, E3}
 end
