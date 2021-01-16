@@ -49,11 +49,28 @@ defmodule Flexflow.Util do
     end
   end
 
+  def defined?(module) when is_atom(module) do
+    module
+    |> Code.ensure_compiled()
+    |> case do
+      {:module, _} -> true
+      _ -> false
+    end
+  end
+
   def main_behaviour(module) do
-    module.module_info(:attributes)
-    |> List.wrap()
-    |> Keyword.get(:behaviour)
-    |> List.wrap()
-    |> List.first()
+    module
+    |> defined?()
+    |> case do
+      false ->
+        nil
+
+      true ->
+        module.module_info(:attributes)
+        |> List.wrap()
+        |> Keyword.get(:behaviour)
+        |> List.wrap()
+        |> List.first()
+    end
   end
 end

@@ -3,6 +3,8 @@ defmodule Flexflow.Transition do
   Transition
   """
 
+  alias Flexflow.Util
+
   @type t :: %__MODULE__{
           name: String.t()
         }
@@ -18,5 +20,11 @@ defmodule Flexflow.Transition do
     end
   end
 
-  def define({_o, tuple}), do: tuple
+  def define({o, tuple}) do
+    unless Util.main_behaviour(o) == __MODULE__ do
+      raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
+    end
+
+    tuple
+  end
 end

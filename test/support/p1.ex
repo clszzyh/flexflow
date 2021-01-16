@@ -12,6 +12,13 @@ defmodule E2 do
   def name, do: :e2
 end
 
+defmodule E3 do
+  @moduledoc false
+  use Flexflow.Event
+  @impl true
+  def name, do: :e3
+end
+
 defmodule T1 do
   @moduledoc false
   use Flexflow.Transition

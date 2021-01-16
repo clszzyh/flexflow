@@ -3,6 +3,8 @@ defmodule Flexflow.Event do
   Event
   """
 
+  alias Flexflow.Util
+
   @callback name :: Flexflow.name()
 
   defmacro __using__(_) do
@@ -12,6 +14,10 @@ defmodule Flexflow.Event do
   end
 
   def define({o, _opts}) do
+    unless Util.main_behaviour(o) == __MODULE__ do
+      raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
+    end
+
     o
   end
 end

@@ -55,6 +55,10 @@ defmodule Flexflow.Process do
     if Enum.empty?(events), do: raise(ArgumentError, "Event is empty!")
     if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
 
+    for {from, to} <- transitions, vert <- [from, to], vert not in events do
+      raise(ArgumentError, "#{inspect(vert)} is not defined!")
+    end
+
     graph =
       Graph.new()
       |> Graph.add_vertices(events)
