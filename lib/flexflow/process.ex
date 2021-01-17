@@ -6,6 +6,7 @@ defmodule Flexflow.Process do
   alias Flexflow.Context
   alias Flexflow.Event
   alias Flexflow.Node
+  alias Flexflow.Telemetry
   alias Flexflow.Transition
 
   @states [:waiting, :initial, :active, :suspended, :terminated, :completed]
@@ -147,7 +148,18 @@ defmodule Flexflow.Process do
   end
 
   @spec init(t()) :: result()
-  def init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
+  def init(p) do
+    Telemetry.span(
+      :process_init,
+      fn ->
+        {state, result} = do_init(p)
+        {{state, result}, %{state: state}}
+      end,
+      %{name: p.name}
+    )
+  end
+
+  defp do_init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
     (Map.to_list(nodes) ++ Map.to_list(transitions))
     |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
       case module.init(o, p) do
