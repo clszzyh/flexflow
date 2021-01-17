@@ -10,7 +10,7 @@ defmodule Flexflow.Process do
   alias Flexflow.Transition
   alias Flexflow.Util
 
-  @states [:waiting, :initial, :active, :suspended, :terminated, :completed]
+  @states [:created, :initial, :active, :suspended, :terminated, :completed]
 
   @typedoc """
   Process state
@@ -40,7 +40,7 @@ defmodule Flexflow.Process do
               [
                 :name,
                 :id,
-                state: :waiting,
+                state: :created,
                 args: %{},
                 opts: [],
                 events: [],

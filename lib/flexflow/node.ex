@@ -7,7 +7,7 @@ defmodule Flexflow.Node do
   alias Flexflow.Process
   alias Flexflow.Util
 
-  @states [:waiting, :initial, :active, :suspended, :terminated, :completed]
+  @states [:created, :initial]
 
   @typedoc """
   Node state
@@ -25,7 +25,7 @@ defmodule Flexflow.Node do
         }
 
   @enforce_keys [:name, :module]
-  defstruct @enforce_keys ++ [:id, state: :waiting, opts: [], context: Context.new()]
+  defstruct @enforce_keys ++ [:id, state: :created, opts: [], context: Context.new()]
 
   @doc "Module name"
   @callback name :: Flexflow.name()

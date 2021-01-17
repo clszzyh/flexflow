@@ -8,7 +8,7 @@ defmodule Flexflow.Transition do
   alias Flexflow.Util
   alias Graph.Edge
 
-  @states [:waiting, :initial, :active, :suspended, :terminated, :completed]
+  @states [:created, :initial]
 
   @typedoc """
   Transition state
@@ -31,7 +31,7 @@ defmodule Flexflow.Transition do
   @type edge_map :: %{edge => t()}
 
   @enforce_keys [:name, :module, :from, :to]
-  defstruct @enforce_keys ++ [:id, opts: [], state: :waiting, context: Context.new()]
+  defstruct @enforce_keys ++ [:id, opts: [], state: :created, context: Context.new()]
 
   @doc "Module name"
   @callback name :: Flexflow.name()
