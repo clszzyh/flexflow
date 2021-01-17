@@ -3,6 +3,7 @@ defmodule Flexflow.Process do
   Process
   """
 
+  alias Flexflow.Event
   alias Flexflow.Node
   alias Flexflow.Transition
   alias Graph.Edge
@@ -12,11 +13,12 @@ defmodule Flexflow.Process do
           module: module(),
           graph: Graph.t(),
           name: String.t(),
+          events: [Event.t()],
           state: state()
         }
 
   @enforce_keys [:graph, :module]
-  defstruct @enforce_keys ++ [:name, state: :active]
+  defstruct @enforce_keys ++ [:name, state: :active, events: []]
 
   defmacro __using__(_opt) do
     quote do
