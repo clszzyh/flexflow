@@ -1,6 +1,7 @@
 defmodule Flexflow.Util do
   @moduledoc false
 
+  @spec normalize_module(Flexflow.event_key()) :: Flexflow.event_key_normalize()
   def normalize_module({o, id}) when is_atom(o), do: {o, id}
   def normalize_module(o) when is_atom(o), do: {o, nil}
 
