@@ -17,23 +17,23 @@ defmodule FlexflowTest do
     assert P1.new().graph.__struct__ == Graph
     assert P1.new().module == P1
 
-    e1 = %N{module: N1, id: nil, opts: [foo: :bar]}
-    e2 = %N{module: N2, id: nil}
-    e3 = %N{module: N3, id: nil}
+    e1 = %N{module: N1, id: :n1, opts: [foo: :bar]}
+    e2 = %N{module: N2, id: :n2}
+    e3 = %N{module: N3, id: :n3}
 
-    t1 = %T{module: T1, id: nil, opts: [foo: :baz], from: {N1, nil}, to: {N2, nil}}
-    t2 = %T{module: T2, id: nil, from: {N2, nil}, to: {N3, nil}}
+    t1 = %T{module: T1, id: :t1, opts: [foo: :baz], from: {N1, :n1}, to: {N2, :n2}}
+    t2 = %T{module: T2, id: :t2, from: {N2, :n2}, to: {N3, :n3}}
 
     assert P1.new().graph ==
              Graph.new()
-             |> Graph.add_vertices([{N1, nil}, {N2, nil}, {N3, nil}])
+             |> Graph.add_vertices([{N1, :n1}, {N2, :n2}, {N3, :n3}])
              |> Graph.add_edges([
-               Graph.Edge.new({N1, nil}, {N2, nil}, label: {T1, nil}),
-               Graph.Edge.new({N2, nil}, {N3, nil}, label: {T2, nil})
+               Graph.Edge.new({N1, :n1}, {N2, :n2}, label: {T1, :t1}),
+               Graph.Edge.new({N2, :n2}, {N3, :n3}, label: {T2, :t2})
              ])
 
-    assert P1.new().nodes == %{{N1, nil} => e1, {N2, nil} => e2, {N3, nil} => e3}
-    assert P1.new().transitions == %{{T1, nil} => t1, {T2, nil} => t2}
+    assert P1.new().nodes == %{{N1, :n1} => e1, {N2, :n2} => e2, {N3, :n3} => e3}
+    assert P1.new().transitions == %{{T1, :t1} => t1, {T2, :t2} => t2}
 
     assert Enum.count(P1.new().graph.vertices) == 3
   end

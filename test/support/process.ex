@@ -3,7 +3,7 @@ for i <- 1..10 do
     @moduledoc false
     use Flexflow.Node
     @impl true
-    def name, do: unquote(String.to_atom("e#{i}"))
+    def name, do: unquote(String.to_atom("n#{i}"))
   end
 
   defmodule String.to_atom("Elixir.T#{i}") do

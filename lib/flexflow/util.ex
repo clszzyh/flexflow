@@ -3,7 +3,7 @@ defmodule Flexflow.Util do
 
   @spec normalize_module(Flexflow.key()) :: Flexflow.key_normalize()
   def normalize_module({o, id}) when is_atom(o), do: {o, id}
-  def normalize_module(o) when is_atom(o), do: {o, nil}
+  def normalize_module(o) when is_atom(o), do: {o, o.name()}
 
   def local_modules do
     {:ok, [_ | _] = modules} = :application.get_key(:flexflow, :modules)
