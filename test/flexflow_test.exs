@@ -13,10 +13,11 @@ defmodule FlexflowTest do
     assert P1.module_info()
     assert P1.new(%{foo: :bar}).args == %{foo: :bar}
     assert P1.new().name == :p1
+    assert P1.new().opts == [hello: %{foo: :zzzz}]
     assert P1.new().graph.__struct__ == Graph
     assert P1.new().module == P1
 
-    e1 = %N{module: N1, name: :n1, opts: [foo: :bar]}
+    e1 = %N{module: N1, name: :n1, opts: [foo: %{aaa: :bbb}]}
     e2 = %N{module: N2, name: :n2}
     e3 = %N{module: N3, name: :n3}
 
@@ -35,6 +36,13 @@ defmodule FlexflowTest do
     assert P1.new().transitions == %{{T1, :t1} => t1, {T2, :t2} => t2}
 
     assert Enum.count(P1.new().graph.vertices) == 3
+  end
+
+  test "init" do
+    {:ok, p} = Flexflow.Process.start(P1)
+    assert p.state == :initial
+    assert p.nodes[{N1, :n1}].state == :initial
+    assert p.transitions[{T1, :t1}].state == :initial
   end
 
   test "process compile raise" do

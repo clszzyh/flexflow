@@ -8,10 +8,12 @@ defmodule Flexflow.Transition do
   alias Flexflow.Util
   alias Graph.Edge
 
+  @type state :: :waiting | :initial
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
           opts: keyword(),
+          state: state(),
           context: Context.t(),
           from: Flexflow.key_normalize(),
           to: Flexflow.key_normalize()
@@ -21,7 +23,7 @@ defmodule Flexflow.Transition do
   @type edge_map :: %{edge => t()}
 
   @enforce_keys [:name, :module, :from, :to]
-  defstruct @enforce_keys ++ [opts: [], context: Context.new()]
+  defstruct @enforce_keys ++ [opts: [], state: :waiting, context: Context.new()]
 
   @callback name :: Flexflow.name()
   @callback init(t(), Process.t()) :: {:ok, t()}

@@ -8,12 +8,13 @@ defmodule Flexflow.Process do
   alias Flexflow.Node
   alias Flexflow.Transition
 
-  @type state :: :active | :suspended | :terminated | :completed
+  @type state :: :waiting | :initial | :active | :suspended | :terminated | :completed
   @type t :: %__MODULE__{
           module: module(),
           graph: Graph.t(),
           name: String.t() | nil,
           args: map(),
+          opts: keyword(),
           nodes: Flexflow.nodes(),
           events: [Event.t()],
           context: Context.t(),
@@ -23,24 +24,61 @@ defmodule Flexflow.Process do
 
   @enforce_keys [:graph, :module, :nodes, :transitions]
   defstruct @enforce_keys ++
-              [:name, state: :active, args: %{}, events: [], context: Context.new()]
+              [
+                :name,
+                state: :waiting,
+                args: %{},
+                opts: [],
+                events: [],
+                context: Context.new()
+              ]
 
   def start(module, args \\ %{}) do
     process = module.new(args)
     process |> init()
   end
 
-  @spec init(t()) :: {:ok, t()}
-  def init(%__MODULE__{} = p) do
-    {:ok, p}
+  @behaviour Access
+  @impl true
+  def fetch(struct, key), do: Map.fetch(struct, key)
+  @impl true
+  def get_and_update(struct, key, fun) when is_function(fun, 1),
+    do: Map.get_and_update(struct, key, fun)
+
+  @impl true
+  def pop(struct, key), do: Map.pop(struct, key)
+
+  @spec init(t()) :: {:ok, t()} | {:error, String.t()}
+  def init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
+    (Map.to_list(nodes) ++ Map.to_list(transitions))
+    |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
+      case module.init(o, p) do
+        {:ok, %Node{} = node} ->
+          {:cont, put_in(p, [:nodes, key], %{node | state: :initial})}
+
+        {:ok, %Transition{} = transition} ->
+          {:cont, put_in(p, [:transitions, key], %{transition | state: :initial})}
+
+        {:error, reason} ->
+          {:halt, "[#{inspect(key)}] #{inspect(reason)}"}
+      end
+    end)
+    |> module.init()
+    |> case do
+      {:error, reason} -> {:error, reason}
+      %__MODULE__{} = p -> {:ok, %{p | state: :initial}}
+    end
   end
 
   @callback name :: Flexflow.name()
+  @callback init(t() | {:error, term()}) :: t() | {:error, term()}
 
-  defmacro __using__(_opt) do
+  defmacro __using__(opts) do
     quote do
       alias Flexflow.Nodes
       alias Flexflow.Transitions
+
+      @__opts__ unquote(opts)
 
       @behaviour unquote(__MODULE__)
 
@@ -51,6 +89,10 @@ defmodule Flexflow.Process do
       Module.register_attribute(__MODULE__, :__transitions__, accumulate: true)
 
       @before_compile unquote(__MODULE__)
+
+      @impl true
+      def init(o), do: o
+
       defoverridable unquote(__MODULE__)
     end
   end
@@ -111,12 +153,13 @@ defmodule Flexflow.Process do
         """
       end
 
-      @__process__ process
+      @__process__ %{process | opts: @__opts__}
 
       @spec new(map()) :: Process.t()
       def new(args \\ %{}), do: struct!(@__process__, name: name(), args: args)
 
       Module.delete_attribute(__MODULE__, :__nodes__)
+      Module.delete_attribute(__MODULE__, :__opts__)
       Module.delete_attribute(__MODULE__, :__transitions__)
       Module.delete_attribute(__MODULE__, :__process__)
     end

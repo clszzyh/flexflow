@@ -16,12 +16,12 @@ end
 
 defmodule P1 do
   @moduledoc false
-  use Flexflow.Process
+  use Flexflow.Process, hello: %{foo: :zzzz}
 
   @impl true
   def name, do: :p1
 
-  defnode(N1, foo: :bar)
+  defnode(N1, foo: %{aaa: :bbb})
   defnode(N2)
   defnode(N3)
   deftransition T1, {N1, N2}, foo: :baz

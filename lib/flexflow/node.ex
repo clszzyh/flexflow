@@ -7,15 +7,17 @@ defmodule Flexflow.Node do
   alias Flexflow.Process
   alias Flexflow.Util
 
+  @type state :: :waiting | :initial
   @type t :: %__MODULE__{
           module: module(),
+          state: state(),
           name: Flexflow.name(),
           context: Context.t(),
           opts: keyword()
         }
 
   @enforce_keys [:name, :module]
-  defstruct @enforce_keys ++ [opts: [], context: Context.new()]
+  defstruct @enforce_keys ++ [state: :waiting, opts: [], context: Context.new()]
 
   @callback name :: Flexflow.name()
   @callback init(t(), Process.t()) :: {:ok, t()}
