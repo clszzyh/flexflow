@@ -9,15 +9,17 @@ defmodule Flexflow.Process do
   alias Graph.Edge
 
   @type state :: :active | :suspended | :terminated | :completed
+  @type nodes :: %{Flexflow.node_key_normalize() => Node.t()}
   @type t :: %__MODULE__{
           module: module(),
           graph: Graph.t(),
-          name: String.t(),
+          name: String.t() | nil,
+          nodes: nodes(),
           events: [Event.t()],
           state: state()
         }
 
-  @enforce_keys [:graph, :module]
+  @enforce_keys [:graph, :module, :nodes]
   defstruct @enforce_keys ++ [:name, state: :active, events: []]
 
   defmacro __using__(_opt) do
@@ -51,11 +53,14 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec new_graph([Node.t()], [Edge.t()]) :: Graph.t()
-  def new_graph(vertices, edges) do
-    Graph.new()
-    |> Graph.add_vertices(vertices)
-    |> Graph.add_edges(edges)
+  @spec new(module(), nodes, [Edge.t()]) :: t()
+  def new(module, nodes, edges) do
+    graph =
+      Graph.new()
+      |> Graph.add_vertices(Map.keys(nodes))
+      |> Graph.add_edges(edges)
+
+    %__MODULE__{graph: graph, nodes: nodes, module: module}
   end
 
   defmacro __before_compile__(env) do
@@ -65,38 +70,36 @@ defmodule Flexflow.Process do
       |> Enum.reverse()
       |> Enum.map(&Node.define/1)
       |> Node.validate()
+      |> Map.new(&{{&1.module, &1.id}, &1})
 
-    node_map = for e <- nodes, into: %{}, do: {{e.module, e.id}, e}
-
-    transitions =
+    edges =
       env.module
       |> Module.get_attribute(:__transitions__)
       |> Enum.reverse()
-      |> Enum.map(&Transition.define(&1, node_map))
+      |> Enum.map(&Transition.define(&1, nodes))
       |> Transition.validate()
 
-    graph = new_graph(nodes, transitions)
+    process = new(env.module, nodes, edges)
 
-    quote bind_quoted: [module: __MODULE__, graph: Macro.escape(graph)] do
+    quote bind_quoted: [module: __MODULE__, process: Macro.escape(process)] do
       alias Flexflow.Process
 
       unless Module.get_attribute(__MODULE__, :moduledoc) do
         @moduledoc """
         See `#{module}`
 
-        #{inspect(graph)}
+        #{inspect(process)}
         """
       end
 
-      @__self__ struct!(module, graph: graph, module: __MODULE__)
+      @__process__ process
 
-      def __self__, do: @__self__
       @spec new(map()) :: Process.t()
-      def new(args \\ %{}), do: struct!(@__self__, args)
+      def new(args \\ %{}), do: struct!(@__process__, args)
 
       Module.delete_attribute(__MODULE__, :__nodes__)
       Module.delete_attribute(__MODULE__, :__transitions__)
-      Module.delete_attribute(__MODULE__, :__self__)
+      Module.delete_attribute(__MODULE__, :__process__)
     end
   end
 end

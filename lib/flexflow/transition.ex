@@ -40,21 +40,21 @@ defmodule Flexflow.Transition do
 
     if from == to, do: raise(ArgumentError, "#{inspect(from)} cannot target to self!")
 
-    new_from = nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined!")
-    new_to = nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined!")
+    _new_from = nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined!")
+    _new_to = nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined!")
 
-    Edge.new(new_from, new_to, label: %__MODULE__{module: o, opts: opts, from: from, to: to})
+    Edge.new(from, to, label: %__MODULE__{module: o, opts: opts, from: from, to: to})
   end
 
   @spec validate([edge()]) :: [edge()]
   def validate(transitions) do
     if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
 
-    for %Edge{v1: %{module: v1_module, id: v1_id}, v2: %{module: v2_module, id: v2_id}} <-
+    for %Edge{v1: v1, v2: v2} <-
           transitions,
         reduce: [] do
       ary ->
-        o = {{v1_module, v1_id}, {v2_module, v2_id}}
+        o = {v1, v2}
         if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice!")
         ary ++ [o]
     end
