@@ -22,6 +22,8 @@ defmodule Flexflow.Process do
           state: state()
         }
 
+  @type result :: {:ok, t()} | {:error, term()}
+
   @enforce_keys [:graph, :module, :nodes, :transitions]
   defstruct @enforce_keys ++
               [
@@ -33,45 +35,14 @@ defmodule Flexflow.Process do
                 context: Context.new()
               ]
 
+  @spec start(module(), map()) :: result()
   def start(module, args \\ %{}) do
     process = module.new(args)
     process |> init()
   end
 
-  @behaviour Access
-  @impl true
-  def fetch(struct, key), do: Map.fetch(struct, key)
-  @impl true
-  def get_and_update(struct, key, fun) when is_function(fun, 1),
-    do: Map.get_and_update(struct, key, fun)
-
-  @impl true
-  def pop(struct, key), do: Map.pop(struct, key)
-
-  @spec init(t()) :: {:ok, t()} | {:error, String.t()}
-  def init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
-    (Map.to_list(nodes) ++ Map.to_list(transitions))
-    |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
-      case module.init(o, p) do
-        {:ok, %Node{} = node} ->
-          {:cont, put_in(p, [:nodes, key], %{node | state: :initial})}
-
-        {:ok, %Transition{} = transition} ->
-          {:cont, put_in(p, [:transitions, key], %{transition | state: :initial})}
-
-        {:error, reason} ->
-          {:halt, "[#{inspect(key)}] #{inspect(reason)}"}
-      end
-    end)
-    |> module.init()
-    |> case do
-      {:error, reason} -> {:error, reason}
-      %__MODULE__{} = p -> {:ok, %{p | state: :initial}}
-    end
-  end
-
   @callback name :: Flexflow.name()
-  @callback init(t() | {:error, term()}) :: t() | {:error, term()}
+  @callback init(t() | {:error, term()}) :: result()
 
   defmacro __using__(opts) do
     quote do
@@ -91,7 +62,7 @@ defmodule Flexflow.Process do
       @before_compile unquote(__MODULE__)
 
       @impl true
-      def init(o), do: o
+      def init(o), do: {:ok, o}
 
       defoverridable unquote(__MODULE__)
     end
@@ -164,4 +135,36 @@ defmodule Flexflow.Process do
       Module.delete_attribute(__MODULE__, :__process__)
     end
   end
+
+  @spec init(t()) :: result()
+  def init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
+    (Map.to_list(nodes) ++ Map.to_list(transitions))
+    |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
+      case module.init(o, p) do
+        {:ok, %Node{} = node} ->
+          {:cont, put_in(p, [:nodes, key], %{node | state: :initial})}
+
+        {:ok, %Transition{} = transition} ->
+          {:cont, put_in(p, [:transitions, key], %{transition | state: :initial})}
+
+        {:error, reason} ->
+          {:halt, {key, reason}}
+      end
+    end)
+    |> module.init()
+    |> case do
+      {:error, reason} -> {:error, reason}
+      {:ok, %__MODULE__{} = p} -> {:ok, %{p | state: :initial}}
+    end
+  end
+
+  @behaviour Access
+  @impl true
+  def fetch(struct, key), do: Map.fetch(struct, key)
+  @impl true
+  def get_and_update(struct, key, fun) when is_function(fun, 1),
+    do: Map.get_and_update(struct, key, fun)
+
+  @impl true
+  def pop(struct, key), do: Map.pop(struct, key)
 end
