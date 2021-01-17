@@ -18,6 +18,9 @@ defmodule P1 do
   @moduledoc false
   use Flexflow.Process
 
+  @impl true
+  def name, do: :p1
+
   defnode(N1, foo: :bar)
   defnode(N2)
   defnode(N3)

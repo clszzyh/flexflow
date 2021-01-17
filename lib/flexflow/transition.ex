@@ -4,6 +4,7 @@ defmodule Flexflow.Transition do
   """
 
   alias Flexflow.Context
+  alias Flexflow.Process
   alias Flexflow.Util
   alias Graph.Edge
 
@@ -23,10 +24,16 @@ defmodule Flexflow.Transition do
   defstruct @enforce_keys ++ [opts: [], context: Context.new()]
 
   @callback name :: Flexflow.name()
+  @callback init(t(), Process.t()) :: {:ok, t()}
 
   defmacro __using__(_) do
     quote do
       @behaviour unquote(__MODULE__)
+
+      @impl true
+      def init(o, _), do: {:ok, o}
+
+      defoverridable unquote(__MODULE__)
     end
   end
 

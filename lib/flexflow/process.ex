@@ -13,6 +13,7 @@ defmodule Flexflow.Process do
           module: module(),
           graph: Graph.t(),
           name: String.t() | nil,
+          args: map(),
           nodes: Flexflow.nodes(),
           events: [Event.t()],
           context: Context.t(),
@@ -21,12 +22,27 @@ defmodule Flexflow.Process do
         }
 
   @enforce_keys [:graph, :module, :nodes, :transitions]
-  defstruct @enforce_keys ++ [:name, state: :active, events: [], context: Context.new()]
+  defstruct @enforce_keys ++
+              [:name, state: :active, args: %{}, events: [], context: Context.new()]
+
+  def start(module, args \\ %{}) do
+    process = module.new(args)
+    process |> init()
+  end
+
+  @spec init(t()) :: {:ok, t()}
+  def init(%__MODULE__{} = p) do
+    {:ok, p}
+  end
+
+  @callback name :: Flexflow.name()
 
   defmacro __using__(_opt) do
     quote do
       alias Flexflow.Nodes
       alias Flexflow.Transitions
+
+      @behaviour unquote(__MODULE__)
 
       import unquote(__MODULE__),
         only: [defnode: 1, defnode: 2, deftransition: 2, deftransition: 3]
@@ -35,6 +51,7 @@ defmodule Flexflow.Process do
       Module.register_attribute(__MODULE__, :__transitions__, accumulate: true)
 
       @before_compile unquote(__MODULE__)
+      defoverridable unquote(__MODULE__)
     end
   end
 
@@ -97,7 +114,7 @@ defmodule Flexflow.Process do
       @__process__ process
 
       @spec new(map()) :: Process.t()
-      def new(args \\ %{}), do: struct!(@__process__, args)
+      def new(args \\ %{}), do: struct!(@__process__, name: name(), args: args)
 
       Module.delete_attribute(__MODULE__, :__nodes__)
       Module.delete_attribute(__MODULE__, :__transitions__)

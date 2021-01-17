@@ -7,7 +7,8 @@ defmodule Flexflow.Registry do
 
   @state %{
     Flexflow.Node => %{},
-    Flexflow.Transition => %{}
+    Flexflow.Transition => %{},
+    Flexflow.Process => %{}
   }
 
   def register(module) do
