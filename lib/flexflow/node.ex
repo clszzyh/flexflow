@@ -3,16 +3,18 @@ defmodule Flexflow.Node do
   Node
   """
 
+  alias Flexflow.Context
   alias Flexflow.Util
 
   @type t :: %__MODULE__{
           module: module(),
           id: Flexflow.id(),
+          context: Context.t(),
           opts: keyword()
         }
 
   @enforce_keys [:id, :module]
-  defstruct @enforce_keys ++ [opts: []]
+  defstruct @enforce_keys ++ [opts: [], context: Context.new()]
 
   @callback name :: Flexflow.name()
 

@@ -3,6 +3,7 @@ defmodule Flexflow.Transition do
   Transition
   """
 
+  alias Flexflow.Context
   alias Flexflow.Util
   alias Graph.Edge
 
@@ -10,6 +11,7 @@ defmodule Flexflow.Transition do
           module: module(),
           id: Flexflow.id(),
           opts: keyword(),
+          context: Context.t(),
           from: Flexflow.key_normalize(),
           to: Flexflow.key_normalize()
         }
@@ -18,7 +20,7 @@ defmodule Flexflow.Transition do
   @type edge_map :: %{edge => t()}
 
   @enforce_keys [:id, :module, :from, :to]
-  defstruct @enforce_keys ++ [opts: []]
+  defstruct @enforce_keys ++ [opts: [], context: Context.new()]
 
   @callback name :: Flexflow.name()
 

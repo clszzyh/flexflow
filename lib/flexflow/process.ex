@@ -3,6 +3,7 @@ defmodule Flexflow.Process do
   Process
   """
 
+  alias Flexflow.Context
   alias Flexflow.Event
   alias Flexflow.Node
   alias Flexflow.Transition
@@ -14,12 +15,13 @@ defmodule Flexflow.Process do
           name: String.t() | nil,
           nodes: Flexflow.nodes(),
           events: [Event.t()],
+          context: Context.t(),
           transitions: Flexflow.transitions(),
           state: state()
         }
 
   @enforce_keys [:graph, :module, :nodes, :transitions]
-  defstruct @enforce_keys ++ [:name, state: :active, events: []]
+  defstruct @enforce_keys ++ [:name, state: :active, events: [], context: Context.new()]
 
   defmacro __using__(_opt) do
     quote do
