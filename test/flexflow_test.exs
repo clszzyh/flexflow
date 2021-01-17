@@ -16,6 +16,7 @@ defmodule FlexflowTest do
     assert P1.new(name: :foo).name == :foo
     graph = P1.__self__().graph
     assert graph.__struct__ == Graph
+    assert P1.new().module == P1
 
     e1 = %V{module: E1, id: nil, opts: [foo: :bar]}
     e2 = %V{module: E2, id: nil}

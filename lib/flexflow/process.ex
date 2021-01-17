@@ -8,15 +8,19 @@ defmodule Flexflow.Process do
   alias Graph.Edge
 
   @type t :: %__MODULE__{
+          module: module(),
           graph: Graph.t(),
           name: String.t()
         }
 
-  @enforce_keys [:graph]
+  @enforce_keys [:graph, :module]
   defstruct @enforce_keys ++ [:name]
 
   defmacro __using__(_opt) do
     quote do
+      alias Flexflow.Events
+      alias Flexflow.Transitions
+
       import unquote(__MODULE__),
         only: [defevent: 1, defevent: 2, deftransition: 2, deftransition: 3]
 
@@ -80,7 +84,7 @@ defmodule Flexflow.Process do
         """
       end
 
-      @__self__ struct!(module, graph: graph)
+      @__self__ struct!(module, graph: graph, module: __MODULE__)
 
       def __self__, do: @__self__
       @spec new(map()) :: Process.t()

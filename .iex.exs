@@ -9,3 +9,7 @@ alias Flexflow.Event, as: V
 alias Flexflow.Transition, as: T
 
 alias Flexflow.Process, as: P
+
+alias Flexflow.Processes
+alias Flexflow.Events
+alias Flexflow.Transitions
