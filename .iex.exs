@@ -7,3 +7,5 @@ alias Graph.Edge, as: E
 
 alias Flexflow.Event, as: V
 alias Flexflow.Transition, as: T
+
+alias Flexflow.Process, as: P

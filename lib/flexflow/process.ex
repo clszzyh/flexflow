@@ -5,6 +5,7 @@ defmodule Flexflow.Process do
 
   alias Flexflow.Event
   alias Flexflow.Transition
+  alias Graph.Edge
 
   @type t :: %__MODULE__{
           graph: Graph.t(),
@@ -42,6 +43,7 @@ defmodule Flexflow.Process do
     end
   end
 
+  @spec new_graph([Event.t()], [Edge.t()]) :: Graph.t()
   def new_graph(vertices, edges) do
     Graph.new()
     |> Graph.add_vertices(vertices)
@@ -68,6 +70,8 @@ defmodule Flexflow.Process do
     graph = new_graph(events, transitions)
 
     quote bind_quoted: [module: __MODULE__, graph: Macro.escape(graph)] do
+      alias Flexflow.Process
+
       unless Module.get_attribute(__MODULE__, :moduledoc) do
         @moduledoc """
         See `#{module}`
@@ -79,6 +83,7 @@ defmodule Flexflow.Process do
       @__self__ struct!(module, graph: graph)
 
       def __self__, do: @__self__
+      @spec new(map()) :: Process.t()
       def new(args \\ %{}), do: struct!(@__self__, args)
 
       Module.delete_attribute(__MODULE__, :__events__)

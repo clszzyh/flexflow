@@ -51,6 +51,15 @@ defmodule Flexflow.Transition do
   def validate(transitions) do
     if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
 
+    for %Edge{v1: %{module: v1_module, id: v1_id}, v2: %{module: v2_module, id: v2_id}} <-
+          transitions,
+        reduce: [] do
+      ary ->
+        o = {{v1_module, v1_id}, {v2_module, v2_id}}
+        if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice!")
+        ary ++ [o]
+    end
+
     transitions
   end
 end

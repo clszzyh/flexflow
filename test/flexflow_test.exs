@@ -33,7 +33,7 @@ defmodule FlexflowTest do
              ])
   end
 
-  test "compile raise" do
+  test "process compile raise" do
     map = %{
       quote do
       end => "Event is empty!",
@@ -48,19 +48,21 @@ defmodule FlexflowTest do
         defevent E2
         defevent E1
         deftransition T1, {E1, E2}
-      end => "{E1, nil} is defined twice!",
+      end => "Event {E1, nil} is defined twice!",
       quote do
         defevent E1
-        defevent E2
-        defevent E3
         deftransition T1, {E1, E4}
       end => "{E4, nil} is not defined!",
       quote do
         defevent E1
-        defevent E2
-        defevent E3
         deftransition T1, {E1, E1}
-      end => "{E1, nil} cannot target to self!"
+      end => "{E1, nil} cannot target to self!",
+      quote do
+        defevent E1
+        defevent E2
+        deftransition T1, {E1, E2}
+        deftransition T1, {E1, E2}
+      end => "Transition {{E1, nil}, {E2, nil}} is defined twice!"
     }
 
     for {ast, msg} <- map do

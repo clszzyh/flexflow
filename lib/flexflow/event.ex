@@ -40,7 +40,7 @@ defmodule Flexflow.Event do
     for %__MODULE__{module: module, id: id} <- events, reduce: [] do
       ary ->
         o = {module, id}
-        if o in ary, do: raise(ArgumentError, "#{inspect(o)} is defined twice!")
+        if o in ary, do: raise(ArgumentError, "Event #{inspect(o)} is defined twice!")
         ary ++ [o]
     end
 
