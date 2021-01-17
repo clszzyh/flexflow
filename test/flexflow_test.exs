@@ -2,6 +2,8 @@ defmodule FlexflowTest do
   use ExUnit.Case
   doctest Flexflow
 
+  @moduletag capture_log: true
+
   alias Flexflow.Node, as: N
   alias Flexflow.Transition, as: T
 

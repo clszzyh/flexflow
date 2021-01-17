@@ -8,7 +8,7 @@ defmodule Flexflow.Telemetry do
   @prefix :flexflow
   @handler_id "#{@prefix}-telemetry-logger"
 
-  @event_types []
+  @event_types [:process_init, :process_next]
 
   @events Enum.flat_map(@event_types, fn x ->
             [

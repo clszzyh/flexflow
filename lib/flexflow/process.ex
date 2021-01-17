@@ -203,6 +203,22 @@ defmodule Flexflow.Process do
     end
   end
 
+  @spec next(t()) :: result()
+  def next(p) do
+    Telemetry.span(
+      :process_next,
+      fn ->
+        {state, result} = do_next(p)
+        {{state, result}, %{state: state}}
+      end,
+      %{name: p.name}
+    )
+  end
+
+  defp do_next(%__MODULE__{__traversal__: _} = p) do
+    {:ok, p}
+  end
+
   @behaviour Access
   @impl true
   def fetch(struct, key), do: Map.fetch(struct, key)
