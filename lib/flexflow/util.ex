@@ -5,6 +5,11 @@ defmodule Flexflow.Util do
   def normalize_module({o, id}) when is_atom(o), do: {o, id}
   def normalize_module(o) when is_atom(o), do: {o, o.name()}
 
+  @spec make_id :: Flexflow.id()
+  def make_id do
+    System.unique_integer([:positive])
+  end
+
   def local_modules do
     {:ok, [_ | _] = modules} = :application.get_key(:flexflow, :modules)
     modules

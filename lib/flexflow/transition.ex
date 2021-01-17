@@ -19,6 +19,7 @@ defmodule Flexflow.Transition do
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
+          id: Flexflow.id(),
           opts: keyword(),
           state: state(),
           context: Context.t(),
@@ -30,7 +31,7 @@ defmodule Flexflow.Transition do
   @type edge_map :: %{edge => t()}
 
   @enforce_keys [:name, :module, :from, :to]
-  defstruct @enforce_keys ++ [opts: [], state: :waiting, context: Context.new()]
+  defstruct @enforce_keys ++ [:id, opts: [], state: :waiting, context: Context.new()]
 
   @doc "Module name"
   @callback name :: Flexflow.name()
