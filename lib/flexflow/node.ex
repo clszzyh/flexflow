@@ -43,10 +43,10 @@ defmodule Flexflow.Node do
     end
   end
 
-  @spec define({Flexflow.key(), keyword()}) :: t()
-  def define({o, opts}) when is_atom(o), do: define({Util.normalize_module(o), opts})
+  @spec new({Flexflow.key(), keyword()}) :: t()
+  def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 
-  def define({{o, name}, opts}) do
+  def new({{o, name}, opts}) do
     unless Util.main_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end

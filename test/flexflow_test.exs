@@ -17,25 +17,74 @@ defmodule FlexflowTest do
     assert P1.new().graph.__struct__ == Graph
     assert P1.new().module == P1
 
-    e1 = %N{module: N1, name: :n1, opts: [foo: %{aaa: :bbb}]}
-    e2 = %N{module: N2, name: :n2}
-    e3 = %N{module: N3, name: :n3}
+    n1 = %N{module: N1, name: :n1, opts: [foo: %{aaa: :bbb}]}
+    n2 = %N{module: N2, name: :n2}
+    n3 = %N{module: N3, name: :n3}
+    n4 = %N{module: N4, name: :n4}
+    n5 = %N{module: N5, name: :n5}
+    n6 = %N{module: N6, name: :n6}
 
-    t1 = %T{module: T1, name: :t1, opts: [foo: :baz], from: {N1, :n1}, to: {N2, :n2}}
-    t2 = %T{module: T2, name: :t2, from: {N2, :n2}, to: {N3, :n3}}
+    n1_s = {N1, :n1}
+    n2_s = {N2, :n2}
+    n3_s = {N3, :n3}
+    n4_s = {N4, :n4}
+    n5_s = {N5, :n5}
+    n6_s = {N6, :n6}
+
+    t1 = %T{module: T1, name: :t1, opts: [foo: :baz], from: n1_s, to: n2_s}
+    t2 = %T{module: T2, name: :t2, from: n2_s, to: n3_s}
+    t3 = %T{module: T2, name: 1, from: n2_s, to: n4_s}
+    t4 = %T{module: T2, name: 2, from: n2_s, to: n5_s}
+    t5 = %T{module: T2, name: 3, from: n2_s, to: n6_s}
+    t6 = %T{module: T2, name: 4, from: n4_s, to: n1_s}
+
+    t1_s = {T1, :t1}
+    t2_s = {T2, :t2}
+    t3_s = {T2, 1}
+    t4_s = {T2, 2}
+    t5_s = {T2, 3}
+    t6_s = {T2, 4}
 
     assert P1.new().graph ==
              Graph.new()
-             |> Graph.add_vertices([{N1, :n1}, {N2, :n2}, {N3, :n3}])
+             |> Graph.add_vertices([n1_s, n2_s, n3_s, n4_s, n5_s, n6_s])
              |> Graph.add_edges([
-               Graph.Edge.new({N1, :n1}, {N2, :n2}, label: {T1, :t1}),
-               Graph.Edge.new({N2, :n2}, {N3, :n3}, label: {T2, :t2})
+               Graph.Edge.new(n1_s, n2_s, label: t1_s),
+               Graph.Edge.new(n2_s, n3_s, label: t2_s),
+               Graph.Edge.new(n2_s, n4_s, label: t3_s),
+               Graph.Edge.new(n2_s, n5_s, label: t4_s),
+               Graph.Edge.new(n2_s, n6_s, label: t5_s),
+               Graph.Edge.new(n4_s, n1_s, label: t6_s)
              ])
 
-    assert P1.new().nodes == %{{N1, :n1} => e1, {N2, :n2} => e2, {N3, :n3} => e3}
-    assert P1.new().transitions == %{{T1, :t1} => t1, {T2, :t2} => t2}
+    assert P1.new().nodes == %{
+             n1_s => n1,
+             n2_s => n2,
+             n3_s => n3,
+             n4_s => n4,
+             n5_s => n5,
+             n6_s => n6
+           }
 
-    assert Enum.count(P1.new().graph.vertices) == 3
+    assert P1.new().transitions == %{
+             t1_s => t1,
+             t2_s => t2,
+             t3_s => t3,
+             t4_s => t4,
+             t5_s => t5,
+             t6_s => t6
+           }
+
+    assert Enum.count(P1.new().graph.vertices) == 6
+
+    assert Map.new(P1.new().__traversal__) == %{
+             n1_s => [n2_s],
+             n2_s => [n5_s, n3_s, n4_s, n6_s],
+             n3_s => [],
+             n4_s => [n1_s],
+             n5_s => [],
+             n6_s => []
+           }
   end
 
   test "init" do

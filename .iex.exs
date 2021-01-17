@@ -13,3 +13,6 @@ alias Flexflow.Process, as: P
 alias Flexflow.Processes
 alias Flexflow.Events
 alias Flexflow.Transitions
+
+alias Graph.Reducers.Bfs
+alias Graph.Reducers.Dfs

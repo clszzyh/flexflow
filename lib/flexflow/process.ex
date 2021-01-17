@@ -10,6 +10,8 @@ defmodule Flexflow.Process do
   alias Flexflow.Transition
   alias Flexflow.Util
 
+  alias Graph.Reducers.Dfs
+
   @states [:created, :initial, :active, :suspended, :terminated, :completed]
 
   @typedoc """
@@ -29,13 +31,14 @@ defmodule Flexflow.Process do
           events: [Event.t()],
           context: Context.t(),
           transitions: Flexflow.transitions(),
-          state: state()
+          state: state(),
+          __traversal__: term()
         }
 
   @typedoc "Init result"
   @opaque result :: {:ok, t()} | {:error, term()}
 
-  @enforce_keys [:graph, :module, :nodes, :transitions]
+  @enforce_keys [:graph, :module, :nodes, :transitions, :__traversal__]
   defstruct @enforce_keys ++
               [
                 :name,
@@ -105,8 +108,17 @@ defmodule Flexflow.Process do
       |> Graph.add_vertices(Map.keys(nodes))
       |> Graph.add_edges(Map.keys(edges))
 
+    cache = Dfs.map(graph, fn v -> {v, Graph.out_neighbors(graph, v)} end)
+
     transitions = for {k, v} <- edges, into: %{}, do: {k.label, v}
-    %__MODULE__{graph: graph, nodes: nodes, module: module, transitions: transitions}
+
+    %__MODULE__{
+      graph: graph,
+      nodes: nodes,
+      module: module,
+      __traversal__: cache,
+      transitions: transitions
+    }
   end
 
   defmacro __before_compile__(env) do
@@ -114,7 +126,7 @@ defmodule Flexflow.Process do
       env.module
       |> Module.get_attribute(:__nodes__)
       |> Enum.reverse()
-      |> Enum.map(&Node.define/1)
+      |> Enum.map(&Node.new/1)
       |> Node.validate()
       |> Map.new(&{{&1.module, &1.name}, &1})
 
@@ -122,7 +134,7 @@ defmodule Flexflow.Process do
       env.module
       |> Module.get_attribute(:__transitions__)
       |> Enum.reverse()
-      |> Enum.into(%{}, &Transition.define(&1, nodes))
+      |> Enum.into(%{}, &Transition.new(&1, nodes))
       |> Transition.validate()
 
     process = new(env.module, nodes, edges)

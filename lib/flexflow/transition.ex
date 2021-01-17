@@ -49,12 +49,12 @@ defmodule Flexflow.Transition do
     end
   end
 
-  @spec define({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, keyword()}, Flexflow.nodes()) ::
+  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, keyword()}, Flexflow.nodes()) ::
           {edge(), t()}
-  def define({o, {from, to}, opts}, nodes) when is_atom(o),
-    do: define({Util.normalize_module(o), {from, to}, opts}, nodes)
+  def new({o, {from, to}, opts}, nodes) when is_atom(o),
+    do: new({Util.normalize_module(o), {from, to}, opts}, nodes)
 
-  def define({{o, name}, {from, to}, opts}, nodes) do
+  def new({{o, name}, {from, to}, opts}, nodes) do
     unless Util.main_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
