@@ -8,11 +8,18 @@ defmodule Flexflow.Process do
   alias Flexflow.Node
   alias Flexflow.Transition
 
-  @type state :: :waiting | :initial | :active | :suspended | :terminated | :completed
+  @states [:waiting, :initial, :active, :suspended, :terminated, :completed]
+
+  @typedoc """
+  Process state
+
+  #{inspect(@states)}
+  """
+  @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{
           module: module(),
           graph: Graph.t(),
-          name: String.t() | nil,
+          name: Flexflow.name(),
           args: map(),
           opts: keyword(),
           nodes: Flexflow.nodes(),
@@ -22,7 +29,8 @@ defmodule Flexflow.Process do
           state: state()
         }
 
-  @type result :: {:ok, t()} | {:error, term()}
+  @typedoc "Init result"
+  @opaque result :: {:ok, t()} | {:error, term()}
 
   @enforce_keys [:graph, :module, :nodes, :transitions]
   defstruct @enforce_keys ++
@@ -41,7 +49,9 @@ defmodule Flexflow.Process do
     process |> init()
   end
 
+  @doc "Module name"
   @callback name :: Flexflow.name()
+  @doc "Invoked when process is started, after nodes and transitions `init`, see `#{__MODULE__}.init/1`"
   @callback init(t() | {:error, term()}) :: result()
 
   defmacro __using__(opts) do

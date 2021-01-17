@@ -6,7 +6,7 @@ defmodule Flexflow.Event do
   @type t :: %__MODULE__{
           id: integer(),
           time: integer(),
-          msg: binary()
+          msg: String.t()
         }
   @enforce_keys [:id, :time, :msg]
   defstruct @enforce_keys

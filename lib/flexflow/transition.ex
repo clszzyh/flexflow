@@ -8,7 +8,14 @@ defmodule Flexflow.Transition do
   alias Flexflow.Util
   alias Graph.Edge
 
-  @type state :: :waiting | :initial
+  @states [:waiting, :initial, :active, :suspended, :terminated, :completed]
+
+  @typedoc """
+  Transition state
+
+  #{inspect(@states)}
+  """
+  @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
@@ -25,7 +32,9 @@ defmodule Flexflow.Transition do
   @enforce_keys [:name, :module, :from, :to]
   defstruct @enforce_keys ++ [opts: [], state: :waiting, context: Context.new()]
 
+  @doc "Module name"
   @callback name :: Flexflow.name()
+  @doc "Invoked when process is started"
   @callback init(t(), Process.t()) :: {:ok, t()}
 
   defmacro __using__(_) do

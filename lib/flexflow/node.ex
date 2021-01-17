@@ -7,7 +7,14 @@ defmodule Flexflow.Node do
   alias Flexflow.Process
   alias Flexflow.Util
 
-  @type state :: :waiting | :initial
+  @states [:waiting, :initial, :active, :suspended, :terminated, :completed]
+
+  @typedoc """
+  Node state
+
+  #{inspect(@states)}
+  """
+  @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{
           module: module(),
           state: state(),
@@ -19,7 +26,9 @@ defmodule Flexflow.Node do
   @enforce_keys [:name, :module]
   defstruct @enforce_keys ++ [state: :waiting, opts: [], context: Context.new()]
 
+  @doc "Module name"
   @callback name :: Flexflow.name()
+  @doc "Invoked when process is started"
   @callback init(t(), Process.t()) :: {:ok, t()}
 
   defmacro __using__(_) do
