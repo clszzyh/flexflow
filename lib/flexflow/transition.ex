@@ -9,7 +9,7 @@ defmodule Flexflow.Transition do
 
   @type t :: %__MODULE__{
           module: module(),
-          id: Flexflow.id(),
+          name: Flexflow.name(),
           opts: keyword(),
           context: Context.t(),
           from: Flexflow.key_normalize(),
@@ -19,7 +19,7 @@ defmodule Flexflow.Transition do
   @type edge :: Edge.t()
   @type edge_map :: %{edge => t()}
 
-  @enforce_keys [:id, :module, :from, :to]
+  @enforce_keys [:name, :module, :from, :to]
   defstruct @enforce_keys ++ [opts: [], context: Context.new()]
 
   @callback name :: Flexflow.name()
@@ -35,7 +35,7 @@ defmodule Flexflow.Transition do
   def define({o, {from, to}, opts}, nodes) when is_atom(o),
     do: define({Util.normalize_module(o), {from, to}, opts}, nodes)
 
-  def define({{o, id}, {from, to}, opts}, nodes) do
+  def define({{o, name}, {from, to}, opts}, nodes) do
     unless Util.main_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
@@ -48,17 +48,17 @@ defmodule Flexflow.Transition do
     _new_from = nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined!")
     _new_to = nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined!")
 
-    transition = %__MODULE__{module: o, id: id, opts: opts, from: from, to: to}
-    {Edge.new(from, to, label: {o, id}), transition}
+    transition = %__MODULE__{module: o, name: name, opts: opts, from: from, to: to}
+    {Edge.new(from, to, label: {o, name}), transition}
   end
 
   @spec validate(edge_map()) :: edge_map()
   def validate(transitions) do
     if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
 
-    for {_, %__MODULE__{module: module, id: id}} <- transitions, reduce: [] do
+    for {_, %__MODULE__{module: module, name: name}} <- transitions, reduce: [] do
       ary ->
-        o = {module, id}
+        o = {module, name}
         if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice!")
         ary ++ [o]
     end

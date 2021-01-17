@@ -8,12 +8,12 @@ defmodule Flexflow.Node do
 
   @type t :: %__MODULE__{
           module: module(),
-          id: Flexflow.id(),
+          name: Flexflow.name(),
           context: Context.t(),
           opts: keyword()
         }
 
-  @enforce_keys [:id, :module]
+  @enforce_keys [:name, :module]
   defstruct @enforce_keys ++ [opts: [], context: Context.new()]
 
   @callback name :: Flexflow.name()
@@ -27,21 +27,21 @@ defmodule Flexflow.Node do
   @spec define({Flexflow.key(), keyword()}) :: t()
   def define({o, opts}) when is_atom(o), do: define({Util.normalize_module(o), opts})
 
-  def define({{o, id}, opts}) do
+  def define({{o, name}, opts}) do
     unless Util.main_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
 
-    %__MODULE__{module: o, id: id, opts: opts}
+    %__MODULE__{module: o, name: name, opts: opts}
   end
 
   @spec validate([t()]) :: [t()]
   def validate(nodes) do
     if Enum.empty?(nodes), do: raise(ArgumentError, "Node is empty!")
 
-    for %__MODULE__{module: module, id: id} <- nodes, reduce: [] do
+    for %__MODULE__{module: module, name: name} <- nodes, reduce: [] do
       ary ->
-        o = {module, id}
+        o = {module, name}
         if o in ary, do: raise(ArgumentError, "Node #{inspect(o)} is defined twice!")
         ary ++ [o]
     end

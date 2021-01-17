@@ -72,7 +72,7 @@ defmodule Flexflow.Process do
       |> Enum.reverse()
       |> Enum.map(&Node.define/1)
       |> Node.validate()
-      |> Map.new(&{{&1.module, &1.id}, &1})
+      |> Map.new(&{{&1.module, &1.name}, &1})
 
     edges =
       env.module

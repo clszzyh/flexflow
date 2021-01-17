@@ -17,12 +17,12 @@ defmodule FlexflowTest do
     assert P1.new().graph.__struct__ == Graph
     assert P1.new().module == P1
 
-    e1 = %N{module: N1, id: :n1, opts: [foo: :bar]}
-    e2 = %N{module: N2, id: :n2}
-    e3 = %N{module: N3, id: :n3}
+    e1 = %N{module: N1, name: :n1, opts: [foo: :bar]}
+    e2 = %N{module: N2, name: :n2}
+    e3 = %N{module: N3, name: :n3}
 
-    t1 = %T{module: T1, id: :t1, opts: [foo: :baz], from: {N1, :n1}, to: {N2, :n2}}
-    t2 = %T{module: T2, id: :t2, from: {N2, :n2}, to: {N3, :n3}}
+    t1 = %T{module: T1, name: :t1, opts: [foo: :baz], from: {N1, :n1}, to: {N2, :n2}}
+    t2 = %T{module: T2, name: :t2, from: {N2, :n2}, to: {N3, :n3}}
 
     assert P1.new().graph ==
              Graph.new()
