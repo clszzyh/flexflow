@@ -28,7 +28,7 @@ defmodule Flexflow.Transition do
         }
 
   @type edge :: Edge.t()
-  @type edge_map :: %{edge => t()}
+  @type edge_tuple :: {edge, t()}
 
   @enforce_keys [:name, :module, :from, :to]
   defstruct @enforce_keys ++ [:id, opts: [], state: :created, context: Context.new()]
@@ -49,8 +49,8 @@ defmodule Flexflow.Transition do
     end
   end
 
-  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, keyword()}, Flexflow.nodes()) ::
-          {edge(), t()}
+  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, keyword()}, [Node.t()]) ::
+          edge_tuple
   def new({o, {from, to}, opts}, nodes) when is_atom(o),
     do: new({Util.normalize_module(o), {from, to}, opts}, nodes)
 
@@ -64,6 +64,8 @@ defmodule Flexflow.Transition do
 
     if from == to, do: raise(ArgumentError, "#{inspect(from)} cannot target to self!")
 
+    nodes = Map.new(nodes, &{{&1.module, &1.name}, &1})
+
     _new_from = nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined!")
     _new_to = nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined!")
 
@@ -71,7 +73,7 @@ defmodule Flexflow.Transition do
     {Edge.new(from, to, label: {o, name}), transition}
   end
 
-  @spec validate(edge_map()) :: edge_map()
+  @spec validate([edge_tuple()]) :: [edge_tuple()]
   def validate(transitions) do
     if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
 

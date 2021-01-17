@@ -101,20 +101,23 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec new(module(), Flexflow.nodes(), Transition.edge_map()) :: t()
-  def new(module, nodes, edges) do
+  @spec new(module(), [Node.t()], [Transition.edge_tuple()]) :: t()
+  def new(module, nodes, edge_list) do
+    vertices = nodes |> Enum.map(&{&1.module, &1.name})
+    edges = Enum.map(edge_list, &elem(&1, 0))
+
     graph =
       Graph.new()
-      |> Graph.add_vertices(Map.keys(nodes))
-      |> Graph.add_edges(Map.keys(edges))
+      |> Graph.add_vertices(vertices)
+      |> Graph.add_edges(edges)
 
     cache = Dfs.map(graph, fn v -> {v, Graph.out_neighbors(graph, v)} end)
 
-    transitions = for {k, v} <- edges, into: %{}, do: {k.label, v}
+    transitions = for {k, v} <- edge_list, into: %{}, do: {k.label, v}
 
     %__MODULE__{
       graph: graph,
-      nodes: nodes,
+      nodes: Map.new(nodes, &{{&1.module, &1.name}, &1}),
       module: module,
       __traversal__: cache,
       transitions: transitions
@@ -128,13 +131,12 @@ defmodule Flexflow.Process do
       |> Enum.reverse()
       |> Enum.map(&Node.new/1)
       |> Node.validate()
-      |> Map.new(&{{&1.module, &1.name}, &1})
 
     edges =
       env.module
       |> Module.get_attribute(:__transitions__)
       |> Enum.reverse()
-      |> Enum.into(%{}, &Transition.new(&1, nodes))
+      |> Enum.map(&Transition.new(&1, nodes))
       |> Transition.validate()
 
     process = new(env.module, nodes, edges)
