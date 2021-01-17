@@ -1,6 +1,6 @@
-defmodule Flexflow.Event do
+defmodule Flexflow.Node do
   @moduledoc """
-  Event
+  Node
   """
 
   alias Flexflow.Util
@@ -22,7 +22,7 @@ defmodule Flexflow.Event do
     end
   end
 
-  @spec define({Flexflow.event_key(), keyword()}) :: t()
+  @spec define({Flexflow.node_key(), keyword()}) :: t()
   def define({o, opts}) when is_atom(o), do: define({Util.normalize_module(o), opts})
 
   def define({{o, id}, opts}) do
@@ -34,16 +34,16 @@ defmodule Flexflow.Event do
   end
 
   @spec validate([t()]) :: [t()]
-  def validate(events) do
-    if Enum.empty?(events), do: raise(ArgumentError, "Event is empty!")
+  def validate(nodes) do
+    if Enum.empty?(nodes), do: raise(ArgumentError, "Node is empty!")
 
-    for %__MODULE__{module: module, id: id} <- events, reduce: [] do
+    for %__MODULE__{module: module, id: id} <- nodes, reduce: [] do
       ary ->
         o = {module, id}
-        if o in ary, do: raise(ArgumentError, "Event #{inspect(o)} is defined twice!")
+        if o in ary, do: raise(ArgumentError, "Node #{inspect(o)} is defined twice!")
         ary ++ [o]
     end
 
-    events
+    nodes
   end
 end

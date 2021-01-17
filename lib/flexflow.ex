@@ -8,6 +8,6 @@ defmodule Flexflow do
   @type name :: atom()
   @type id :: atom()
 
-  @type event_key :: event_key_normalize | module()
-  @type event_key_normalize :: {module(), id()}
+  @type node_key :: node_key_normalize | module()
+  @type node_key_normalize :: {module(), id()}
 end

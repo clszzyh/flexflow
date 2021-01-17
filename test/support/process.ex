@@ -1,7 +1,7 @@
 for i <- 1..10 do
-  defmodule String.to_atom("Elixir.E#{i}") do
+  defmodule String.to_atom("Elixir.N#{i}") do
     @moduledoc false
-    use Flexflow.Event
+    use Flexflow.Node
     @impl true
     def name, do: unquote(String.to_atom("e#{i}"))
   end
@@ -18,21 +18,9 @@ defmodule P1 do
   @moduledoc false
   use Flexflow.Process
 
-  defevent E1, foo: :bar
-  defevent E2
-  defevent E3
-  deftransition T1, {E1, E2}, foo: :baz
-  deftransition T2, {E2, E3}
-end
-
-defmodule P2 do
-  @moduledoc false
-  use Flexflow.Process
-
-  defevent E1
-  defevent E2
-  defevent E3
-  defevent {E2, :two}
-  deftransition T1, {E1, E2}
-  deftransition T2, {E2, E3}
+  defnode(N1, foo: :bar)
+  defnode(N2)
+  defnode(N3)
+  deftransition T1, {N1, N2}, foo: :baz
+  deftransition T2, {N2, N3}
 end

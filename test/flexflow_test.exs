@@ -2,7 +2,7 @@ defmodule FlexflowTest do
   use ExUnit.Case
   doctest Flexflow
 
-  alias Flexflow.Event, as: V
+  alias Flexflow.Node, as: N
   alias Flexflow.Transition, as: T
 
   test "version" do
@@ -18,12 +18,12 @@ defmodule FlexflowTest do
     assert graph.__struct__ == Graph
     assert P1.new().module == P1
 
-    e1 = %V{module: E1, id: nil, opts: [foo: :bar]}
-    e2 = %V{module: E2, id: nil}
-    e3 = %V{module: E3, id: nil}
+    e1 = %N{module: N1, id: nil, opts: [foo: :bar]}
+    e2 = %N{module: N2, id: nil}
+    e3 = %N{module: N3, id: nil}
 
-    t1 = %T{module: T1, opts: [foo: :baz], from: {E1, nil}, to: {E2, nil}}
-    t2 = %T{module: T2, from: {E2, nil}, to: {E3, nil}}
+    t1 = %T{module: T1, opts: [foo: :baz], from: {N1, nil}, to: {N2, nil}}
+    t2 = %T{module: T2, from: {N2, nil}, to: {N3, nil}}
 
     assert graph ==
              Graph.new()
@@ -37,33 +37,33 @@ defmodule FlexflowTest do
   test "process compile raise" do
     map = %{
       quote do
-      end => "Event is empty!",
+      end => "Node is empty!",
       quote do
-        defevent E1
+        defnode(N1)
       end => "Transition is empty!",
       quote do
-        defevent E0
-      end => "E0 should implement Elixir.Flexflow.Event",
+        defnode(N0)
+      end => "N0 should implement Elixir.Flexflow.Node",
       quote do
-        defevent E1
-        defevent E2
-        defevent E1
-        deftransition T1, {E1, E2}
-      end => "Event {E1, nil} is defined twice!",
+        defnode(N1)
+        defnode(N2)
+        defnode(N1)
+        deftransition T1, {N1, N2}
+      end => "Node {N1, nil} is defined twice!",
       quote do
-        defevent E1
-        deftransition T1, {E1, E4}
-      end => "{E4, nil} is not defined!",
+        defnode(N1)
+        deftransition T1, {N1, N4}
+      end => "{N4, nil} is not defined!",
       quote do
-        defevent E1
-        deftransition T1, {E1, E1}
-      end => "{E1, nil} cannot target to self!",
+        defnode(N1)
+        deftransition T1, {N1, N1}
+      end => "{N1, nil} cannot target to self!",
       quote do
-        defevent E1
-        defevent E2
-        deftransition T1, {E1, E2}
-        deftransition T1, {E1, E2}
-      end => "Transition {{E1, nil}, {E2, nil}} is defined twice!"
+        defnode(N1)
+        defnode(N2)
+        deftransition T1, {N1, N2}
+        deftransition T1, {N1, N2}
+      end => "Transition {{N1, nil}, {N2, nil}} is defined twice!"
     }
 
     for {ast, msg} <- map do

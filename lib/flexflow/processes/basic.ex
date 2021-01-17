@@ -2,8 +2,8 @@
 defmodule Flexflow.Processes.Basic do
   use Flexflow.Process
 
-  defevent Events.Start
-  defevent Events.End
+  defnode Nodes.Start
+  defnode Nodes.End
 
-  deftransition Transitions.Pass, {Events.Start, Events.End}
+  deftransition Transitions.Pass, {Nodes.Start, Nodes.End}
 end
