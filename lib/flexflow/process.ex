@@ -6,20 +6,19 @@ defmodule Flexflow.Process do
   alias Flexflow.Event
   alias Flexflow.Node
   alias Flexflow.Transition
-  alias Graph.Edge
 
   @type state :: :active | :suspended | :terminated | :completed
-  @type nodes :: %{Flexflow.node_key_normalize() => Node.t()}
   @type t :: %__MODULE__{
           module: module(),
           graph: Graph.t(),
           name: String.t() | nil,
-          nodes: nodes(),
+          nodes: Flexflow.nodes(),
           events: [Event.t()],
+          transitions: Flexflow.transitions(),
           state: state()
         }
 
-  @enforce_keys [:graph, :module, :nodes]
+  @enforce_keys [:graph, :module, :nodes, :transitions]
   defstruct @enforce_keys ++ [:name, state: :active, events: []]
 
   defmacro __using__(_opt) do
@@ -53,14 +52,15 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec new(module(), nodes, [Edge.t()]) :: t()
+  @spec new(module(), Flexflow.nodes(), Transition.edge_map()) :: t()
   def new(module, nodes, edges) do
     graph =
       Graph.new()
       |> Graph.add_vertices(Map.keys(nodes))
-      |> Graph.add_edges(edges)
+      |> Graph.add_edges(Map.keys(edges))
 
-    %__MODULE__{graph: graph, nodes: nodes, module: module}
+    transitions = for {k, v} <- edges, into: %{}, do: {k.label, v}
+    %__MODULE__{graph: graph, nodes: nodes, module: module, transitions: transitions}
   end
 
   defmacro __before_compile__(env) do
@@ -76,7 +76,7 @@ defmodule Flexflow.Process do
       env.module
       |> Module.get_attribute(:__transitions__)
       |> Enum.reverse()
-      |> Enum.map(&Transition.define(&1, nodes))
+      |> Enum.into(%{}, &Transition.define(&1, nodes))
       |> Transition.validate()
 
     process = new(env.module, nodes, edges)

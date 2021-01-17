@@ -5,9 +5,15 @@ defmodule Flexflow do
   @version Mix.Project.config()[:version]
   def version, do: @version
 
+  alias Flexflow.Node
+  alias Flexflow.Transition
+
   @type name :: atom()
   @type id :: atom()
 
-  @type node_key :: node_key_normalize | module()
-  @type node_key_normalize :: {module(), id()}
+  @type key :: key_normalize | module()
+  @type key_normalize :: {module(), id()}
+
+  @type nodes :: %{key_normalize() => Node.t()}
+  @type transitions :: %{key_normalize() => Transition.t()}
 end

@@ -22,7 +22,7 @@ defmodule Flexflow.Node do
     end
   end
 
-  @spec define({Flexflow.node_key(), keyword()}) :: t()
+  @spec define({Flexflow.key(), keyword()}) :: t()
   def define({o, opts}) when is_atom(o), do: define({Util.normalize_module(o), opts})
 
   def define({{o, id}, opts}) do

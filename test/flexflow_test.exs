@@ -21,18 +21,19 @@ defmodule FlexflowTest do
     e2 = %N{module: N2, id: nil}
     e3 = %N{module: N3, id: nil}
 
-    t1 = %T{module: T1, opts: [foo: :baz], from: {N1, nil}, to: {N2, nil}}
-    t2 = %T{module: T2, from: {N2, nil}, to: {N3, nil}}
+    t1 = %T{module: T1, id: nil, opts: [foo: :baz], from: {N1, nil}, to: {N2, nil}}
+    t2 = %T{module: T2, id: nil, from: {N2, nil}, to: {N3, nil}}
 
     assert P1.new().graph ==
              Graph.new()
              |> Graph.add_vertices([{N1, nil}, {N2, nil}, {N3, nil}])
              |> Graph.add_edges([
-               Graph.Edge.new({N1, nil}, {N2, nil}, label: t1),
-               Graph.Edge.new({N2, nil}, {N3, nil}, label: t2)
+               Graph.Edge.new({N1, nil}, {N2, nil}, label: {T1, nil}),
+               Graph.Edge.new({N2, nil}, {N3, nil}, label: {T2, nil})
              ])
 
     assert P1.new().nodes == %{{N1, nil} => e1, {N2, nil} => e2, {N3, nil} => e3}
+    assert P1.new().transitions == %{{T1, nil} => t1, {T2, nil} => t2}
 
     assert Enum.count(P1.new().graph.vertices) == 3
   end
@@ -71,9 +72,17 @@ defmodule FlexflowTest do
         defnode(N1)
         defnode(N2)
         deftransition T1, {N1, N2}
-        deftransition T1, {N1, N2}
+        deftransition T2, {N1, N2}
       end,
-      "Transition {{N1, nil}, {N2, nil}} is defined twice!"
+      "Transition {{N1, nil}, {N2, nil}} is defined twice!",
+      quote do
+        defnode(N1)
+        defnode(N2)
+        defnode(N3)
+        deftransition T1, {N1, N2}
+        deftransition T1, {N2, N3}
+      end,
+      "Transition {T1, nil} is defined twice!"
     ]
 
     for {ast, msg} <- Enum.chunk_every(data, 2) do
