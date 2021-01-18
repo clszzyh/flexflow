@@ -4,7 +4,7 @@ defmodule Flexflow.Process do
   """
 
   alias Flexflow.Context
-  alias Flexflow.Event
+  alias Flexflow.History
   alias Flexflow.Node
   alias Flexflow.Telemetry
   alias Flexflow.Transition
@@ -27,7 +27,7 @@ defmodule Flexflow.Process do
           id: Flexflow.id() | nil,
           opts: keyword(),
           nodes: Flexflow.nodes(),
-          events: [Event.t()],
+          histories: [History.t()],
           context: Context.t(),
           transitions: Flexflow.transitions(),
           state: state(),
@@ -45,7 +45,7 @@ defmodule Flexflow.Process do
                 state: :created,
                 args: %{},
                 opts: [],
-                events: [],
+                histories: [],
                 context: Context.new()
               ]
 
@@ -77,7 +77,6 @@ defmodule Flexflow.Process do
       Module.register_attribute(__MODULE__, :__transitions__, accumulate: true)
 
       @before_compile unquote(__MODULE__)
-      # @after_compile unquote(__MODULE__)
 
       @impl true
       def init(o), do: {:ok, o}
@@ -107,12 +106,8 @@ defmodule Flexflow.Process do
     vertices = nodes |> Enum.map(&{&1.module, &1.name})
     edges = Enum.map(edge_list, &elem(&1, 0))
 
-    graph =
-      Graph.new()
-      |> Graph.add_vertices(vertices)
-      |> Graph.add_edges(edges)
-
-    cache = Dfs.map(graph, fn v -> {v, Graph.out_neighbors(graph, v)} end)
+    graph = Graph.new() |> Graph.add_vertices(vertices) |> Graph.add_edges(edges)
+    path = Dfs.map(graph, fn v -> {v, Graph.out_neighbors(graph, v)} end)
 
     transitions = for {k, v} <- edge_list, into: %{}, do: {k.label, v}
 
@@ -120,7 +115,7 @@ defmodule Flexflow.Process do
       graph: graph,
       nodes: Map.new(nodes, &{{&1.module, &1.name}, &1}),
       module: module,
-      __traversal__: cache,
+      __traversal__: path,
       transitions: transitions
     }
   end
@@ -179,7 +174,7 @@ defmodule Flexflow.Process do
         {state, result} = do_init(p)
         {{state, result}, %{state: state}}
       end,
-      %{name: p.name}
+      %{id: p.id}
     )
   end
 
@@ -212,7 +207,7 @@ defmodule Flexflow.Process do
         {state, result} = do_next(p)
         {{state, result}, %{state: state}}
       end,
-      %{name: p.name}
+      %{id: p.id}
     )
   end
 
@@ -229,8 +224,4 @@ defmodule Flexflow.Process do
 
   @impl true
   def pop(struct, key), do: Map.pop(struct, key)
-
-  # def __after_compile__(env, _bytecode) do
-  #   Flexflow.ModuleRegistry.register(env.module)
-  # end
 end

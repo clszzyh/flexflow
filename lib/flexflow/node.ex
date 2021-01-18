@@ -20,7 +20,7 @@ defmodule Flexflow.Node do
           state: state(),
           name: Flexflow.name(),
           context: Context.t(),
-          opts: keyword()
+          opts: Flexflow.node_opts()
         }
 
   @enforce_keys [:name, :module]
@@ -43,7 +43,7 @@ defmodule Flexflow.Node do
     end
   end
 
-  @spec new({Flexflow.key(), keyword()}) :: t()
+  @spec new({Flexflow.key(), Flexflow.node_opts()}) :: t()
   def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 
   def new({{o, name}, opts}) do

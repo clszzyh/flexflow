@@ -20,7 +20,7 @@ defmodule Flexflow.Transition do
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
-          opts: keyword(),
+          opts: Flexflow.node_opts(),
           state: state(),
           context: Context.t(),
           from: Flexflow.key_normalize(),
@@ -53,7 +53,7 @@ defmodule Flexflow.Transition do
     end
   end
 
-  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, keyword()}, [Node.t()]) ::
+  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, Flexflow.node_opts()}, [Node.t()]) ::
           edge_tuple
   def new({o, {from, to}, opts}, nodes) when is_atom(o),
     do: new({Util.normalize_module(o), {from, to}, opts}, nodes)
