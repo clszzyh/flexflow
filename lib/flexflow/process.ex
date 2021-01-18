@@ -77,6 +77,7 @@ defmodule Flexflow.Process do
       Module.register_attribute(__MODULE__, :__transitions__, accumulate: true)
 
       @before_compile unquote(__MODULE__)
+      # @after_compile unquote(__MODULE__)
 
       @impl true
       def init(o), do: {:ok, o}
@@ -228,4 +229,8 @@ defmodule Flexflow.Process do
 
   @impl true
   def pop(struct, key), do: Map.pop(struct, key)
+
+  # def __after_compile__(env, _bytecode) do
+  #   Flexflow.ModuleRegistry.register(env.module)
+  # end
 end

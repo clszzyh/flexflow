@@ -40,22 +40,22 @@ defmodule Flexflow.ModuleRegistry do
     {:reply, get_in(state, [module, name]), state}
   end
 
-  @impl true
-  def handle_cast({:register, module}, state) do
+  def register(module, state) do
     kind = Util.local_behaviour(module)
     name = module.name()
 
+    if kind == Flexflow.Process do
+      :ok = Flexflow.ProcessParentManager.register(module)
+    end
+
     case Map.get(state, kind) do
       nil ->
-        {:stop, "Undefined kind #{module.kind()}", state}
+        {:halt, "Undefined kind #{module.kind()}"}
 
       %{} = map ->
         case Map.get(map, name) do
-          nil ->
-            {:noreply, %{state | kind => Map.merge(map, %{module => module, name => module})}}
-
-          exists ->
-            {:stop, "Already exists #{name}, #{exists}", state}
+          nil -> {:cont, %{state | kind => Map.merge(map, %{module => module, name => module})}}
+          exists -> {:halt, "Already exists #{name}, #{exists}"}
         end
     end
   end
@@ -64,9 +64,12 @@ defmodule Flexflow.ModuleRegistry do
   def handle_continue(:register_all, state) do
     [_ | _] = modules = Util.implement_modules()
 
-    :ok = Enum.each(modules, &register/1)
-
-    {:noreply, state}
+    modules
+    |> Enum.reduce_while(state, &register/2)
+    |> case do
+      {:error, reason} -> {:stop, reason, state}
+      state -> {:noreply, state}
+    end
   end
 
   @impl true

@@ -7,9 +7,9 @@ defmodule Flexflow.Application do
 
   def start(_type, _args) do
     children = [
-      Flexflow.ModuleRegistry,
       Flexflow.ProcessRegistry,
-      Flexflow.ProcessDynamicSupervisor
+      Flexflow.ProcessParentManager,
+      Flexflow.ModuleRegistry
     ]
 
     if Config.get(:telemetry_logger) do
