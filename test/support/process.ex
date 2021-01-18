@@ -11,6 +11,9 @@ for i <- 1..10 do
     use Flexflow.Transition
     @impl true
     def name, do: unquote(String.to_atom("t#{i}"))
+
+    @impl true
+    def handle_enter(_, _, _), do: :pass
   end
 end
 

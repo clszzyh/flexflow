@@ -58,6 +58,7 @@ defmodule Flexflow.Process do
 
   @doc "Module name"
   @callback name :: Flexflow.name()
+
   @doc "Invoked when process is started, after nodes and transitions `init`, see `#{__MODULE__}.init/1`"
   @callback init(t() | {:error, term()}) :: result()
 

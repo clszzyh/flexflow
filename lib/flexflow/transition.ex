@@ -4,6 +4,7 @@ defmodule Flexflow.Transition do
   """
 
   alias Flexflow.Context
+  alias Flexflow.Node
   alias Flexflow.Process
   alias Flexflow.Util
   alias Graph.Edge
@@ -35,8 +36,12 @@ defmodule Flexflow.Transition do
 
   @doc "Module name"
   @callback name :: Flexflow.name()
+
   @doc "Invoked when process is started"
   @callback init(t(), Process.t()) :: {:ok, t()}
+
+  @doc "Invoked when process is enter this transition"
+  @callback handle_enter(t(), Node.t(), Process.t()) :: :pass | :stop
 
   defmacro __using__(_) do
     quote do
@@ -71,6 +76,15 @@ defmodule Flexflow.Transition do
 
     transition = %__MODULE__{module: o, name: name, opts: opts, from: from, to: to}
     {Edge.new(from, to, label: {o, name}), transition}
+  end
+
+  @spec enter(t(), Node.t(), Process.t()) :: {:ok, Process.t()} | {:error, atom()}
+  def enter(%__MODULE__{module: module} = transition, node, process) do
+    case module.handle_enter(transition, node, process) do
+      :pass -> {:ok, process}
+      :stop -> {:error, :stop}
+      other -> raise ArgumentError, "Unmatched return value #{inspect(other)}"
+    end
   end
 
   @spec validate([edge_tuple()]) :: [edge_tuple()]

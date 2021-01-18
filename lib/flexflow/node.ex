@@ -29,6 +29,7 @@ defmodule Flexflow.Node do
 
   @doc "Module name"
   @callback name :: Flexflow.name()
+
   @doc "Invoked when process is started"
   @callback init(t(), Process.t()) :: {:ok, t()}
 

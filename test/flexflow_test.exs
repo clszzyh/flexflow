@@ -1,6 +1,7 @@
 defmodule FlexflowTest do
   use ExUnit.Case
   doctest Flexflow
+  doctest Flexflow.ProcessRegistry
 
   @moduletag capture_log: true
 

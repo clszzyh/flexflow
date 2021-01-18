@@ -1,4 +1,4 @@
-defmodule Flexflow.Registry do
+defmodule Flexflow.ModuleRegistry do
   @moduledoc false
 
   use GenServer, restart: :temporary
@@ -11,6 +11,10 @@ defmodule Flexflow.Registry do
     Flexflow.Process => %{}
   }
 
+  def start_link(args) do
+    GenServer.start_link(__MODULE__, args, name: __MODULE__)
+  end
+
   def register(module) do
     GenServer.cast(__MODULE__, {:register, module})
   end
@@ -20,10 +24,6 @@ defmodule Flexflow.Registry do
   end
 
   def state, do: GenServer.call(__MODULE__, :state)
-
-  def start_link(args) do
-    GenServer.start_link(__MODULE__, args, name: __MODULE__)
-  end
 
   @impl true
   def init(_) do

@@ -6,7 +6,7 @@ defmodule Flexflow.Application do
   alias Flexflow.Config
 
   def start(_type, _args) do
-    children = [Flexflow.Registry]
+    children = [Flexflow.ModuleRegistry, Flexflow.ProcessRegistry]
 
     if Config.get(:telemetry_logger) do
       :ok = Flexflow.Telemetry.attach_default_logger(Config.get(:telemetry_logger_level))
