@@ -23,7 +23,7 @@ defmodule Flexflow.Telemetry do
     :telemetry.attach_many(@handler_id, @events, &handle_event/4, level)
   end
 
-  @spec span(name :: atom(), fun :: (() -> {term(), map()}), meta :: map()) :: term()
+  @spec span(atom(), fun :: (() -> {term(), map()}), meta :: map()) :: term()
   def span(name, fun, meta \\ %{}) when is_atom(name) and is_function(fun, 0) do
     :telemetry.span([@prefix, name], meta, fun)
   end

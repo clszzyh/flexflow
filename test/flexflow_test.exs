@@ -80,7 +80,7 @@ defmodule FlexflowTest do
 
     assert Enum.count(P1.new().graph.vertices) == 6
 
-    assert Map.new(P1.new().__traversal__) == %{
+    assert Map.new(P1.new().__path__) == %{
              n1_s => [n2_s],
              n2_s => [n5_s, n3_s, n4_s, n6_s],
              n3_s => [],

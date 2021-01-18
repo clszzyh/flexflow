@@ -19,6 +19,7 @@ defmodule Flexflow.Process do
   #{inspect(@states)}
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
+  @typep path :: term()
   @type t :: %__MODULE__{
           module: module(),
           graph: Graph.t(),
@@ -31,13 +32,13 @@ defmodule Flexflow.Process do
           context: Context.t(),
           transitions: Flexflow.transitions(),
           state: state(),
-          __traversal__: term()
+          __path__: path()
         }
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
 
-  @enforce_keys [:graph, :module, :nodes, :transitions, :__traversal__]
+  @enforce_keys [:graph, :module, :nodes, :transitions, :__path__]
   defstruct @enforce_keys ++
               [
                 :name,
@@ -51,8 +52,25 @@ defmodule Flexflow.Process do
 
   @spec start(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def start(module, id, args \\ %{}) do
-    process = module.new(id, args)
-    process |> init()
+    p = module.new(id, args)
+
+    {:ok, p}
+    |> telemetry_invoke(:process_init, &init/1)
+    |> telemetry_invoke(:process_next, &next/1)
+  end
+
+  @spec telemetry_invoke(result(), atom(), (t() -> result())) :: result()
+  def telemetry_invoke({:error, reason}, _, _), do: {:error, reason}
+
+  def telemetry_invoke({:ok, p}, name, f) do
+    Telemetry.span(
+      name,
+      fn ->
+        {state, result} = f.(p)
+        {{state, result}, %{state: state}}
+      end,
+      %{id: p.id}
+    )
   end
 
   @doc "Module name"
@@ -115,7 +133,7 @@ defmodule Flexflow.Process do
       graph: graph,
       nodes: Map.new(nodes, &{{&1.module, &1.name}, &1}),
       module: module,
-      __traversal__: path,
+      __path__: path,
       transitions: transitions
     }
   end
@@ -167,18 +185,7 @@ defmodule Flexflow.Process do
   end
 
   @spec init(t()) :: result()
-  def init(p) do
-    Telemetry.span(
-      :process_init,
-      fn ->
-        {state, result} = do_init(p)
-        {{state, result}, %{state: state}}
-      end,
-      %{id: p.id}
-    )
-  end
-
-  defp do_init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
+  def init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
     (Map.to_list(nodes) ++ Map.to_list(transitions))
     |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
       case module.init(o, p) do
@@ -201,17 +208,6 @@ defmodule Flexflow.Process do
 
   @spec next(t()) :: result()
   def next(p) do
-    Telemetry.span(
-      :process_next,
-      fn ->
-        {state, result} = do_next(p)
-        {{state, result}, %{state: state}}
-      end,
-      %{id: p.id}
-    )
-  end
-
-  defp do_next(%__MODULE__{__traversal__: _} = p) do
     {:ok, p}
   end
 
