@@ -9,7 +9,7 @@ defmodule Flexflow do
   alias Flexflow.Transition
 
   @type name :: atom() | String.t()
-  @type id :: integer() | nil
+  @type id :: binary() | nil
 
   @type key :: key_normalize | module()
   @type key_normalize :: {module(), name()}

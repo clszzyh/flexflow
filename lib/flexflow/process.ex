@@ -8,7 +8,6 @@ defmodule Flexflow.Process do
   alias Flexflow.Node
   alias Flexflow.Telemetry
   alias Flexflow.Transition
-  alias Flexflow.Util
 
   alias Graph.Reducers.Dfs
 
@@ -50,9 +49,9 @@ defmodule Flexflow.Process do
                 context: Context.new()
               ]
 
-  @spec start(module(), map()) :: result()
-  def start(module, args \\ %{}) do
-    process = module.new(args)
+  @spec start(module(), Flexflow.id(), map()) :: result()
+  def start(module, id, args \\ %{}) do
+    process = module.new(id, args)
     process |> init()
   end
 
@@ -156,11 +155,12 @@ defmodule Flexflow.Process do
       @__module__ module
       @__process__ %{process | opts: @__opts__}
 
-      @spec new(map()) :: Process.t()
-      def new(args \\ %{}), do: struct!(@__process__, name: name(), args: args)
+      @spec new(Flexflow.id(), map()) :: Process.t()
+      def new(id \\ Flexflow.Util.make_id(), args \\ %{}),
+        do: struct!(@__process__, name: name(), id: id, args: args)
 
-      @spec start(map()) :: Process.result()
-      def start(args \\ %{}), do: @__module__.start(__MODULE__, args)
+      @spec start(Flexflow.id(), map()) :: Process.result()
+      def start(id, args \\ %{}), do: @__module__.start(__MODULE__, id, args)
 
       Module.delete_attribute(__MODULE__, :__nodes__)
       Module.delete_attribute(__MODULE__, :__opts__)
@@ -187,11 +187,10 @@ defmodule Flexflow.Process do
     |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
       case module.init(o, p) do
         {:ok, %Node{} = node} ->
-          {:cont, put_in(p, [:nodes, key], %{node | state: :initial, id: Util.make_id()})}
+          {:cont, put_in(p, [:nodes, key], %{node | state: :initial})}
 
         {:ok, %Transition{} = transition} ->
-          {:cont,
-           put_in(p, [:transitions, key], %{transition | state: :initial, id: Util.make_id()})}
+          {:cont, put_in(p, [:transitions, key], %{transition | state: :initial})}
 
         {:error, reason} ->
           {:halt, {key, reason}}
@@ -200,7 +199,7 @@ defmodule Flexflow.Process do
     |> module.init()
     |> case do
       {:error, reason} -> {:error, reason}
-      {:ok, %__MODULE__{} = p} -> {:ok, %{p | state: :initial, id: Util.make_id()}}
+      {:ok, %__MODULE__{} = p} -> {:ok, %{p | state: :initial}}
     end
   end
 

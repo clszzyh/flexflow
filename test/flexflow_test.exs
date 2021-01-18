@@ -14,7 +14,8 @@ defmodule FlexflowTest do
 
   test "p1" do
     assert P1.module_info()
-    assert P1.new(%{foo: :bar}).args == %{foo: :bar}
+    assert P1.new("p1", %{foo: :bar}).args == %{foo: :bar}
+    assert P1.new("p1", %{foo: :bar}).id == "p1"
     assert P1.new().name == :p1
     assert P1.new().opts == [hello: %{foo: :zzzz}]
     assert P1.new().graph.__struct__ == Graph
@@ -91,11 +92,10 @@ defmodule FlexflowTest do
   end
 
   test "init" do
-    {:ok, p} = Flexflow.Process.start(P1)
+    {:ok, p} = Flexflow.Process.start(P1, "p1")
     assert p.state == :initial
-    assert p.id
+    assert p.id == "p1"
     assert p.nodes[{N1, :n1}].state == :initial
-    assert p.nodes[{N1, :n1}].id
     assert p.transitions[{T1, :t1}].state == :initial
     assert p.transitions[{T1, :t1}]
   end

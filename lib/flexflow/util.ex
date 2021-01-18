@@ -7,7 +7,7 @@ defmodule Flexflow.Util do
 
   @spec make_id :: Flexflow.id()
   def make_id do
-    System.unique_integer([:positive])
+    to_string(System.unique_integer([:positive]))
   end
 
   def local_modules do
