@@ -8,8 +8,11 @@ defmodule Flexflow do
   alias Flexflow.Node
   alias Flexflow.Transition
 
+  @type process_identity :: {module(), id()}
+  @type process_args :: map()
+
   @type name :: atom() | String.t()
-  @type id :: binary() | nil
+  @type id :: binary()
 
   @type key :: key_normalize | module()
   @type key_normalize :: {module(), name()}

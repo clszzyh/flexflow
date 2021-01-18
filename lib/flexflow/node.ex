@@ -47,7 +47,7 @@ defmodule Flexflow.Node do
   def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 
   def new({{o, name}, opts}) do
-    unless Util.main_behaviour(o) == __MODULE__ do
+    unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
 

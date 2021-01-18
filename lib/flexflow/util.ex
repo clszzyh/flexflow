@@ -1,6 +1,8 @@
 defmodule Flexflow.Util do
   @moduledoc false
 
+  @local_behaviours [Flexflow.Process, Flexflow.Transition, Flexflow.Node]
+
   @spec normalize_module(Flexflow.key()) :: Flexflow.key_normalize()
   def normalize_module({o, id}) when is_atom(o), do: {o, id}
   def normalize_module(o) when is_atom(o), do: {o, o.name()}
@@ -40,21 +42,16 @@ defmodule Flexflow.Util do
     :ets.match(:ac_tab, {{:loaded, :"$1"}, :_})
   end
 
-  def local_behaviour?(module) do
+  def implement_modules(behaviours \\ @local_behaviours) do
+    for module <- modules(), local_behaviour?(module, behaviours), do: module
+  end
+
+  def local_behaviour?(module, behaviours \\ @local_behaviours) do
     module
     |> Code.ensure_compiled()
     |> case do
-      {:module, _} ->
-        module
-        |> main_behaviour
-        |> to_string
-        |> case do
-          "Elixir.Flexflow." <> _ -> true
-          _ -> false
-        end
-
-      _ ->
-        false
+      {:module, _} -> local_behaviour(module) in behaviours
+      _ -> false
     end
   end
 
@@ -67,7 +64,7 @@ defmodule Flexflow.Util do
     end
   end
 
-  def main_behaviour(module) do
+  def local_behaviour(module) do
     module
     |> defined?()
     |> case do
@@ -79,7 +76,7 @@ defmodule Flexflow.Util do
         |> List.wrap()
         |> Keyword.get(:behaviour)
         |> List.wrap()
-        |> List.first()
+        |> Enum.find(&(&1 in @local_behaviours))
     end
   end
 end

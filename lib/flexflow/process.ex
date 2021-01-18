@@ -23,8 +23,8 @@ defmodule Flexflow.Process do
           module: module(),
           graph: Graph.t(),
           name: Flexflow.name(),
-          args: map(),
-          id: Flexflow.id(),
+          args: Flexflow.process_args(),
+          id: Flexflow.id() | nil,
           opts: keyword(),
           nodes: Flexflow.nodes(),
           events: [Event.t()],
@@ -49,7 +49,7 @@ defmodule Flexflow.Process do
                 context: Context.new()
               ]
 
-  @spec start(module(), Flexflow.id(), map()) :: result()
+  @spec start(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def start(module, id, args \\ %{}) do
     process = module.new(id, args)
     process |> init()
@@ -155,11 +155,11 @@ defmodule Flexflow.Process do
       @__module__ module
       @__process__ %{process | opts: @__opts__}
 
-      @spec new(Flexflow.id(), map()) :: Process.t()
+      @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}),
         do: struct!(@__process__, name: name(), id: id, args: args)
 
-      @spec start(Flexflow.id(), map()) :: Process.result()
+      @spec start(Flexflow.id(), Flexflow.process_args()) :: Process.result()
       def start(id, args \\ %{}), do: @__module__.start(__MODULE__, id, args)
 
       Module.delete_attribute(__MODULE__, :__nodes__)

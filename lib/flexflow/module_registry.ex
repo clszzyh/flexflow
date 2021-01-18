@@ -42,7 +42,7 @@ defmodule Flexflow.ModuleRegistry do
 
   @impl true
   def handle_cast({:register, module}, state) do
-    kind = Util.main_behaviour(module)
+    kind = Util.local_behaviour(module)
     name = module.name()
 
     case Map.get(state, kind) do
@@ -62,7 +62,7 @@ defmodule Flexflow.ModuleRegistry do
 
   @impl true
   def handle_continue(:register_all, state) do
-    [_ | _] = modules = for module <- Util.modules(), Util.local_behaviour?(module), do: module
+    [_ | _] = modules = Util.implement_modules()
 
     :ok = Enum.each(modules, &register/1)
 

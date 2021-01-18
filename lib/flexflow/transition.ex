@@ -59,7 +59,7 @@ defmodule Flexflow.Transition do
     do: new({Util.normalize_module(o), {from, to}, opts}, nodes)
 
   def new({{o, name}, {from, to}, opts}, nodes) do
-    unless Util.main_behaviour(o) == __MODULE__ do
+    unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
 
