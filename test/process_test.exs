@@ -3,6 +3,7 @@ defmodule ProcessTest do
 
   doctest Flexflow.ProcessRegistry
 
+  @moduletag capture_log: true
   @moduletag :process
 
   setup_all do
@@ -27,5 +28,11 @@ defmodule ProcessTest do
     assert is_pid(pid)
     pids = for %{pid: pid} <- Flexflow.ProcessParentManager.children(), do: pid
     assert pid in pids
+  end
+
+  test "start process" do
+    {:ok, pid} = Flexflow.ProcessManager.server({P1, "p1"})
+    process = Flexflow.ProcessServer.state(pid)
+    assert process.id == "p1"
   end
 end

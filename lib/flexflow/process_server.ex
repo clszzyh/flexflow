@@ -12,9 +12,20 @@ defmodule Flexflow.ProcessServer do
     GenServer.start_link(__MODULE__, {module, id, opts}, name: via_tuple({module, id}))
   end
 
+  def state(srv), do: GenServer.call(srv, :state)
+
   @impl true
   def init({module, id, opts}) do
-    p = Process.start(module, id, opts)
-    {:ok, p}
+    module
+    |> Process.start(id, opts)
+    |> case do
+      {:ok, p} -> {:ok, p}
+      {:error, reason} -> {:stop, reason}
+    end
+  end
+
+  @impl true
+  def handle_call(:state, _from, state) do
+    {:reply, state, state}
   end
 end

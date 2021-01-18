@@ -13,17 +13,17 @@ defmodule Flexflow.ProcessManager do
     DynamicSupervisor.init(strategy: :one_for_one, extra_arguments: [module])
   end
 
-  @spec server(Flexflow.id(), Flexflow.process_args()) :: {:ok | :exist, pid}
-  def server(id, opts \\ %{}) do
-    case start_child(id, opts) do
+  @spec server(Flexflow.process_identity(), Flexflow.process_args()) :: {:ok | :exist, pid}
+  def server({module, id}, opts \\ %{}) do
+    case start_child({module, id}, opts) do
       {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, pid}} -> {:exist, pid}
     end
   end
 
-  @spec start_child(Flexflow.id(), Flexflow.process_args()) ::
+  @spec start_child(Flexflow.process_identity(), Flexflow.process_args()) ::
           {:ok, pid} | {:error, {:already_started, pid}}
-  defp start_child(id, opts) do
-    DynamicSupervisor.start_child(__MODULE__, {Flexflow.ProcessServer, {id, opts}})
+  defp start_child({module, id}, opts) do
+    DynamicSupervisor.start_child(pid(module), {Flexflow.ProcessServer, {id, opts}})
   end
 end

@@ -35,7 +35,7 @@ defmodule Flexflow.Process do
         }
 
   @typedoc "Init result"
-  @opaque result :: {:ok, t()} | {:error, term()}
+  @type result :: {:ok, t()} | {:error, term()}
 
   @enforce_keys [:graph, :module, :nodes, :transitions, :__traversal__]
   defstruct @enforce_keys ++
