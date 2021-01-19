@@ -15,25 +15,25 @@ defmodule Verify do
   @moduledoc false
 
   defmodule Uncertified do
-    use Flexflow.Node, version: 1
+    use Flexflow.Node
     @impl true
     def name, do: :uncertified
   end
 
   defmodule Certified do
-    use Flexflow.Node, version: 1
+    use Flexflow.Node
     @impl true
     def name, do: :certified
   end
 
   defmodule Rejected do
-    use Flexflow.Node, version: 1
+    use Flexflow.Node
     @impl true
     def name, do: :rejected
   end
 
   defmodule Canceled do
-    use Flexflow.Node, version: 1
+    use Flexflow.Node
     @impl true
     def name, do: :canceled
   end
@@ -42,6 +42,30 @@ defmodule Verify do
     use Flexflow.Transition
     @impl true
     def name, do: :cert
+    @impl true
+    def handle_enter(_, _, _), do: :pass
+  end
+
+  defmodule Modify do
+    use Flexflow.Transition
+    @impl true
+    def name, do: :modify
+    @impl true
+    def handle_enter(_, _, _), do: :pass
+  end
+
+  defmodule Reject do
+    use Flexflow.Transition
+    @impl true
+    def name, do: :reject
+    @impl true
+    def handle_enter(_, _, _), do: :pass
+  end
+
+  defmodule Cancel do
+    use Flexflow.Transition
+    @impl true
+    def name, do: :cancel
     @impl true
     def handle_enter(_, _, _), do: :pass
   end
@@ -57,6 +81,9 @@ defmodule Verify do
   defnode Canceled
 
   deftransition Cert, {Uncertified, Certified}
+  deftransition Modify, {Uncertified, Uncertified}
+  deftransition Reject, {Uncertified, Rejected}
+  deftransition Cancel, {Uncertified, Canceled}
 end
 ```
 

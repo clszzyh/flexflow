@@ -126,11 +126,6 @@ defmodule FlexflowTest do
       "{N4, nil} is not defined!",
       quote do
         defnode(N1)
-        deftransition T1, {N1, N1}
-      end,
-      "{N1, nil} cannot target to self!",
-      quote do
-        defnode(N1)
         defnode(N2)
         deftransition T1, {N1, N2}
         deftransition T2, {N1, N2}

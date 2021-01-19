@@ -6,6 +6,7 @@ defmodule Flexflow.Processes.Basic do
   defnode Nodes.End
 
   deftransition Transitions.Pass, {Nodes.Start, Nodes.End}
+  deftransition {Transitions.Pass, 2}, {Nodes.Start, Nodes.Start}
 
   @impl true
   def name, do: :basic

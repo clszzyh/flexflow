@@ -72,8 +72,6 @@ defmodule Flexflow.Transition do
     from = Util.normalize_module(from)
     to = Util.normalize_module(to)
 
-    if from == to, do: raise(ArgumentError, "#{inspect(from)} cannot target to self!")
-
     nodes = Map.new(nodes, &{{&1.module, &1.name}, &1})
 
     _new_from = nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined!")
