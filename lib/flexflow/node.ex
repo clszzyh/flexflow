@@ -36,6 +36,12 @@ defmodule Flexflow.Node do
     quote do
       @behaviour unquote(__MODULE__)
 
+      unless Module.get_attribute(__MODULE__, :moduledoc) do
+        @moduledoc """
+        See `#{unquote(__MODULE__)}`
+        """
+      end
+
       @impl true
       def init(o, _), do: {:ok, o}
 

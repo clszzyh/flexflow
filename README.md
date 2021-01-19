@@ -11,16 +11,52 @@
 ## Usage
 
 ```elixir
-defmodule Flexflow.Processes.Basic do
-  use Flexflow.Process
+defmodule Verify do
+  @moduledoc false
 
-  defnode Nodes.Start
-  defnode Nodes.End
+  defmodule Uncertified do
+    use Flexflow.Node, version: 1
+    @impl true
+    def name, do: :uncertified
+  end
 
-  deftransition Transitions.Pass, {Nodes.Start, Nodes.End}
+  defmodule Certified do
+    use Flexflow.Node, version: 1
+    @impl true
+    def name, do: :certified
+  end
+
+  defmodule Rejected do
+    use Flexflow.Node, version: 1
+    @impl true
+    def name, do: :rejected
+  end
+
+  defmodule Canceled do
+    use Flexflow.Node, version: 1
+    @impl true
+    def name, do: :canceled
+  end
+
+  defmodule Cert do
+    use Flexflow.Transition
+    @impl true
+    def name, do: :cert
+    @impl true
+    def handle_enter(_, _, _), do: :pass
+  end
+
+  use Flexflow.Process, version: 1
 
   @impl true
-  def name, do: :basic
+  def name, do: :verify
+
+  defnode Uncertified
+  defnode Certified
+  defnode Rejected
+  defnode Canceled
+
+  deftransition Cert, {Uncertified, Certified}
 end
 ```
 

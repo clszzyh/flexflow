@@ -67,6 +67,7 @@ defmodule Flexflow.MixProject do
     [
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:earmark_parser, "~> 1.4", runtime: false},
       {:ex_doc, "~> 0.22", runtime: false},
       {:libgraph, "~> 0.13"},
       {:telemetry, "~> 0.4.0"}

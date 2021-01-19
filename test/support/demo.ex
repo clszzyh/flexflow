@@ -24,12 +24,12 @@ defmodule P1 do
   @impl true
   def name, do: :p1
 
-  defnode(N1, foo: %{aaa: :bbb})
-  defnode(N2)
-  defnode(N3)
-  defnode(N4)
-  defnode(N5)
-  defnode(N6)
+  defnode N1, foo: %{aaa: :bbb}
+  defnode N2
+  defnode N3
+  defnode N4
+  defnode N5
+  defnode N6
   deftransition T1, {N1, N2}, foo: :baz
   deftransition T2, {N2, N3}
   deftransition {T2, 1}, {N2, N4}
