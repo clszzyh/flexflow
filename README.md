@@ -80,6 +80,7 @@ end
 ```
 custom_mark10
 digraph G {
+  size = "8,8"
   canceled [label=canceled];
   certified [label=certified];
   rejected [label=rejected];
@@ -88,7 +89,7 @@ digraph G {
   uncertified -> canceled [label=cancel];
   uncertified -> certified [label=cert];
   rejected -> uncertified [label=modify];
-  uncertified -> uncertified [label=modify];
+  uncertified -> uncertified [label=modify,style=dotted];
   uncertified -> rejected [label=reject];
 }
 custom_mark10
