@@ -3,6 +3,7 @@ defmodule Flexflow.Process do
   Process
   """
 
+  alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.History
   alias Flexflow.Node
@@ -32,7 +33,9 @@ defmodule Flexflow.Process do
           context: Context.t(),
           transitions: Flexflow.transitions(),
           state: state(),
-          __path__: path()
+          __path__: path(),
+          __loop_counter__: integer(),
+          __counter__: integer()
         }
 
   @typedoc "Init result"
@@ -44,6 +47,8 @@ defmodule Flexflow.Process do
                 :name,
                 :id,
                 state: :created,
+                __counter__: 0,
+                __loop_counter__: 0,
                 args: %{},
                 opts: [],
                 histories: [],
@@ -56,7 +61,7 @@ defmodule Flexflow.Process do
 
     {:ok, p}
     |> telemetry_invoke(:process_init, &init/1)
-    |> telemetry_invoke(:process_next, &next/1)
+    |> telemetry_invoke(:process_loop, &loop/1)
   end
 
   @spec telemetry_invoke(result(), atom(), (t() -> result())) :: result()
@@ -206,9 +211,22 @@ defmodule Flexflow.Process do
     end
   end
 
+  @max_loop_limit Config.get(:max_loop_limit)
+
+  @spec loop(t()) :: result()
+  def loop(p) do
+    case next(%{p | __loop_counter__: 0}) do
+      {:error, reason} -> {:error, reason}
+      {:ok, p} -> next(p)
+    end
+  end
+
   @spec next(t()) :: result()
-  def next(p) do
-    {:ok, p}
+  def next(%{__loop_counter__: loop_counter}) when loop_counter > @max_loop_limit,
+    do: {:error, :exceed_loop_limit}
+
+  def next(%{__loop_counter__: loop_counter, __counter__: counter} = p) do
+    {:ok, %{p | __loop_counter__: loop_counter + 1, __counter__: counter + 1}}
   end
 
   @behaviour Access

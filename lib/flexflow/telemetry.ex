@@ -8,7 +8,7 @@ defmodule Flexflow.Telemetry do
   @prefix :flexflow
   @handler_id "#{@prefix}-telemetry-logger"
 
-  @event_types [:process_init, :process_next]
+  @event_types [:process_init, :process_loop]
 
   @events Enum.flat_map(@event_types, fn x ->
             [
@@ -24,7 +24,7 @@ defmodule Flexflow.Telemetry do
   end
 
   @spec span(atom(), fun :: (() -> {term(), map()}), meta :: map()) :: term()
-  def span(name, fun, meta \\ %{}) when is_atom(name) and is_function(fun, 0) do
+  def span(name, fun, meta \\ %{}) when name in @event_types and is_function(fun, 0) do
     :telemetry.span([@prefix, name], meta, fun)
   end
 

@@ -1,5 +1,6 @@
 defmodule Flexflow.Config do
   @default_map %{
+    max_loop_limit: 1000,
     telemetry_logger: true,
     telemetry_logger_level: :debug
   }
