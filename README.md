@@ -79,7 +79,7 @@ end
 
 ```
 custom_mark10
-digraph G {
+digraph verify {
   size = "8,8"
   canceled [label=canceled];
   certified [label=certified];

@@ -1,5 +1,8 @@
 defmodule Flexflow.Dot do
-  @moduledoc false
+  @moduledoc """
+  https://en.wikipedia.org/wiki/DOT_(graph_description_language)
+  https://github.com/TLmaK0/gravizo
+  """
   def serialize(p) do
     label =
       case Flexflow.DotProtocol.labels(p) do
@@ -24,7 +27,7 @@ defprotocol Flexflow.DotProtocol do
 end
 
 defimpl Flexflow.DotProtocol, for: Flexflow.Process do
-  def prefix(_), do: "digraph G {\n  size = \"8,8\"\n"
+  def prefix(%{name: name}), do: "digraph #{name} {\n  size = \"8,8\"\n"
   def suffix(_), do: "}"
   def labels(_), do: []
 
