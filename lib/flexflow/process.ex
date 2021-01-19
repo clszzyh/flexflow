@@ -20,7 +20,9 @@ defmodule Flexflow.Process do
   #{inspect(@states)}
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
-  @typep path :: term()
+  @typep path :: %{
+           Flexflow.key_normalize() => %{Flexflow.key_normalize() => Flexflow.key_normalize()}
+         }
   @type t :: %__MODULE__{
           module: module(),
           graph: Graph.t(),
@@ -130,7 +132,18 @@ defmodule Flexflow.Process do
     edges = Enum.map(edge_list, &elem(&1, 0))
 
     graph = Graph.new() |> Graph.add_vertices(vertices) |> Graph.add_edges(edges)
-    path = Dfs.map(graph, fn v -> {v, Graph.out_neighbors(graph, v)} end)
+
+    path =
+      Dfs.map(graph, fn o ->
+        map =
+          for v <- Graph.out_neighbors(graph, o), into: %{} do
+            [edge] = Graph.edges(graph, o, v)
+            {v, edge.label}
+          end
+
+        {o, map}
+      end)
+      |> Map.new()
 
     transitions = for {k, v} <- edge_list, into: %{}, do: {k.label, v}
 

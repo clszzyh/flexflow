@@ -7,7 +7,7 @@ defmodule Flexflow.Node do
   alias Flexflow.Process
   alias Flexflow.Util
 
-  @states [:created, :initial]
+  @states [:created, :initial, :ready, :completed]
 
   @typedoc """
   Node state

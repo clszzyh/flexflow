@@ -81,12 +81,12 @@ defmodule FlexflowTest do
     assert Enum.count(P1.new().graph.vertices) == 6
 
     assert Map.new(P1.new().__path__) == %{
-             n1_s => [n2_s],
-             n2_s => [n5_s, n3_s, n4_s, n6_s],
-             n3_s => [],
-             n4_s => [n1_s],
-             n5_s => [],
-             n6_s => []
+             n1_s => %{n2_s => t1_s},
+             n2_s => %{n5_s => t4_s, n3_s => t2_s, n4_s => t3_s, n6_s => t5_s},
+             n3_s => %{},
+             n4_s => %{n1_s => t6_s},
+             n5_s => %{},
+             n6_s => %{}
            }
   end
 
