@@ -103,8 +103,10 @@ defmodule Flexflow.Process do
 
       @before_compile unquote(__MODULE__)
 
+      @__name__ Flexflow.Util.module_name(__MODULE__)
+
       @impl true
-      def name, do: Flexflow.Util.module_name(__MODULE__)
+      def name, do: @__name__
 
       @impl true
       def init(o), do: {:ok, o}
@@ -201,6 +203,7 @@ defmodule Flexflow.Process do
       Module.delete_attribute(__MODULE__, :__opts__)
       Module.delete_attribute(__MODULE__, :__transitions__)
       Module.delete_attribute(__MODULE__, :__module__)
+      Module.delete_attribute(__MODULE__, :__name__)
       Module.delete_attribute(__MODULE__, :__process__)
     end
   end

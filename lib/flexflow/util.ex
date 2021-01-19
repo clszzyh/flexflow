@@ -12,9 +12,23 @@ defmodule Flexflow.Util do
     to_string(System.unique_integer([:positive]))
   end
 
+  @doc """
+  Get module name
+
+  ## Examples
+
+      iex> #{__MODULE__}.module_name(Foo.Bar.FooBar)
+      :foo_bar_foo_bar
+  """
+
   @spec module_name(atom()) :: atom()
   def module_name(module) do
     module
+    |> to_string
+    |> String.trim_leading("Elixir.")
+    |> String.replace(".", "")
+    |> Macro.underscore()
+    |> String.to_atom()
   end
 
   def local_modules do

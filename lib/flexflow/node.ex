@@ -42,13 +42,17 @@ defmodule Flexflow.Node do
         """
       end
 
+      @__name__ Flexflow.Util.module_name(__MODULE__)
+
       @impl true
-      def name, do: Flexflow.Util.module_name(__MODULE__)
+      def name, do: @__name__
 
       @impl true
       def init(o, _), do: {:ok, o}
 
       defoverridable unquote(__MODULE__)
+
+      Module.delete_attribute(__MODULE__, :__name__)
     end
   end
 

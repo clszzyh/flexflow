@@ -15,7 +15,7 @@ defmodule FlexflowTest do
     assert P1.module_info()
     assert P1.new("p1", %{foo: :bar}).args == %{foo: :bar}
     assert P1.new("p1", %{foo: :bar}).id == "p1"
-    assert P1.new().name == :p1
+    assert P1.new().name == :p1_new
     assert P1.new().opts == [hello: %{foo: :zzzz}]
     assert P1.new().graph.__struct__ == Graph
     assert P1.new().module == P1
@@ -148,8 +148,6 @@ defmodule FlexflowTest do
           [
             quote do
               use Flexflow.Process
-              @impl true
-              def name, do: :p
             end,
             ast
           ],

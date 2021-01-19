@@ -2,16 +2,11 @@ for i <- 1..10 do
   defmodule String.to_atom("Elixir.N#{i}") do
     @moduledoc false
     use Flexflow.Node
-    @impl true
-    def name, do: unquote(String.to_atom("n#{i}"))
   end
 
   defmodule String.to_atom("Elixir.T#{i}") do
     @moduledoc false
     use Flexflow.Transition
-    @impl true
-    def name, do: unquote(String.to_atom("t#{i}"))
-
     @impl true
     def handle_enter(_, _, _), do: :pass
   end
@@ -22,7 +17,7 @@ defmodule P1 do
   use Flexflow.Process, hello: %{foo: :zzzz}
 
   @impl true
-  def name, do: :p1
+  def name, do: :p1_new
 
   defnode N1, foo: %{aaa: :bbb}
   defnode N2

@@ -14,7 +14,7 @@ defmodule ProcessTest do
   test "Flexflow.ModuleRegistry" do
     pid = Flexflow.ModuleRegistry |> Process.whereis()
     assert is_pid(pid)
-    assert Flexflow.ModuleRegistry.find(Flexflow.Process, :p1)
+    assert Flexflow.ModuleRegistry.find(Flexflow.Process, :p1_new)
   end
 
   test "Flexflow.ProcessParentManager" do
