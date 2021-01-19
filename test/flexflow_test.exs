@@ -92,7 +92,7 @@ defmodule FlexflowTest do
 
   test "init" do
     {:ok, p} = Flexflow.Process.start(P1, "p1")
-    assert p.state == :initial
+    assert p.state == :active
     assert p.id == "p1"
     assert p.nodes[{N1, :n1}].state == :initial
     assert p.transitions[{T1, :t1}].state == :initial

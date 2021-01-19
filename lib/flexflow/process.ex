@@ -12,7 +12,7 @@ defmodule Flexflow.Process do
 
   alias Graph.Reducers.Dfs
 
-  @states [:created, :initial, :active, :suspended, :terminated, :completed]
+  @states [:created, :active, :loop]
 
   @typedoc """
   Process state
@@ -220,17 +220,22 @@ defmodule Flexflow.Process do
     |> module.init()
     |> case do
       {:error, reason} -> {:error, reason}
-      {:ok, %__MODULE__{} = p} -> {:ok, %{p | state: :initial}}
+      {:ok, %__MODULE__{} = p} -> {:ok, %{p | state: :active}}
     end
   end
 
   @max_loop_limit Config.get(:max_loop_limit)
 
   @spec loop(t()) :: result()
-  def loop(p) do
-    case next(%{p | __loop_counter__: 0}) do
+  def loop(%{state: state} = p) when state in [:active],
+    do: loop(%{p | state: :loop, __loop_counter__: 0})
+
+  def loop(%{state: :loop, __loop_counter__: 50} = p), do: {:ok, %{p | state: :active}}
+
+  def loop(%{state: :loop} = p) do
+    case next(p) do
       {:error, reason} -> {:error, reason}
-      {:ok, p} -> next(p)
+      {:ok, p} -> loop(p)
     end
   end
 
