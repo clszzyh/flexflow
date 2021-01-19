@@ -79,14 +79,18 @@ end
 
 ```
 custom_mark10
-  digraph G {s
-    "{Verify.Canceled, \"verify_canceled\"}" -> "{Verify.Uncertified, \"verify_uncertified\"}" [label="{Verify.Cancel, \"verify_cancel_by_verify_canceled\"}"; weight=1]
-    "{Verify.Rejected, \"verify_rejected\"}" -> "{Verify.Uncertified, \"verify_uncertified\"}" [label="{Verify.Modify, \"verify_modify_by_verify_rejected\"}"; weight=1]
-    "{Verify.Uncertified, \"verify_uncertified\"}" -> "{Verify.Canceled, \"verify_canceled\"}" [label="{Verify.Cancel, \"verify_cancel_by_verify_uncertified\"}"; weight=1]
-    "{Verify.Uncertified, \"verify_uncertified\"}" -> "{Verify.Certified, \"verify_certified\"}" [label="{Verify.Cert, \"verify_cert_by_verify_uncertified\"}"; weight=1]
-    "{Verify.Uncertified, \"verify_uncertified\"}" -> "{Verify.Rejected, \"verify_rejected\"}" [label="{Verify.Reject, \"verify_reject_by_verify_uncertified\"}"; weight=1]
-    "{Verify.Uncertified, \"verify_uncertified\"}" -> "{Verify.Uncertified, \"verify_uncertified\"}" [label="{Verify.Modify, \"verify_modify_by_verify_uncertified\"}"; weight=1]
-  }
+digraph G {
+  verify_canceled [label=verify_canceled];
+  verify_certified [label=verify_certified];
+  verify_rejected [label=verify_rejected];
+  verify_uncertified [label=verify_uncertified];
+  verify_canceled -> verify_uncertified [label=verify_cancel_by_verify_canceled];
+  verify_uncertified -> verify_canceled [label=verify_cancel_by_verify_uncertified];
+  verify_uncertified -> verify_certified [label=verify_cert_by_verify_uncertified];
+  verify_rejected -> verify_uncertified [label=verify_modify_by_verify_rejected];
+  verify_uncertified -> verify_uncertified [label=verify_modify_by_verify_uncertified];
+  verify_uncertified -> verify_rejected [label=verify_reject_by_verify_uncertified];
+}
 custom_mark10
 ```
 </details>
