@@ -54,7 +54,7 @@ defmodule Flexflow.ModuleRegistry do
 
       %{} = map ->
         case Map.get(map, name) do
-          nil -> {:cont, %{state | kind => Map.merge(map, %{module => module, name => module})}}
+          nil -> {:cont, %{state | kind => Map.merge(map, %{name => module})}}
           exists -> {:halt, "Already exists #{name}, #{exists}"}
         end
     end

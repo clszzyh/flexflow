@@ -104,6 +104,9 @@ defmodule Flexflow.Process do
       @before_compile unquote(__MODULE__)
 
       @impl true
+      def name, do: Flexflow.Util.module_name(__MODULE__)
+
+      @impl true
       def init(o), do: {:ok, o}
 
       defoverridable unquote(__MODULE__)

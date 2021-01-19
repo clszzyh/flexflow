@@ -43,6 +43,9 @@ defmodule Flexflow.Node do
       end
 
       @impl true
+      def name, do: Flexflow.Util.module_name(__MODULE__)
+
+      @impl true
       def init(o, _), do: {:ok, o}
 
       defoverridable unquote(__MODULE__)

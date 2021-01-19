@@ -4,7 +4,4 @@ defmodule Flexflow.Nodes.End do
   """
 
   use Flexflow.Node
-
-  @impl true
-  def name, do: :end
 end

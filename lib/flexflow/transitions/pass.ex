@@ -6,8 +6,5 @@ defmodule Flexflow.Transitions.Pass do
   use Flexflow.Transition
 
   @impl true
-  def name, do: :pass
-
-  @impl true
   def handle_enter(_, _, _), do: :pass
 end

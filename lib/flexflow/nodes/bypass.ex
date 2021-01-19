@@ -4,7 +4,4 @@ defmodule Flexflow.Nodes.Bypass do
   """
 
   use Flexflow.Node
-
-  @impl true
-  def name, do: :bypass
 end

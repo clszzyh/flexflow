@@ -17,3 +17,5 @@ alias Flexflow.Transitions
 
 alias Graph.Reducers.Bfs
 alias Graph.Reducers.Dfs
+
+alias Flexflow.ModuleRegistry

@@ -4,7 +4,4 @@ defmodule Flexflow.Nodes.Start do
   """
 
   use Flexflow.Node
-
-  @impl true
-  def name, do: :start
 end

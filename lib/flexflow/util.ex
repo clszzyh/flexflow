@@ -12,6 +12,11 @@ defmodule Flexflow.Util do
     to_string(System.unique_integer([:positive]))
   end
 
+  @spec module_name(atom()) :: atom()
+  def module_name(module) do
+    module
+  end
+
   def local_modules do
     {:ok, [_ | _] = modules} = :application.get_key(:flexflow, :modules)
     modules
