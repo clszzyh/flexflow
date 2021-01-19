@@ -80,16 +80,16 @@ end
 ```
 custom_mark10
 digraph G {
-  verify_canceled [label=verify_canceled];
-  verify_certified [label=verify_certified];
-  verify_rejected [label=verify_rejected];
-  verify_uncertified [label=verify_uncertified];
-  verify_canceled -> verify_uncertified [label=verify_cancel];
-  verify_uncertified -> verify_canceled [label=verify_cancel];
-  verify_uncertified -> verify_certified [label=verify_cert];
-  verify_rejected -> verify_uncertified [label=verify_modify];
-  verify_uncertified -> verify_uncertified [label=verify_modify];
-  verify_uncertified -> verify_rejected [label=verify_reject];
+  canceled [label=canceled];
+  certified [label=certified];
+  rejected [label=rejected];
+  uncertified [label=uncertified];
+  canceled -> uncertified [label=cancel];
+  uncertified -> canceled [label=cancel];
+  uncertified -> certified [label=cert];
+  rejected -> uncertified [label=modify];
+  uncertified -> uncertified [label=modify];
+  uncertified -> rejected [label=reject];
 }
 custom_mark10
 ```

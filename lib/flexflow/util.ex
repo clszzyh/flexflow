@@ -18,7 +18,7 @@ defmodule Flexflow.Util do
   ## Examples
 
       iex> #{__MODULE__}.module_name(Foo.Bar.FooBar)
-      "foo_bar_foo_bar"
+      "foo_bar"
   """
 
   @spec module_name(atom()) :: binary()
@@ -26,7 +26,8 @@ defmodule Flexflow.Util do
     module
     |> to_string
     |> String.trim_leading("Elixir.")
-    |> String.replace(".", "")
+    |> String.split(".")
+    |> List.last()
     |> Macro.underscore()
   end
 
