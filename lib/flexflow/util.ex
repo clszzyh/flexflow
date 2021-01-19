@@ -31,11 +31,6 @@ defmodule Flexflow.Util do
     |> String.to_atom()
   end
 
-  def local_modules do
-    {:ok, [_ | _] = modules} = :application.get_key(:flexflow, :modules)
-    modules
-  end
-
   def modules do
     case :code.get_mode() do
       :interactive -> (:erlang.loaded() ++ get_modules_from_applications()) |> Enum.uniq()
@@ -43,7 +38,7 @@ defmodule Flexflow.Util do
     end
   end
 
-  def get_modules_from_applications do
+  defp get_modules_from_applications do
     for [app] <- loaded_applications(),
         {:ok, modules} = :application.get_key(app, :modules),
         module <- modules do
@@ -62,16 +57,7 @@ defmodule Flexflow.Util do
   end
 
   def implement_modules(behaviours \\ @local_behaviours) do
-    for module <- modules(), local_behaviour?(module, behaviours), do: module
-  end
-
-  def local_behaviour?(module, behaviours \\ @local_behaviours) do
-    module
-    |> Code.ensure_compiled()
-    |> case do
-      {:module, _} -> local_behaviour(module) in behaviours
-      _ -> false
-    end
+    for module <- modules(), local_behaviour(module) in behaviours, do: module
   end
 
   def defined?(module) when is_atom(module) do
