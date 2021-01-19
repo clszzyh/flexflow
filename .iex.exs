@@ -11,7 +11,7 @@ alias Flexflow.Transition, as: T
 
 alias Flexflow.Process, as: P
 
-alias Flexflow.Processes
+alias Flexflow.Process
 alias Flexflow.Events
 alias Flexflow.Transitions
 
