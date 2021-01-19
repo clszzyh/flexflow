@@ -25,7 +25,11 @@ defimpl Flexflow.Dot, for: Flexflow.Node do
 end
 
 defimpl Flexflow.Dot, for: Flexflow.Transition do
-  def serialize(%Flexflow.Transition{name: name, from: {_, from_name}, to: {_, to_name}}) do
-    "  #{from_name} -> #{to_name} [label=#{name}];\n"
+  def serialize(%Flexflow.Transition{
+        display: display,
+        from: {_, from_name},
+        to: {_, to_name}
+      }) do
+    "  #{from_name} -> #{to_name} [label=#{display}];\n"
   end
 end

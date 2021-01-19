@@ -84,12 +84,12 @@ digraph G {
   verify_certified [label=verify_certified];
   verify_rejected [label=verify_rejected];
   verify_uncertified [label=verify_uncertified];
-  verify_canceled -> verify_uncertified [label=verify_cancel_by_verify_canceled];
-  verify_uncertified -> verify_canceled [label=verify_cancel_by_verify_uncertified];
-  verify_uncertified -> verify_certified [label=verify_cert_by_verify_uncertified];
-  verify_rejected -> verify_uncertified [label=verify_modify_by_verify_rejected];
-  verify_uncertified -> verify_uncertified [label=verify_modify_by_verify_uncertified];
-  verify_uncertified -> verify_rejected [label=verify_reject_by_verify_uncertified];
+  verify_canceled -> verify_uncertified [label=verify_cancel];
+  verify_uncertified -> verify_canceled [label=verify_cancel];
+  verify_uncertified -> verify_certified [label=verify_cert];
+  verify_rejected -> verify_uncertified [label=verify_modify];
+  verify_uncertified -> verify_uncertified [label=verify_modify];
+  verify_uncertified -> verify_rejected [label=verify_reject];
 }
 custom_mark10
 ```

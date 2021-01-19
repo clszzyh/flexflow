@@ -34,12 +34,12 @@ defmodule FlexflowTest do
     n5_s = {N5, "n5"}
     n6_s = {N6, "n6"}
 
-    t1 = %T{module: T1, name: "t1_by_n1", opts: [foo: :baz], from: n1_s, to: n2_s}
-    t2 = %T{module: T2, name: "t2_by_n2", from: n2_s, to: n3_s}
-    t3 = %T{module: T2, name: "1", from: n2_s, to: n4_s}
-    t4 = %T{module: T2, name: "2", from: n2_s, to: n5_s}
-    t5 = %T{module: T2, name: "3", from: n2_s, to: n6_s}
-    t6 = %T{module: T2, name: "4", from: n4_s, to: n1_s}
+    t1 = %T{module: T1, name: "t1_by_n1", display: "t1", opts: [foo: :baz], from: n1_s, to: n2_s}
+    t2 = %T{module: T2, name: "t2_by_n2", display: "t2", from: n2_s, to: n3_s}
+    t3 = %T{module: T2, name: "1", display: "t2", from: n2_s, to: n4_s}
+    t4 = %T{module: T2, name: "2", display: "t2", from: n2_s, to: n5_s}
+    t5 = %T{module: T2, name: "3", display: "t2", from: n2_s, to: n6_s}
+    t6 = %T{module: T2, name: "4", display: "t2", from: n4_s, to: n1_s}
 
     t1_s = {T1, "t1_by_n1"}
     t2_s = {T2, "t2_by_n2"}
