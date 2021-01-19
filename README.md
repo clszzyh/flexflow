@@ -65,6 +65,8 @@ defmodule Verify do
   deftransition Modify, {Uncertified, Uncertified}
   deftransition Reject, {Uncertified, Rejected}
   deftransition Cancel, {Uncertified, Canceled}
+  deftransition Modify, {Rejected, Uncertified}
+  deftransition Cancel, {Canceled, Uncertified}
 end
 ```
 

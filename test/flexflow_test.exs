@@ -15,38 +15,38 @@ defmodule FlexflowTest do
     assert P1.module_info()
     assert P1.new("p1", %{foo: :bar}).args == %{foo: :bar}
     assert P1.new("p1", %{foo: :bar}).id == "p1"
-    assert P1.new().name == :p1_new
+    assert P1.new().name == "p1_new"
     assert P1.new().opts == [hello: %{foo: :zzzz}]
     assert P1.new().graph.__struct__ == Graph
     assert P1.new().module == P1
 
-    n1 = %N{module: N1, name: :n1, opts: [foo: %{aaa: :bbb}]}
-    n2 = %N{module: N2, name: :n2}
-    n3 = %N{module: N3, name: :n3}
-    n4 = %N{module: N4, name: :n4}
-    n5 = %N{module: N5, name: :n5}
-    n6 = %N{module: N6, name: :n6}
+    n1 = %N{module: N1, name: "n1", opts: [foo: %{aaa: :bbb}]}
+    n2 = %N{module: N2, name: "n2"}
+    n3 = %N{module: N3, name: "n3"}
+    n4 = %N{module: N4, name: "n4"}
+    n5 = %N{module: N5, name: "n5"}
+    n6 = %N{module: N6, name: "n6"}
 
-    n1_s = {N1, :n1}
-    n2_s = {N2, :n2}
-    n3_s = {N3, :n3}
-    n4_s = {N4, :n4}
-    n5_s = {N5, :n5}
-    n6_s = {N6, :n6}
+    n1_s = {N1, "n1"}
+    n2_s = {N2, "n2"}
+    n3_s = {N3, "n3"}
+    n4_s = {N4, "n4"}
+    n5_s = {N5, "n5"}
+    n6_s = {N6, "n6"}
 
-    t1 = %T{module: T1, name: :t1, opts: [foo: :baz], from: n1_s, to: n2_s}
-    t2 = %T{module: T2, name: :t2, from: n2_s, to: n3_s}
-    t3 = %T{module: T2, name: 1, from: n2_s, to: n4_s}
-    t4 = %T{module: T2, name: 2, from: n2_s, to: n5_s}
-    t5 = %T{module: T2, name: 3, from: n2_s, to: n6_s}
-    t6 = %T{module: T2, name: 4, from: n4_s, to: n1_s}
+    t1 = %T{module: T1, name: "t1_by_n1", opts: [foo: :baz], from: n1_s, to: n2_s}
+    t2 = %T{module: T2, name: "t2_by_n2", from: n2_s, to: n3_s}
+    t3 = %T{module: T2, name: "1", from: n2_s, to: n4_s}
+    t4 = %T{module: T2, name: "2", from: n2_s, to: n5_s}
+    t5 = %T{module: T2, name: "3", from: n2_s, to: n6_s}
+    t6 = %T{module: T2, name: "4", from: n4_s, to: n1_s}
 
-    t1_s = {T1, :t1}
-    t2_s = {T2, :t2}
-    t3_s = {T2, 1}
-    t4_s = {T2, 2}
-    t5_s = {T2, 3}
-    t6_s = {T2, 4}
+    t1_s = {T1, "t1_by_n1"}
+    t2_s = {T2, "t2_by_n2"}
+    t3_s = {T2, "1"}
+    t4_s = {T2, "2"}
+    t5_s = {T2, "3"}
+    t6_s = {T2, "4"}
 
     assert P1.new().graph ==
              Graph.new()
@@ -94,9 +94,9 @@ defmodule FlexflowTest do
     {:ok, p} = Flexflow.Process.start(P1, "p1")
     assert p.state == :active
     assert p.id == "p1"
-    assert p.nodes[{N1, :n1}].state == :initial
-    assert p.transitions[{T1, :t1}].state == :initial
-    assert p.transitions[{T1, :t1}]
+    assert p.nodes[{N1, "n1"}].state == :initial
+    assert p.transitions[{T1, "t1_by_n1"}].state == :initial
+    assert p.transitions[{T1, "t1_by_n1"}]
   end
 
   test "process compile raise" do

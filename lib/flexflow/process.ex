@@ -26,7 +26,7 @@ defmodule Flexflow.Process do
   @type t :: %__MODULE__{
           module: module(),
           graph: Graph.t(),
-          name: Flexflow.name(),
+          name: Flexflow.name() | nil,
           args: Flexflow.process_args(),
           id: Flexflow.id() | nil,
           opts: keyword(),

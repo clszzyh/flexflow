@@ -18,17 +18,16 @@ defmodule Flexflow.Util do
   ## Examples
 
       iex> #{__MODULE__}.module_name(Foo.Bar.FooBar)
-      :foo_bar_foo_bar
+      "foo_bar_foo_bar"
   """
 
-  @spec module_name(atom()) :: atom()
+  @spec module_name(atom()) :: binary()
   def module_name(module) do
     module
     |> to_string
     |> String.trim_leading("Elixir.")
     |> String.replace(".", "")
     |> Macro.underscore()
-    |> String.to_atom()
   end
 
   def modules do

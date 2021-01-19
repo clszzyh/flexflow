@@ -39,8 +39,8 @@ defmodule Flexflow.MixProject do
     ]
   end
 
-  defp elixirc_paths(:test), do: ~w(lib test/support)
-  defp elixirc_paths(_), do: ~w(lib)
+  defp elixirc_paths(:prod), do: ~w(lib)
+  defp elixirc_paths(_), do: ~w(lib test/support)
 
   # Run "mix help compile.app" to learn about applications.
   def application do

@@ -13,8 +13,8 @@ defmodule Flexflow do
 
   @type node_opts :: keyword()
 
-  @type name :: atom() | String.t()
-  @type id :: binary()
+  @type name :: String.t()
+  @type id :: String.t()
 
   @type key :: key_normalize | module()
   @type key_normalize :: {module(), name()}

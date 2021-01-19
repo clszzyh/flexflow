@@ -68,8 +68,10 @@ defmodule Flexflow.Transition do
 
   @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, Flexflow.node_opts()}, [Node.t()]) ::
           edge_tuple
-  def new({o, {from, to}, opts}, nodes) when is_atom(o),
-    do: new({Util.normalize_module(o), {from, to}, opts}, nodes)
+  def new({o, {from, to}, opts}, nodes) when is_atom(o) do
+    {from, from_name} = Util.normalize_module(from)
+    new({{o, o.name() <> "_by_" <> from_name}, {from, to}, opts}, nodes)
+  end
 
   def new({{o, name}, {from, to}, opts}, nodes) do
     unless Util.local_behaviour(o) == __MODULE__ do
