@@ -134,6 +134,7 @@ defmodule Flexflow.Process do
   defmacro defnode(key, opts \\ []), do: define_node(key, opts)
   defmacro defstart(key, opts \\ []), do: define_node(key, [kind: :start] ++ opts)
   defmacro defend(key, opts \\ []), do: define_node(key, [kind: :end] ++ opts)
+  defmacro deftransition(key, tuple, opts \\ []), do: define_transition(key, tuple, opts)
 
   defp define_node(key, opts) do
     quote bind_quoted: [key: key, opts: opts] do
@@ -142,10 +143,10 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro deftransition(module_or_name, tuple, opts \\ []) do
-    quote bind_quoted: [module_or_name: module_or_name, tuple: tuple, opts: opts] do
-      @__transitions__ {module_or_name, tuple, opts}
-      @__identities__ {:transition, Tuple.insert_at(tuple, 0, module_or_name)}
+  defp define_transition(key, tuple, opts) do
+    quote bind_quoted: [key: key, tuple: tuple, opts: opts] do
+      @__transitions__ {key, tuple, opts}
+      @__identities__ {:transition, Tuple.insert_at(tuple, 0, key)}
     end
   end
 
