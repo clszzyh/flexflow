@@ -109,6 +109,7 @@ defmodule Flexflow.Process do
           defstart: 2,
           defend: 1,
           defend: 2,
+          ~>: 2,
           deftransition: 2,
           deftransition: 3
         ]
@@ -135,6 +136,7 @@ defmodule Flexflow.Process do
   defmacro defstart(key, opts \\ []), do: define_node(key, [kind: :start] ++ opts)
   defmacro defend(key, opts \\ []), do: define_node(key, [kind: :end] ++ opts)
   defmacro deftransition(key, tuple, opts \\ []), do: define_transition(key, tuple, opts)
+  def a ~> b, do: {a, b}
 
   defp define_node(key, opts) do
     quote bind_quoted: [key: key, opts: opts] do

@@ -61,12 +61,12 @@ defmodule Verify do
   defnode Rejected
   defend Canceled
 
-  deftransition Cert, {Uncertified, Certified}
-  deftransition Modify, {Uncertified, Uncertified}
-  deftransition Reject, {Uncertified, Rejected}
-  deftransition Cancel, {Uncertified, Canceled}
-  deftransition Modify, {Rejected, Uncertified}
-  deftransition Cancel, {Rejected, Canceled}
+  deftransition Cert, Uncertified ~> Certified
+  deftransition Modify, Uncertified ~> Uncertified
+  deftransition Reject, Uncertified ~> Rejected
+  deftransition Cancel, Uncertified ~> Canceled
+  deftransition Modify, Rejected ~> Uncertified
+  deftransition Cancel, Rejected ~> Canceled
 end
 ```
 

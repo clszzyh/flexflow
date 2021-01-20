@@ -6,6 +6,7 @@ locals_without_parens = [
   defstart: 2,
   defend: 1,
   defend: 2,
+  ~>: 2,
   deftransition: 2,
   deftransition: 3
 ]
