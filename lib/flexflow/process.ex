@@ -9,6 +9,7 @@ defmodule Flexflow.Process do
   alias Flexflow.Node
   alias Flexflow.Telemetry
   alias Flexflow.Transition
+  alias Flexflow.Util
 
   alias Graph.Reducers.Dfs
 
@@ -36,6 +37,7 @@ defmodule Flexflow.Process do
           transitions: Flexflow.transitions(),
           state: state(),
           __path__: path(),
+          __identities__: [identity],
           __attributes__: keyword(),
           __loop_counter__: integer(),
           __counter__: integer()
@@ -44,7 +46,9 @@ defmodule Flexflow.Process do
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
 
-  @enforce_keys [:graph, :module, :nodes, :transitions, :__path__]
+  @type identity :: {:node | :transition, Flexflow.key_normalize()}
+
+  @enforce_keys [:graph, :module, :nodes, :transitions, :__path__, :__identities__]
   defstruct @enforce_keys ++
               [
                 :name,
@@ -102,6 +106,7 @@ defmodule Flexflow.Process do
 
       Module.register_attribute(__MODULE__, :__nodes__, accumulate: true)
       Module.register_attribute(__MODULE__, :__transitions__, accumulate: true)
+      Module.register_attribute(__MODULE__, :__identities__, accumulate: true)
 
       @before_compile unquote(__MODULE__)
 
@@ -122,6 +127,7 @@ defmodule Flexflow.Process do
   defmacro defnode(module_or_name, opts) do
     quote bind_quoted: [module_or_name: module_or_name, opts: opts] do
       @__nodes__ {module_or_name, opts}
+      @__identities__ {:node, module_or_name}
     end
   end
 
@@ -130,11 +136,12 @@ defmodule Flexflow.Process do
   defmacro deftransition(module_or_name, tuple, opts) do
     quote bind_quoted: [module_or_name: module_or_name, tuple: tuple, opts: opts] do
       @__transitions__ {module_or_name, tuple, opts}
+      @__identities__ {:transition, module_or_name}
     end
   end
 
-  @spec new(module(), [Node.t()], [Transition.edge_tuple()]) :: t()
-  def new(module, nodes, edge_list) do
+  @spec new(module(), [Node.t()], [Transition.edge_tuple()], [identity]) :: t()
+  def new(module, nodes, edge_list, identities) do
     vertices = nodes |> Enum.map(&{&1.module, &1.name})
     edges = Enum.map(edge_list, &elem(&1, 0))
 
@@ -159,6 +166,7 @@ defmodule Flexflow.Process do
       nodes: Map.new(nodes, &{{&1.module, &1.name}, &1}),
       module: module,
       __path__: path,
+      __identities__: identities,
       transitions: transitions
     }
   end
@@ -178,7 +186,13 @@ defmodule Flexflow.Process do
       |> Enum.map(&Transition.new(&1, nodes))
       |> Transition.validate()
 
-    process = new(env.module, nodes, edges)
+    identities =
+      env.module
+      |> Module.get_attribute(:__identities__)
+      |> Enum.reverse()
+      |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v)} end)
+
+    process = new(env.module, nodes, edges, identities)
 
     quote bind_quoted: [module: __MODULE__, process: Macro.escape(process)] do
       alias Flexflow.Process
@@ -204,6 +218,7 @@ defmodule Flexflow.Process do
       Module.delete_attribute(__MODULE__, :__nodes__)
       Module.delete_attribute(__MODULE__, :__opts__)
       Module.delete_attribute(__MODULE__, :__transitions__)
+      Module.delete_attribute(__MODULE__, :__identities__)
       Module.delete_attribute(__MODULE__, :__module__)
       Module.delete_attribute(__MODULE__, :__name__)
       Module.delete_attribute(__MODULE__, :__process__)

@@ -48,6 +48,21 @@ defmodule FlexflowTest do
     t5_s = {T2, "3"}
     t6_s = {T2, "4"}
 
+    assert P1.new().__identities__ == [
+             node: n1_s,
+             node: n2_s,
+             transition: {T1, "t1"},
+             node: n3_s,
+             node: n4_s,
+             node: n5_s,
+             node: n6_s,
+             transition: {T2, "t2"},
+             transition: t3_s,
+             transition: t4_s,
+             transition: t5_s,
+             transition: t6_s
+           ]
+
     assert P1.new().graph ==
              Graph.new()
              |> Graph.add_vertices([n1_s, n2_s, n3_s, n4_s, n5_s, n6_s])
