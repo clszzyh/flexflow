@@ -56,10 +56,10 @@ defmodule Verify do
 
   use Flexflow.Process, version: 1
 
-  defnode Uncertified
-  defnode Certified
+  defstart Uncertified
+  defend Certified
   defnode Rejected
-  defnode Canceled
+  defend Canceled
 
   deftransition Cert, {Uncertified, Certified}
   deftransition Modify, {Uncertified, Uncertified}
@@ -80,10 +80,10 @@ end
 // custom_mark10
 digraph verify {
   size = "4,4";
-  uncertified [label=uncertified,shape=box];
-  certified [label=certified,shape=box];
+  uncertified [label=uncertified,color=".7 .3 1.0"];
+  certified [label=certified,color=red];
   rejected [label=rejected,shape=box];
-  canceled [label=canceled,shape=box];
+  canceled [label=canceled,color=red];
   uncertified -> certified [label=cert];
   uncertified -> uncertified [label=modify,color=blue];
   uncertified -> rejected [label=reject];

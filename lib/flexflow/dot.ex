@@ -2,6 +2,7 @@ defmodule Flexflow.Dot do
   @moduledoc """
   * https://en.wikipedia.org/wiki/DOT_(graph_description_language)
   * https://github.com/TLmaK0/gravizo
+  * https://gravizo.com/
   """
 
   verify_dot =

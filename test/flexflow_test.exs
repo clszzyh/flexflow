@@ -20,19 +20,19 @@ defmodule FlexflowTest do
     assert P1.new().graph.__struct__ == Graph
     assert P1.new().module == P1
 
-    n1 = %N{module: N1, name: "n1", opts: [foo: %{aaa: :bbb}]}
-    n2 = %N{module: N2, name: "n2"}
-    n3 = %N{module: N3, name: "n3"}
-    n4 = %N{module: N4, name: "n4"}
-    n5 = %N{module: N5, name: "n5"}
-    n6 = %N{module: N6, name: "n6"}
-
     n1_s = {N1, "n1"}
     n2_s = {N2, "n2"}
     n3_s = {N3, "n3"}
     n4_s = {N4, "n4"}
     n5_s = {N5, "n5"}
     n6_s = {N6, "n6"}
+
+    n1 = N.new({n1_s, foo: %{aaa: :bbb}, kind: :start})
+    n2 = N.new({n2_s, []})
+    n3 = N.new({n3_s, []})
+    n4 = N.new({n4_s, []})
+    n5 = N.new({n5_s, kind: :end})
+    n6 = N.new({n6_s, []})
 
     t1 = %T{module: T1, name: "t1_by_n1", opts: [foo: :baz], from: n1_s, to: n2_s}
     t2 = %T{module: T2, name: "t2_by_n2", from: n2_s, to: n3_s}
@@ -118,11 +118,11 @@ defmodule FlexflowTest do
     data = [
       quote do
       end,
-      "Node is empty!",
+      "Node is empty",
       quote do
         defnode(N1)
       end,
-      "Transition is empty!",
+      "Transition is empty",
       quote do
         defnode(N0)
       end,
@@ -133,19 +133,19 @@ defmodule FlexflowTest do
         defnode(N1)
         deftransition T1, {N1, N2}
       end,
-      "Node {N1, nil} is defined twice!",
+      "Node {N1, nil} is defined twice",
       quote do
         defnode(N1)
         deftransition T1, {N1, N4}
       end,
-      "{N4, nil} is not defined!",
+      "{N4, nil} is not defined",
       quote do
         defnode(N1)
         defnode(N2)
         deftransition T1, {N1, N2}
         deftransition T2, {N1, N2}
       end,
-      "Transition {{N1, nil}, {N2, nil}} is defined twice!",
+      "Transition {{N1, nil}, {N2, nil}} is defined twice",
       quote do
         defnode(N1)
         defnode(N2)
@@ -153,7 +153,25 @@ defmodule FlexflowTest do
         deftransition T1, {N1, N2}
         deftransition T1, {N2, N3}
       end,
-      "Transition {T1, nil} is defined twice!"
+      "Transition {T1, nil} is defined twice",
+      quote do
+        defnode(N1)
+        defnode(N2)
+        deftransition T1, {N1, N2}
+      end,
+      "Need a start node",
+      quote do
+        defstart(N1)
+        defstart(N2)
+        deftransition T1, {N1, N2}
+      end,
+      "Only need one start node",
+      quote do
+        defstart(N1)
+        defnode(N2)
+        deftransition T1, {N1, N2}
+      end,
+      "Need one or more end node"
     ]
 
     for {ast, msg} <- Enum.chunk_every(data, 2) do

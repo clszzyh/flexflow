@@ -102,7 +102,16 @@ defmodule Flexflow.Process do
       @behaviour unquote(__MODULE__)
 
       import unquote(__MODULE__),
-        only: [defnode: 1, defnode: 2, deftransition: 2, deftransition: 3]
+        only: [
+          defnode: 1,
+          defnode: 2,
+          defstart: 1,
+          defstart: 2,
+          defend: 1,
+          defend: 2,
+          deftransition: 2,
+          deftransition: 3
+        ]
 
       Module.register_attribute(__MODULE__, :__nodes__, accumulate: true)
       Module.register_attribute(__MODULE__, :__transitions__, accumulate: true)
@@ -122,18 +131,18 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro defnode(name, opts \\ [])
+  defmacro defnode(key, opts \\ []), do: define_node(key, opts)
+  defmacro defstart(key, opts \\ []), do: define_node(key, [kind: :start] ++ opts)
+  defmacro defend(key, opts \\ []), do: define_node(key, [kind: :end] ++ opts)
 
-  defmacro defnode(module_or_name, opts) do
-    quote bind_quoted: [module_or_name: module_or_name, opts: opts] do
-      @__nodes__ {module_or_name, opts}
-      @__identities__ {:node, module_or_name}
+  defp define_node(key, opts) do
+    quote bind_quoted: [key: key, opts: opts] do
+      @__nodes__ {key, opts}
+      @__identities__ {:node, key}
     end
   end
 
-  defmacro deftransition(module_or_name, tuple, opts \\ [])
-
-  defmacro deftransition(module_or_name, tuple, opts) do
+  defmacro deftransition(module_or_name, tuple, opts \\ []) do
     quote bind_quoted: [module_or_name: module_or_name, tuple: tuple, opts: opts] do
       @__transitions__ {module_or_name, tuple, opts}
       @__identities__ {:transition, Tuple.insert_at(tuple, 0, module_or_name)}

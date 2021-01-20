@@ -15,20 +15,21 @@ defmodule Flexflow.Node do
   #{inspect(@states)}
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
+  @type kind :: :start | :end | :intermediate
   @type t :: %__MODULE__{
           module: module(),
           state: state(),
           name: Flexflow.name(),
+          kind: kind(),
           __attributes__: keyword(),
           context: Context.t(),
           opts: Flexflow.node_opts()
         }
 
-  @enforce_keys [:name, :module]
+  @enforce_keys [:name, :module, :kind, :__attributes__]
   defstruct @enforce_keys ++
               [
                 state: :created,
-                __attributes__: [shape: "box"],
                 opts: [],
                 context: Context.new()
               ]
@@ -63,6 +64,11 @@ defmodule Flexflow.Node do
     end
   end
 
+  @spec attribute(kind()) :: keyword()
+  def attribute(:intermediate), do: [shape: "box"]
+  def attribute(:start), do: [color: "\".7 .3 1.0\""]
+  def attribute(:end), do: [color: "red"]
+
   @spec new({Flexflow.key(), Flexflow.node_opts()}) :: t()
   def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 
@@ -71,19 +77,36 @@ defmodule Flexflow.Node do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
 
-    %__MODULE__{module: o, name: name, opts: opts}
+    {kind, opts} = Keyword.pop(opts, :kind, :intermediate)
+    {attributes, opts} = Keyword.pop(opts, :attributes, attribute(kind))
+
+    %__MODULE__{module: o, name: name, opts: opts, kind: kind, __attributes__: attributes}
   end
+
+  def start?(%__MODULE__{kind: :start}), do: true
+  def start?(%__MODULE__{}), do: false
+
+  def end?(%__MODULE__{kind: :end}), do: true
+  def end?(%__MODULE__{}), do: false
 
   @spec validate([t()]) :: [t()]
   def validate(nodes) do
-    if Enum.empty?(nodes), do: raise(ArgumentError, "Node is empty!")
+    if Enum.empty?(nodes), do: raise(ArgumentError, "Node is empty")
 
     for %__MODULE__{module: module, name: name} <- nodes, reduce: [] do
       ary ->
         o = {module, name}
-        if o in ary, do: raise(ArgumentError, "Node #{inspect(o)} is defined twice!")
+        if o in ary, do: raise(ArgumentError, "Node #{inspect(o)} is defined twice")
         ary ++ [o]
     end
+
+    case Enum.filter(nodes, &start?/1) do
+      [_] -> :ok
+      [] -> raise(ArgumentError, "Need a start node")
+      [_, _ | _] -> raise(ArgumentError, "Only need one start node")
+    end
+
+    Enum.find(nodes, &end?/1) || raise(ArgumentError, "Need one or more end node")
 
     nodes
   end

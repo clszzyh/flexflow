@@ -84,8 +84,8 @@ defmodule Flexflow.Transition do
 
     nodes = Map.new(nodes, &{{&1.module, &1.name}, &1})
 
-    _new_from = nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined!")
-    _new_to = nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined!")
+    _new_from = nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined")
+    _new_to = nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined")
 
     attributes = if from == to, do: [color: "blue"], else: []
 
@@ -117,14 +117,14 @@ defmodule Flexflow.Transition do
     for {_, %__MODULE__{module: module, name: name}} <- transitions, reduce: [] do
       ary ->
         o = {module, name}
-        if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice!")
+        if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice")
         ary ++ [o]
     end
 
     for {%Edge{v1: v1, v2: v2}, _} <- transitions, reduce: [] do
       ary ->
         o = {v1, v2}
-        if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice!")
+        if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice")
         ary ++ [o]
     end
 
