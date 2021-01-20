@@ -64,7 +64,7 @@ defmodule Flexflow.Node do
   end
 
   @spec new({Flexflow.key(), Flexflow.node_opts()}) :: t()
-  def new({o, opts}) when is_atom(o), do: new({{o, o.name()}, opts})
+  def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 
   def new({{o, name}, opts}) do
     unless Util.local_behaviour(o) == __MODULE__ do

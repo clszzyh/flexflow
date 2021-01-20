@@ -47,14 +47,21 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
   def suffix(_), do: "}\n//"
   def attributes(_), do: []
 
-  def name(%Flexflow.Process{nodes: nodes, transitions: transitions, __attributes__: attributes}) do
+  def name(%Flexflow.Process{
+        __identities__: identities,
+        nodes: nodes,
+        transitions: transitions,
+        __attributes__: attributes
+      }) do
     attributes_str = Enum.map_join(attributes, fn {k, v} -> "  #{k} = #{v};\n" end)
 
-    str =
-      nodes
-      |> Map.values()
-      |> Kernel.++(Map.values(transitions))
-      |> Enum.map_join(&Flexflow.Dot.serialize/1)
+    identities =
+      Enum.map(identities, fn
+        {:node, key} -> Map.fetch!(nodes, key)
+        {:transition, key} -> Map.fetch!(transitions, key)
+      end)
+
+    str = Enum.map_join(identities, &Flexflow.Dot.serialize/1)
 
     attributes_str <> str
   end

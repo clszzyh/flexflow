@@ -66,7 +66,7 @@ defmodule Verify do
   deftransition Reject, {Uncertified, Rejected}
   deftransition Cancel, {Uncertified, Canceled}
   deftransition Modify, {Rejected, Uncertified}
-  deftransition Cancel, {Canceled, Uncertified}
+  deftransition Cancel, {Rejected, Canceled}
 end
 ```
 
@@ -80,16 +80,16 @@ end
 // custom_mark10
 digraph verify {
   size = "4,4";
-  canceled [label=canceled,shape=box];
+  uncertified [label=uncertified,shape=box];
   certified [label=certified,shape=box];
   rejected [label=rejected,shape=box];
-  uncertified [label=uncertified,shape=box];
-  canceled -> uncertified [label=cancel];
-  uncertified -> canceled [label=cancel];
+  canceled [label=canceled,shape=box];
   uncertified -> certified [label=cert];
-  rejected -> uncertified [label=modify];
   uncertified -> uncertified [label=modify,color=blue];
   uncertified -> rejected [label=reject];
+  uncertified -> canceled [label=cancel];
+  rejected -> uncertified [label=modify];
+  rejected -> canceled [label=cancel];
 }
 // custom_mark10
 ```

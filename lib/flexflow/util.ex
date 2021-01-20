@@ -3,9 +3,16 @@ defmodule Flexflow.Util do
 
   @local_behaviours [Flexflow.Process, Flexflow.Transition, Flexflow.Node]
 
-  @spec normalize_module(Flexflow.key()) :: Flexflow.key_normalize()
-  def normalize_module({o, id}) when is_atom(o), do: {o, id}
+  @spec normalize_module(Flexflow.key() | {Flexflow.key(), Flexflow.key(), Flexflow.key()}) ::
+          Flexflow.key_normalize()
+  def normalize_module({o, from, _to}) when is_atom(o) do
+    {_, from_name} = normalize_module(from)
+    {o, o.name() <> "_by_" <> from_name}
+  end
+
   def normalize_module(o) when is_atom(o), do: {o, o.name()}
+  def normalize_module({{o, name}, _from, _to}) when is_atom(o), do: {o, name}
+  def normalize_module({o, name}) when is_atom(o), do: {o, name}
 
   @spec make_id :: Flexflow.id()
   def make_id do

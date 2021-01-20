@@ -136,7 +136,7 @@ defmodule Flexflow.Process do
   defmacro deftransition(module_or_name, tuple, opts) do
     quote bind_quoted: [module_or_name: module_or_name, tuple: tuple, opts: opts] do
       @__transitions__ {module_or_name, tuple, opts}
-      @__identities__ {:transition, module_or_name}
+      @__identities__ {:transition, Tuple.insert_at(tuple, 0, module_or_name)}
     end
   end
 
