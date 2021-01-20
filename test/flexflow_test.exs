@@ -120,56 +120,56 @@ defmodule FlexflowTest do
       end,
       "Node is empty",
       quote do
-        node(N1)
+        intermediate_node N1
       end,
       "Transition is empty",
       quote do
-        node(N0)
+        intermediate_node N0
       end,
       "N0 should implement Elixir.Flexflow.Node",
       quote do
-        node(N1)
-        node(N2)
-        node(N1)
-        transition(T1, N1 ~> N2)
+        intermediate_node N1
+        intermediate_node N2
+        intermediate_node N1
+        transition T1, N1 ~> N2
       end,
       "Node {N1, nil} is defined twice",
       quote do
-        node(N1)
-        transition(T1, N1 ~> N4)
+        intermediate_node N1
+        transition T1, N1 ~> N4
       end,
       "{N4, nil} is not defined",
       quote do
-        node(N1)
-        node(N2)
-        transition(T1, N1 ~> N2)
-        transition(T2, N1 ~> N2)
+        intermediate_node N1
+        intermediate_node N2
+        transition T1, N1 ~> N2
+        transition T2, N1 ~> N2
       end,
       "Transition {{N1, nil}, {N2, nil}} is defined twice",
       quote do
-        node(N1)
-        node(N2)
-        node(N3)
-        transition(T1, N1 ~> N2)
-        transition(T1, N2 ~> N3)
+        intermediate_node N1
+        intermediate_node N2
+        intermediate_node N3
+        transition T1, N1 ~> N2
+        transition T1, N2 ~> N3
       end,
       "Transition {T1, nil} is defined twice",
       quote do
-        node(N1)
-        node(N2)
-        transition(T1, N1 ~> N2)
+        intermediate_node N1
+        intermediate_node N2
+        transition T1, N1 ~> N2
       end,
       "Need a start node",
       quote do
-        defstart(N1)
-        defstart(N2)
-        transition(T1, N1 ~> N2)
+        start_node N1
+        start_node N2
+        transition T1, N1 ~> N2
       end,
       "Only need one start node",
       quote do
-        defstart(N1)
-        node(N2)
-        transition(T1, N1 ~> N2)
+        start_node N1
+        intermediate_node N2
+        transition T1, N1 ~> N2
       end,
       "Need one or more end node"
     ]

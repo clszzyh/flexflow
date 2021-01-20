@@ -56,10 +56,10 @@ defmodule Verify do
 
   use Flexflow.Process, version: 1
 
-  defstart Uncertified
-  defend Certified
-  node Rejected
-  defend Canceled
+  start_node Uncertified
+  end_node Certified
+  intermediate_node Rejected
+  end_node Canceled
 
   transition Cert, Uncertified ~> Certified
   transition Modify, Uncertified ~> Uncertified

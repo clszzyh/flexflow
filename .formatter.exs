@@ -1,11 +1,11 @@
 # Used by "mix format"
 locals_without_parens = [
-  node: 1,
-  node: 2,
-  defstart: 1,
-  defstart: 2,
-  defend: 1,
-  defend: 2,
+  intermediate_node: 1,
+  intermediate_node: 2,
+  start_node: 1,
+  start_node: 2,
+  end_node: 1,
+  end_node: 2,
   ~>: 2,
   transition: 2,
   transition: 3
