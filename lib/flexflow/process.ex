@@ -38,7 +38,7 @@ defmodule Flexflow.Process do
           state: state(),
           __path__: path(),
           __identities__: [identity],
-          __attributes__: keyword(),
+          __graphviz_attributes__: keyword(),
           __loop_counter__: integer(),
           __counter__: integer()
         }
@@ -56,7 +56,7 @@ defmodule Flexflow.Process do
                 state: :created,
                 __counter__: 0,
                 __loop_counter__: 0,
-                __attributes__: [size: "\"4,4\""],
+                __graphviz_attributes__: [size: "\"4,4\""],
                 args: %{},
                 opts: [],
                 histories: [],

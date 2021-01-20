@@ -21,14 +21,15 @@ defmodule Flexflow.Node do
           state: state(),
           name: Flexflow.name(),
           kind: kind(),
-          __attributes__: keyword(),
+          __graphviz_attributes__: keyword(),
           context: Context.t(),
           opts: Flexflow.node_opts()
         }
 
-  @enforce_keys [:name, :module, :kind, :__attributes__]
+  @enforce_keys [:name, :module, :kind]
   defstruct @enforce_keys ++
               [
+                __graphviz_attributes__: [],
                 state: :created,
                 opts: [],
                 context: Context.new()
@@ -80,7 +81,13 @@ defmodule Flexflow.Node do
     {kind, opts} = Keyword.pop(opts, :kind, :intermediate)
     {attributes, opts} = Keyword.pop(opts, :attributes, attribute(kind))
 
-    %__MODULE__{module: o, name: name, opts: opts, kind: kind, __attributes__: attributes}
+    %__MODULE__{
+      module: o,
+      name: name,
+      opts: opts,
+      kind: kind,
+      __graphviz_attributes__: attributes
+    }
   end
 
   def start?(%__MODULE__{kind: :start}), do: true

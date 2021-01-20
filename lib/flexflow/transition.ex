@@ -22,7 +22,7 @@ defmodule Flexflow.Transition do
           name: Flexflow.name(),
           opts: Flexflow.node_opts(),
           state: state(),
-          __attributes__: keyword(),
+          __graphviz_attributes__: keyword(),
           context: Context.t(),
           from: Flexflow.key_normalize(),
           to: Flexflow.key_normalize()
@@ -33,7 +33,7 @@ defmodule Flexflow.Transition do
 
   @enforce_keys [:name, :module, :from, :to]
   defstruct @enforce_keys ++
-              [opts: [], __attributes__: [], state: :created, context: Context.new()]
+              [opts: [], __graphviz_attributes__: [], state: :created, context: Context.new()]
 
   @doc "Module name"
   @callback name :: Flexflow.name()
@@ -92,7 +92,7 @@ defmodule Flexflow.Transition do
     transition = %__MODULE__{
       module: o,
       name: name,
-      __attributes__: attributes,
+      __graphviz_attributes__: attributes,
       opts: opts,
       from: from,
       to: to

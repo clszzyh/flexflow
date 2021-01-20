@@ -52,7 +52,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
         __identities__: identities,
         nodes: nodes,
         transitions: transitions,
-        __attributes__: attributes
+        __graphviz_attributes__: attributes
       }) do
     attributes_str = Enum.map_join(attributes, fn {k, v} -> "  #{k} = #{v};\n" end)
 
@@ -72,8 +72,9 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Node do
   def prefix(_), do: "  "
   def suffix(_), do: ";\n"
   def name(%{name: name}), do: name
-  # def labels(%{name: "rejected"}), do: [label: "\"{{O|6}|1100}\"", shape: "box"]
-  def attributes(%{name: name, __attributes__: attributes}), do: [label: name] ++ attributes
+
+  def attributes(%{name: name, __graphviz_attributes__: attributes}),
+    do: [label: name] ++ attributes
 end
 
 defimpl Flexflow.DotProtocol, for: Flexflow.Transition do
@@ -81,6 +82,6 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Transition do
   def suffix(_), do: ";\n"
   def name(%{from: {_, from_name}, to: {_, to_name}}), do: "#{from_name} -> #{to_name}"
 
-  def attributes(%{module: module, __attributes__: attributes}),
+  def attributes(%{module: module, __graphviz_attributes__: attributes}),
     do: [label: module.name()] ++ attributes
 end
