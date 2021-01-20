@@ -28,7 +28,7 @@ end
 
 defimpl Flexflow.DotProtocol, for: Flexflow.Process do
   def prefix(%{name: name}), do: "digraph #{name} {\n"
-  def suffix(_), do: "}"
+  def suffix(_), do: "}\n//"
   def labels(_), do: []
 
   def name(%Flexflow.Process{nodes: nodes, transitions: transitions}) do

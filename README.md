@@ -77,8 +77,8 @@ end
 <details>
 <summary></summary>
 
-```
-custom_mark10
+```dot
+// custom_mark10
 digraph verify {
   canceled [label=canceled];
   certified [label=certified];
@@ -91,7 +91,7 @@ digraph verify {
   uncertified -> uncertified [label=modify,style=dotted];
   uncertified -> rejected [label=reject];
 }
-custom_mark10
+// custom_mark10
 ```
 </details>
 
