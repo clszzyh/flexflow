@@ -27,7 +27,7 @@ defprotocol Flexflow.DotProtocol do
 end
 
 defimpl Flexflow.DotProtocol, for: Flexflow.Process do
-  def prefix(%{name: name}), do: "digraph #{name} {\n  size = \"8,8\"\n"
+  def prefix(%{name: name}), do: "digraph #{name} {\n"
   def suffix(_), do: "}"
   def labels(_), do: []
 
@@ -51,8 +51,8 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Transition do
   def suffix(_), do: ";\n"
   def name(%{from: {_, from_name}, to: {_, to_name}}), do: "#{from_name} -> #{to_name}"
 
-  def labels(%{display: display, from: {_, name}, to: {_, name}}),
-    do: [label: display, style: "dotted"]
+  def labels(%{module: module, from: {_, name}, to: {_, name}}),
+    do: [label: module.name(), style: "dotted"]
 
-  def labels(%{display: display}), do: [label: display]
+  def labels(%{module: module}), do: [label: module.name()]
 end
