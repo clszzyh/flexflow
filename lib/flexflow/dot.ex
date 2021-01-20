@@ -3,6 +3,22 @@ defmodule Flexflow.Dot do
   https://en.wikipedia.org/wiki/DOT_(graph_description_language)
   https://github.com/TLmaK0/gravizo
   """
+
+  verify_dot =
+    [__DIR__, "../../README.md"]
+    |> Path.join()
+    |> File.read!()
+    |> String.split("custom_mark10")
+    |> Enum.fetch!(2)
+    |> String.trim()
+    |> inspect
+
+  @doc """
+  ## Example
+
+      iex> #{__MODULE__}.serialize(Verify.new())
+      #{verify_dot}
+  """
   def serialize(p) do
     attributes =
       case Flexflow.DotProtocol.attributes(p) do
