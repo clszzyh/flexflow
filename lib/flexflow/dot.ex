@@ -3,6 +3,7 @@ defmodule Flexflow.Dot do
   * https://en.wikipedia.org/wiki/DOT_(graph_description_language)
   * https://github.com/TLmaK0/gravizo
   * https://gravizo.com/
+  * http://www.graphviz.org/doc/info/attrs.html
   """
 
   verify_dot =

@@ -67,8 +67,8 @@ defmodule Flexflow.Node do
 
   @spec attribute(kind()) :: keyword()
   def attribute(:intermediate), do: [shape: "box"]
-  def attribute(:start), do: [color: "\".7 .3 1.0\""]
-  def attribute(:end), do: [color: "red"]
+  def attribute(:start), do: [shape: "doublecircle", color: "\".7 .3 1.0\""]
+  def attribute(:end), do: [shape: "circle", color: "red"]
 
   @spec new({Flexflow.key(), Flexflow.node_opts()}) :: t()
   def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})

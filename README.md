@@ -74,16 +74,16 @@ end
 
 
 <details>
-<summary><img src="https://g.gravizo.com/source/custom_mark10?https%3A%2F%2Fraw.githubusercontent.com%2Fclszzyh%2Fflexflow%2Fmaster%2FREADME.md" width="60%"></summary>
+<summary><img src="https://g.gravizo.com/source/custom_mark10?https%3A%2F%2Fraw.githubusercontent.com%2Fclszzyh%2Fflexflow%2Fmaster%2FREADME.md" width="50%"></summary>
 
 ```dot
 // custom_mark10
 digraph verify {
   size = "4,4";
-  uncertified [label=uncertified,color=".7 .3 1.0"];
-  certified [label=certified,color=red];
+  uncertified [label=uncertified,shape=doublecircle,color=".7 .3 1.0"];
+  certified [label=certified,shape=circle,color=red];
   rejected [label=rejected,shape=box];
-  canceled [label=canceled,color=red];
+  canceled [label=canceled,shape=circle,color=red];
   uncertified -> certified [label=cert];
   uncertified -> uncertified [label=modify,color=blue];
   uncertified -> rejected [label=reject];
