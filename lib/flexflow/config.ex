@@ -5,9 +5,12 @@ defmodule Flexflow.Config do
     telemetry_logger_level: :debug
   }
 
+  str = Enum.map_join(@default_map, "\n", fn {k, v} -> "* #{k}: #{v}" end)
+
   @moduledoc """
-  Default Map:
-  #{inspect(@default_map, struct: true)}
+  ## Default value:
+
+  #{str}
   """
 
   def get(key) when is_map_key(@default_map, key) do

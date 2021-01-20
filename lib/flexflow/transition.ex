@@ -84,10 +84,11 @@ defmodule Flexflow.Transition do
 
     nodes = Map.new(nodes, &{{&1.module, &1.name}, &1})
 
-    _new_from = nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined")
-    _new_to = nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined")
+    nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined")
+    nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined")
 
-    attributes = if from == to, do: [color: "blue"], else: []
+    {attributes, opts} = Keyword.pop(opts, :attributes, [])
+    attributes = attributes ++ if from == to, do: [color: "blue"], else: []
 
     transition = %__MODULE__{
       module: o,

@@ -11,11 +11,7 @@ defmodule Flexflow.Telemetry do
   @event_types [:process_init, :process_loop]
 
   @events Enum.flat_map(@event_types, fn x ->
-            [
-              [@prefix, x, :start],
-              [@prefix, x, :stop],
-              [@prefix, x, :exception]
-            ]
+            [[@prefix, x, :start], [@prefix, x, :stop], [@prefix, x, :exception]]
           end)
 
   @spec attach_default_logger(Logger.level()) :: :ok | {:error, :already_exists}

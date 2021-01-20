@@ -70,9 +70,6 @@ defmodule Verify do
 end
 ```
 
-<!-- MDOC -->
-
-
 <details>
 <summary><img src="https://g.gravizo.com/source/custom_mark10?https%3A%2F%2Fraw.githubusercontent.com%2Fclszzyh%2Fflexflow%2Fmaster%2FREADME.md" width="50%"></summary>
 
@@ -95,8 +92,7 @@ digraph verify {
 ```
 </details>
 
-
-
+<!-- MDOC -->
 
 
 ## See Also

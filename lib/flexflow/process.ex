@@ -279,11 +279,6 @@ defmodule Flexflow.Process do
     {:ok, %{p | __loop_counter__: loop_counter + 1, __counter__: counter + 1}}
   end
 
-  def to_dot(%__MODULE__{graph: graph}) do
-    {:ok, dot} = Graph.to_dot(graph)
-    dot
-  end
-
   @behaviour Access
   @impl true
   def fetch(struct, key), do: Map.fetch(struct, key)
