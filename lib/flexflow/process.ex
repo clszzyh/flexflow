@@ -36,6 +36,7 @@ defmodule Flexflow.Process do
           transitions: Flexflow.transitions(),
           state: state(),
           __path__: path(),
+          __attributes__: keyword(),
           __loop_counter__: integer(),
           __counter__: integer()
         }
@@ -51,6 +52,7 @@ defmodule Flexflow.Process do
                 state: :created,
                 __counter__: 0,
                 __loop_counter__: 0,
+                __attributes__: [],
                 args: %{},
                 opts: [],
                 histories: [],

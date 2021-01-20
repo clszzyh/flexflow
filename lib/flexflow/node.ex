@@ -19,12 +19,19 @@ defmodule Flexflow.Node do
           module: module(),
           state: state(),
           name: Flexflow.name(),
+          __attributes__: keyword(),
           context: Context.t(),
           opts: Flexflow.node_opts()
         }
 
   @enforce_keys [:name, :module]
-  defstruct @enforce_keys ++ [state: :created, opts: [], context: Context.new()]
+  defstruct @enforce_keys ++
+              [
+                state: :created,
+                __attributes__: [shape: "box"],
+                opts: [],
+                context: Context.new()
+              ]
 
   @doc "Module name"
   @callback name :: Flexflow.name()

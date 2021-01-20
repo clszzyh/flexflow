@@ -22,6 +22,7 @@ defmodule Flexflow.Transition do
           name: Flexflow.name(),
           opts: Flexflow.node_opts(),
           state: state(),
+          __attributes__: keyword(),
           context: Context.t(),
           from: Flexflow.key_normalize(),
           to: Flexflow.key_normalize()
@@ -31,7 +32,8 @@ defmodule Flexflow.Transition do
   @type edge_tuple :: {edge, t()}
 
   @enforce_keys [:name, :module, :from, :to]
-  defstruct @enforce_keys ++ [opts: [], state: :created, context: Context.new()]
+  defstruct @enforce_keys ++
+              [opts: [], __attributes__: [], state: :created, context: Context.new()]
 
   @doc "Module name"
   @callback name :: Flexflow.name()
@@ -86,7 +88,16 @@ defmodule Flexflow.Transition do
     _new_from = nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined!")
     _new_to = nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined!")
 
-    transition = %__MODULE__{module: o, name: name, opts: opts, from: from, to: to}
+    attributes = if from == to, do: [color: "blue"], else: []
+
+    transition = %__MODULE__{
+      module: o,
+      name: name,
+      __attributes__: attributes,
+      opts: opts,
+      from: from,
+      to: to
+    }
 
     {Edge.new(from, to, label: {o, name}), transition}
   end

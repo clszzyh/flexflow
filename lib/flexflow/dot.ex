@@ -4,18 +4,18 @@ defmodule Flexflow.Dot do
   https://github.com/TLmaK0/gravizo
   """
   def serialize(p) do
-    label =
-      case Flexflow.DotProtocol.labels(p) do
+    attributes =
+      case Flexflow.DotProtocol.attributes(p) do
         [] ->
           ""
 
-        labels ->
-          s = Enum.map_join(labels, ",", fn {k, v} -> "#{k}=#{v}" end)
+        attributes ->
+          s = Enum.map_join(attributes, ",", fn {k, v} -> "#{k}=#{v}" end)
           " [#{s}]"
       end
 
     Flexflow.DotProtocol.prefix(p) <>
-      Flexflow.DotProtocol.name(p) <> label <> Flexflow.DotProtocol.suffix(p)
+      Flexflow.DotProtocol.name(p) <> attributes <> Flexflow.DotProtocol.suffix(p)
   end
 end
 
@@ -23,13 +23,13 @@ defprotocol Flexflow.DotProtocol do
   def prefix(term)
   def suffix(term)
   def name(term)
-  def labels(term)
+  def attributes(term)
 end
 
 defimpl Flexflow.DotProtocol, for: Flexflow.Process do
-  def prefix(%{name: name}), do: "digraph #{name} {\n  aize =\"4,4\";\n"
+  def prefix(%{name: name}), do: "digraph #{name} {\n"
   def suffix(_), do: "}\n//"
-  def labels(_), do: []
+  def attributes(_), do: []
 
   def name(%Flexflow.Process{nodes: nodes, transitions: transitions}) do
     nodes
@@ -44,7 +44,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Node do
   def suffix(_), do: ";\n"
   def name(%{name: name}), do: name
   # def labels(%{name: "rejected"}), do: [label: "\"{{O|6}|1100}\"", shape: "box"]
-  def labels(%{name: name}), do: [label: name, shape: "box"]
+  def attributes(%{name: name, __attributes__: attributes}), do: [label: name] ++ attributes
 end
 
 defimpl Flexflow.DotProtocol, for: Flexflow.Transition do
@@ -52,8 +52,6 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Transition do
   def suffix(_), do: ";\n"
   def name(%{from: {_, from_name}, to: {_, to_name}}), do: "#{from_name} -> #{to_name}"
 
-  def labels(%{module: module, from: {_, name}, to: {_, name}}),
-    do: [label: module.name(), style: "dotted", color: "blue"]
-
-  def labels(%{module: module}), do: [label: module.name()]
+  def attributes(%{module: module, __attributes__: attributes}),
+    do: [label: module.name()] ++ attributes
 end

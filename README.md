@@ -80,7 +80,6 @@ end
 ```dot
 // custom_mark10
 digraph verify {
-  aize ="4,4";
   canceled [label=canceled,shape=box];
   certified [label=certified,shape=box];
   rejected [label=rejected,shape=box];
@@ -89,7 +88,7 @@ digraph verify {
   uncertified -> canceled [label=cancel];
   uncertified -> certified [label=cert];
   rejected -> uncertified [label=modify];
-  uncertified -> uncertified [label=modify,style=dotted,color=blue];
+  uncertified -> uncertified [label=modify,color=blue];
   uncertified -> rejected [label=reject];
 }
 // custom_mark10
