@@ -31,11 +31,16 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
   def suffix(_), do: "}\n//"
   def attributes(_), do: []
 
-  def name(%Flexflow.Process{nodes: nodes, transitions: transitions}) do
-    nodes
-    |> Map.values()
-    |> Kernel.++(Map.values(transitions))
-    |> Enum.map_join("", &Flexflow.Dot.serialize/1)
+  def name(%Flexflow.Process{nodes: nodes, transitions: transitions, __attributes__: attributes}) do
+    attributes_str = Enum.map_join(attributes, fn {k, v} -> "  #{k} = #{v};\n" end)
+
+    str =
+      nodes
+      |> Map.values()
+      |> Kernel.++(Map.values(transitions))
+      |> Enum.map_join(&Flexflow.Dot.serialize/1)
+
+    attributes_str <> str
   end
 end
 

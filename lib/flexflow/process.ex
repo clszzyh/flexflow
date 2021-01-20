@@ -52,7 +52,7 @@ defmodule Flexflow.Process do
                 state: :created,
                 __counter__: 0,
                 __loop_counter__: 0,
-                __attributes__: [],
+                __attributes__: [size: "\"4,4\""],
                 args: %{},
                 opts: [],
                 histories: [],

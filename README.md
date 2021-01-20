@@ -80,6 +80,7 @@ end
 ```dot
 // custom_mark10
 digraph verify {
+  size = "4,4";
   canceled [label=canceled,shape=box];
   certified [label=certified,shape=box];
   rejected [label=rejected,shape=box];
