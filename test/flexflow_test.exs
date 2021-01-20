@@ -120,56 +120,56 @@ defmodule FlexflowTest do
       end,
       "Node is empty",
       quote do
-        defnode(N1)
+        node(N1)
       end,
       "Transition is empty",
       quote do
-        defnode(N0)
+        node(N0)
       end,
       "N0 should implement Elixir.Flexflow.Node",
       quote do
-        defnode(N1)
-        defnode(N2)
-        defnode(N1)
-        deftransition T1, N1 ~> N2
+        node(N1)
+        node(N2)
+        node(N1)
+        transition(T1, N1 ~> N2)
       end,
       "Node {N1, nil} is defined twice",
       quote do
-        defnode(N1)
-        deftransition T1, N1 ~> N4
+        node(N1)
+        transition(T1, N1 ~> N4)
       end,
       "{N4, nil} is not defined",
       quote do
-        defnode(N1)
-        defnode(N2)
-        deftransition T1, N1 ~> N2
-        deftransition T2, N1 ~> N2
+        node(N1)
+        node(N2)
+        transition(T1, N1 ~> N2)
+        transition(T2, N1 ~> N2)
       end,
       "Transition {{N1, nil}, {N2, nil}} is defined twice",
       quote do
-        defnode(N1)
-        defnode(N2)
-        defnode(N3)
-        deftransition T1, N1 ~> N2
-        deftransition T1, N2 ~> N3
+        node(N1)
+        node(N2)
+        node(N3)
+        transition(T1, N1 ~> N2)
+        transition(T1, N2 ~> N3)
       end,
       "Transition {T1, nil} is defined twice",
       quote do
-        defnode(N1)
-        defnode(N2)
-        deftransition T1, N1 ~> N2
+        node(N1)
+        node(N2)
+        transition(T1, N1 ~> N2)
       end,
       "Need a start node",
       quote do
         defstart(N1)
         defstart(N2)
-        deftransition T1, N1 ~> N2
+        transition(T1, N1 ~> N2)
       end,
       "Only need one start node",
       quote do
         defstart(N1)
-        defnode(N2)
-        deftransition T1, N1 ~> N2
+        node(N2)
+        transition(T1, N1 ~> N2)
       end,
       "Need one or more end node"
     ]

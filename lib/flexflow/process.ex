@@ -103,15 +103,15 @@ defmodule Flexflow.Process do
 
       import unquote(__MODULE__),
         only: [
-          defnode: 1,
-          defnode: 2,
+          node: 1,
+          node: 2,
           defstart: 1,
           defstart: 2,
           defend: 1,
           defend: 2,
           ~>: 2,
-          deftransition: 2,
-          deftransition: 3
+          transition: 2,
+          transition: 3
         ]
 
       Module.register_attribute(__MODULE__, :__nodes__, accumulate: true)
@@ -132,10 +132,10 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro defnode(key, opts \\ []), do: define_node(key, opts)
+  defmacro node(key, opts \\ []), do: define_node(key, opts)
   defmacro defstart(key, opts \\ []), do: define_node(key, [kind: :start] ++ opts)
   defmacro defend(key, opts \\ []), do: define_node(key, [kind: :end] ++ opts)
-  defmacro deftransition(key, tuple, opts \\ []), do: define_transition(key, tuple, opts)
+  defmacro transition(key, tuple, opts \\ []), do: define_transition(key, tuple, opts)
   def a ~> b, do: {a, b}
 
   defp define_node(key, opts) do

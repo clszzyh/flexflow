@@ -20,16 +20,16 @@ defmodule P1 do
   def name, do: "p1_new"
 
   defstart N1, foo: %{aaa: :bbb}
-  defnode N2
-  deftransition T1, N1 ~> N2, foo: :baz
+  node N2
+  transition T1, N1 ~> N2, foo: :baz
 
-  defnode N3
-  defnode N4
+  node N3
+  node N4
   defend N5
-  defnode N6
-  deftransition T2, N2 ~> N3
-  deftransition {T2, "1"}, N2 ~> N4
-  deftransition {T2, "2"}, N2 ~> N5
-  deftransition {T2, "3"}, N2 ~> N6
-  deftransition {T2, "4"}, N4 ~> N1
+  node N6
+  transition T2, N2 ~> N3
+  transition {T2, "1"}, N2 ~> N4
+  transition {T2, "2"}, N2 ~> N5
+  transition {T2, "3"}, N2 ~> N6
+  transition {T2, "4"}, N4 ~> N1
 end

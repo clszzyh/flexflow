@@ -58,15 +58,15 @@ defmodule Verify do
 
   defstart Uncertified
   defend Certified
-  defnode Rejected
+  node Rejected
   defend Canceled
 
-  deftransition Cert, Uncertified ~> Certified
-  deftransition Modify, Uncertified ~> Uncertified
-  deftransition Reject, Uncertified ~> Rejected
-  deftransition Cancel, Uncertified ~> Canceled
-  deftransition Modify, Rejected ~> Uncertified
-  deftransition Cancel, Rejected ~> Canceled
+  transition Cert, Uncertified ~> Certified
+  transition Modify, Uncertified ~> Uncertified
+  transition Reject, Uncertified ~> Rejected
+  transition Cancel, Uncertified ~> Canceled
+  transition Modify, Rejected ~> Uncertified
+  transition Cancel, Rejected ~> Canceled
 end
 ```
 
