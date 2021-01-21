@@ -16,6 +16,8 @@ defmodule Flexflow.Node do
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type kind :: :start | :end | :intermediate
+  @type option :: {:async, boolean()}
+  @type options :: [option]
   @type t :: %__MODULE__{
           module: module(),
           state: state(),
@@ -25,7 +27,7 @@ defmodule Flexflow.Node do
           __in_edges__: [{Flexflow.key_normalize(), Flexflow.key_normalize()}],
           __out_edges__: [{Flexflow.key_normalize(), Flexflow.key_normalize()}],
           __context__: Context.t(),
-          __opts__: Flexflow.node_opts()
+          __opts__: options
         }
 
   @enforce_keys [:name, :module, :kind]
@@ -77,7 +79,7 @@ defmodule Flexflow.Node do
   @spec key(t()) :: Flexflow.key_normalize()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({Flexflow.key(), Flexflow.node_opts()}) :: t()
+  @spec new({Flexflow.key(), options}) :: t()
   def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 
   def new({{o, name}, opts}) do

@@ -27,7 +27,8 @@ defmodule Review do
   end
 
   defmodule Rejected do
-    use Flexflow.Node
+    ## `async` mode means this node run's in a separated elixir process.
+    use Flexflow.Node, async: true
   end
 
   defmodule Canceled do
@@ -39,7 +40,8 @@ defmodule Review do
   end
 
   defmodule Agree do
-    use Flexflow.Transition
+    ## `async` mode means this transition run's in a separated elixir process.
+    use Flexflow.Transition, async: true
   end
 
   defmodule Modify do

@@ -11,8 +11,6 @@ defmodule Flexflow do
   @type process_identity :: {module(), id()}
   @type process_args :: map()
 
-  @type node_opts :: keyword()
-
   @type name :: String.t()
   @type id :: String.t()
 

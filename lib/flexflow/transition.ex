@@ -16,13 +16,15 @@ defmodule Flexflow.Transition do
   #{inspect(@states)}
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
+  @type option :: {:async, boolean()}
+  @type options :: [option]
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
           state: state(),
           from: Flexflow.key_normalize(),
           to: Flexflow.key_normalize(),
-          __opts__: Flexflow.node_opts(),
+          __opts__: options,
           __graphviz_attributes__: keyword(),
           __context__: Context.t()
         }
@@ -72,8 +74,7 @@ defmodule Flexflow.Transition do
   @spec key(t()) :: Flexflow.key_normalize()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, Flexflow.node_opts()}, [Node.t()]) ::
-          t()
+  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, options}, [Node.t()]) :: t()
   def new({o, {from, to}, opts}, nodes) when is_atom(o) do
     new({Util.normalize_module({o, from, to}), {from, to}, opts}, nodes)
   end
