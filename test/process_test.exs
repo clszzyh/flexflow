@@ -32,7 +32,13 @@ defmodule ProcessTest do
 
   test "start process" do
     {:ok, pid} = Flexflow.ProcessManager.server({P1, "p1"})
+    {:exist, pid2} = Flexflow.ProcessManager.server({P1, "p1"})
+    assert pid == pid2
     process = Flexflow.ProcessServer.state(pid)
     assert process.id == "p1"
+
+    assert Flexflow.ProcessManager.children(P1) == [
+             %{kind: :worker, module: Flexflow.ProcessServer, pid: pid}
+           ]
   end
 end

@@ -38,6 +38,13 @@ defmodule Flexflow.Process do
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
   @type identity :: {:node | :transition, Flexflow.key_normalize()}
+  @type handle_cast_return :: {:noreply, t()} | {:stop, term(), t()}
+  @type handle_info_return :: {:noreply, t()} | {:stop, term(), t()}
+  @type handle_call_return ::
+          {:reply, term, t()}
+          | {:noreply, term}
+          | {:stop, term, term}
+          | {:stop, term, term, t()}
 
   @enforce_keys [:module, :nodes, :start_node, :transitions, :__identities__]
   defstruct @enforce_keys ++
@@ -60,8 +67,14 @@ defmodule Flexflow.Process do
   @doc "Invoked when process is started, after nodes and transitions `init`, see `Flexflow.Api.init/1`"
   @callback init(t() | {:error, term()}) :: result()
 
+  @callback handle_call(t(), term(), GenServer.from()) :: handle_call_return()
+  @callback handle_cast(t(), term()) :: handle_cast_return()
+  @callback handle_info(t(), term()) :: handle_info_return()
+  @callback terminate(t(), term()) :: term()
+
   defmacro __using__(opts) do
     quote do
+      alias Flexflow.Api
       alias Flexflow.Nodes
       alias Flexflow.Transitions
 
@@ -96,6 +109,18 @@ defmodule Flexflow.Process do
 
       @impl true
       def init(o), do: {:ok, o}
+
+      @impl true
+      def handle_call(process, term, from), do: Api.call(process, term, from)
+
+      @impl true
+      def handle_cast(process, term), do: Api.cast(process, term)
+
+      @impl true
+      def handle_info(process, term), do: Api.info(process, term)
+
+      @impl true
+      def terminate(process, term), do: Api.terminate(process, term)
 
       defoverridable unquote(__MODULE__)
     end

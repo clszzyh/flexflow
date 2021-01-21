@@ -50,4 +50,10 @@ defmodule Flexflow.ProcessManager do
       {:error, reason} -> {:error, reason}
     end
   end
+
+  def children(mod) do
+    {:ok, srv} = server_pid(mod)
+    childs = DynamicSupervisor.which_children(srv)
+    for {_, pid, kind, [module]} <- childs, do: %{pid: pid, kind: kind, module: module}
+  end
 end

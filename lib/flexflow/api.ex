@@ -18,6 +18,26 @@ defmodule Flexflow.Api do
     |> telemetry_invoke(:process_loop, &loop/1)
   end
 
+  @spec call(Process.t(), term(), GenServer.from() | nil) :: Process.handle_call_return()
+  def call(%Process{} = p, input, from \\ nil) do
+    {:stop, {:call, input, from}, p}
+  end
+
+  @spec cast(Process.t(), term()) :: Process.handle_cast_return()
+  def cast(%Process{} = p, input) do
+    {:stop, {:cast, input}, p}
+  end
+
+  @spec info(Process.t(), term()) :: Process.handle_info_return()
+  def info(%Process{} = p, input) do
+    {:stop, {:info, input}, p}
+  end
+
+  @spec terminate(Process.t(), term()) :: term()
+  def terminate(%Process{} = _p, _reason) do
+    :ok
+  end
+
   @spec init(Process.t()) :: Process.result()
   def init(%Process{module: module, nodes: nodes, transitions: transitions} = p) do
     (Map.to_list(nodes) ++ Map.to_list(transitions))
