@@ -22,15 +22,15 @@ defmodule Flexflow.Process do
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name() | nil,
-          args: Flexflow.process_args(),
           id: Flexflow.id() | nil,
-          opts: keyword(),
           nodes: Flexflow.nodes(),
-          histories: [History.t()],
-          context: Context.t(),
           transitions: Flexflow.transitions(),
           start_node: Flexflow.key_normalize(),
           state: state(),
+          __args__: Flexflow.process_args(),
+          __opts__: keyword(),
+          __context__: Context.t(),
+          __histories__: [History.t()],
           __identities__: [identity],
           __graphviz_attributes__: keyword(),
           __loop_counter__: integer(),
@@ -51,10 +51,10 @@ defmodule Flexflow.Process do
                 __counter__: 0,
                 __loop_counter__: 0,
                 __graphviz_attributes__: [size: "\"4,4\""],
-                args: %{},
-                opts: [],
-                histories: [],
-                context: Context.new()
+                __args__: %{},
+                __opts__: [],
+                __histories__: [],
+                __context__: Context.new()
               ]
 
   @spec start(module(), Flexflow.id(), Flexflow.process_args()) :: result()
@@ -164,8 +164,8 @@ defmodule Flexflow.Process do
       nodes: nodes,
       module: module,
       start_node: start_node,
-      __identities__: identities,
-      transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t})
+      transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t}),
+      __identities__: identities
     }
   end
 
@@ -227,11 +227,11 @@ defmodule Flexflow.Process do
       end
 
       @__module__ module
-      @__process__ %{process | opts: @__opts__}
+      @__process__ %{process | __opts__: @__opts__}
 
       @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}),
-        do: struct!(@__process__, name: name(), id: id, args: args)
+        do: struct!(@__process__, name: name(), id: id, __args__: args)
 
       @spec start(Flexflow.id(), Flexflow.process_args()) :: Process.result()
       def start(id, args \\ %{}), do: @__module__.start(__MODULE__, id, args)

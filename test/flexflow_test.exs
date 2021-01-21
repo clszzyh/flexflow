@@ -13,10 +13,10 @@ defmodule FlexflowTest do
 
   test "p1" do
     assert P1.module_info()
-    assert P1.new("p1", %{foo: :bar}).args == %{foo: :bar}
+    assert P1.new("p1", %{foo: :bar}).__args__ == %{foo: :bar}
     assert P1.new("p1", %{foo: :bar}).id == "p1"
     assert P1.new().name == "p1_new"
-    assert P1.new().opts == [hello: %{foo: :zzzz}]
+    assert P1.new().__opts__ == [hello: %{foo: :zzzz}]
     assert P1.new().module == P1
 
     n1_s = {N1, "n1"}
@@ -24,7 +24,7 @@ defmodule FlexflowTest do
     n3_s = {N3, "n3"}
     n4_s = {N4, "n4"}
 
-    t1 = %T{module: T1, name: "t1_by_n1", opts: [foo: :baz], from: n1_s, to: n2_s}
+    t1 = %T{module: T1, name: "t1_by_n1", __opts__: [foo: :baz], from: n1_s, to: n2_s}
     t2 = %T{module: T2, name: "t2_by_n2", from: n2_s, to: n3_s}
     t3 = %T{module: T2, name: "1", from: n2_s, to: n4_s}
 

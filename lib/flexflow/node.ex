@@ -24,19 +24,19 @@ defmodule Flexflow.Node do
           __graphviz_attributes__: keyword(),
           __in_edges__: [{Flexflow.key_normalize(), Flexflow.key_normalize()}],
           __out_edges__: [{Flexflow.key_normalize(), Flexflow.key_normalize()}],
-          context: Context.t(),
-          opts: Flexflow.node_opts()
+          __context__: Context.t(),
+          __opts__: Flexflow.node_opts()
         }
 
   @enforce_keys [:name, :module, :kind]
   defstruct @enforce_keys ++
               [
+                state: :created,
                 __graphviz_attributes__: [],
                 __in_edges__: [],
                 __out_edges__: [],
-                state: :created,
-                opts: [],
-                context: Context.new()
+                __opts__: [],
+                __context__: Context.new()
               ]
 
   @doc "Module name"
@@ -91,8 +91,8 @@ defmodule Flexflow.Node do
     %__MODULE__{
       module: o,
       name: name,
-      opts: opts,
       kind: kind,
+      __opts__: opts,
       __graphviz_attributes__: attributes
     }
   end
