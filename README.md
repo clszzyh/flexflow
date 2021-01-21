@@ -40,8 +40,7 @@ defmodule Review do
   end
 
   defmodule Agree do
-    ## `async` mode means this transition run's in a separated elixir process.
-    use Flexflow.Transition, async: true
+    use Flexflow.Transition
   end
 
   defmodule Modify do
@@ -80,7 +79,8 @@ defmodule Review do
 
   ## Define a transition
   transition Reject, Inreview ~> Rejected
-  transition Agree, Inreview ~> {Reviewed, "Already reviewed"}
+  ## `async` mode means this transition run's in a separated elixir process.
+  transition Agree, Inreview ~> {Reviewed, "Already reviewed"}, async: true
 end
 ```
 
@@ -99,7 +99,7 @@ digraph review {
   Already_reviewed [label="Already reviewed",shape=circle,color=red];
   canceled [label="canceled",shape=circle,color=red];
   inreview [label="inreview",shape=box];
-  rejected [label="rejected",shape=box];
+  rejected [label="rejected",shape=box,style=bold];
   draft -> inreview [label="submit"];
   draft -> draft [label="modify",color=blue];
   draft -> canceled [label="cancel"];
@@ -107,7 +107,7 @@ digraph review {
   rejected -> rejected [label="modify",color=blue];
   rejected -> canceled [label="cancel"];
   inreview -> rejected [label="reject"];
-  inreview -> Already_reviewed [label="agree"];
+  inreview -> Already_reviewed [label="agree",style=bold];
 }
 // custom_mark10
 ```

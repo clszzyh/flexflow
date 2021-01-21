@@ -47,7 +47,7 @@ defmodule Flexflow.Node do
   @doc "Invoked when process is started"
   @callback init(t(), Process.t()) :: {:ok, t()}
 
-  defmacro __using__(_) do
+  defmacro __using__(opts \\ []) do
     quote do
       @behaviour unquote(__MODULE__)
 
@@ -58,6 +58,7 @@ defmodule Flexflow.Node do
       end
 
       @__name__ Flexflow.Util.module_name(__MODULE__)
+      def __opts__, do: unquote(opts)
 
       @impl true
       def name, do: @__name__
@@ -87,8 +88,11 @@ defmodule Flexflow.Node do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
 
+    opts = opts ++ o.__opts__
     {kind, opts} = Keyword.pop(opts, :kind, :intermediate)
     {attributes, opts} = Keyword.pop(opts, :attributes, attribute(kind))
+    async = Keyword.get(opts, :async, false)
+    attributes = if async, do: attributes ++ [style: "bold"], else: attributes
 
     %__MODULE__{
       module: o,

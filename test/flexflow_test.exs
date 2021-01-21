@@ -25,7 +25,16 @@ defmodule FlexflowTest do
     n4_s = {N4, "n4"}
 
     t1 = %T{module: T1, name: "t1_by_n1", __opts__: [foo: :baz], from: n1_s, to: n2_s}
-    t2 = %T{module: T2, name: "t2_by_n2", from: n2_s, to: n3_s, __opts__: [async: true]}
+
+    t2 = %T{
+      module: T2,
+      name: "t2_by_n2",
+      __graphviz_attributes__: [{:style, "bold"}],
+      from: n2_s,
+      to: n3_s,
+      __opts__: [async: true]
+    }
+
     t3 = %T{module: T2, name: "1", from: n2_s, to: n4_s}
 
     n1 = N.new({n1_s, foo: %{aaa: :bbb}, kind: :start})
