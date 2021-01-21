@@ -22,9 +22,9 @@ defmodule P1 do
 
   transition T1, N1 ~> N2, foo: :baz
 
-  intermediate_node N3
+  intermediate_node N3, async: true
   end_node N4
 
-  transition T2, N2 ~> N3
+  transition T2, N2 ~> N3, async: true
   transition {T2, "1"}, N2 ~> N4
 end

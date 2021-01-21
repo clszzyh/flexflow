@@ -46,7 +46,7 @@ defmodule Flexflow.ProcessManager do
     module
     |> server_pid()
     |> case do
-      {:ok, srv} -> DynamicSupervisor.start_child(srv, {Flexflow.ProcessServer, {id, opts}})
+      {:ok, srv} -> DynamicSupervisor.start_child(srv, {Flexflow.ProcessSupervisor, {id, opts}})
       {:error, reason} -> {:error, reason}
     end
   end
