@@ -15,4 +15,5 @@ alias Flexflow.ModuleRegistry
 
 alias Flexflow.ProcessParentManager
 alias Flexflow.ProcessManager
-alias Flexflow.Server
+alias Flexflow.ProcessServer
+alias Flexflow.Api
