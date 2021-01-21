@@ -72,17 +72,19 @@ end
 defimpl Flexflow.DotProtocol, for: Flexflow.Node do
   def prefix(_), do: "  "
   def suffix(_), do: ";\n"
-  def name(%{name: name}), do: name
+  def name(%{name: name}), do: inspect(name)
 
   def attributes(%{name: name, __graphviz_attributes__: attributes}),
-    do: [label: name] ++ attributes
+    do: [label: inspect(name)] ++ attributes
 end
 
 defimpl Flexflow.DotProtocol, for: Flexflow.Transition do
   def prefix(_), do: "  "
   def suffix(_), do: ";\n"
-  def name(%{from: {_, from_name}, to: {_, to_name}}), do: "#{from_name} -> #{to_name}"
+
+  def name(%{from: {_, from_name}, to: {_, to_name}}),
+    do: "#{inspect(from_name)} -> #{inspect(to_name)}"
 
   def attributes(%{module: module, __graphviz_attributes__: attributes}),
-    do: [label: module.name()] ++ attributes
+    do: [label: inspect(module.name())] ++ attributes
 end
