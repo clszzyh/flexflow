@@ -58,9 +58,9 @@ defmodule Review do
 
   ## Define a start node
   start_node Draft
-  ## Define an end node
-  end_node Canceled
+  ## Define an end node with custom name
   end_node {Reviewed, "Already reviewed"}
+  end_node Canceled
   ## Define an intermediate node
   intermediate_node Inreview
   intermediate_node Rejected
@@ -71,7 +71,8 @@ defmodule Review do
   transition Modify, Draft ~> Draft
   transition Cancel, Draft ~> Canceled
 
-  transition Submit, Rejected ~> Inreview
+  ## Define a transition with custom name
+  transition {Submit, "Submit rejected"}, Rejected ~> Inreview
   transition Modify, Rejected ~> Rejected
   transition Cancel, Rejected ~> Canceled
 
@@ -93,8 +94,8 @@ end
 digraph review {
   size ="4,4";
   draft [label="draft",shape=doublecircle,color=".7 .3 1.0"];
-  canceled [label="canceled",shape=circle,color=red];
   Already_reviewed [label="Already reviewed",shape=circle,color=red];
+  canceled [label="canceled",shape=circle,color=red];
   inreview [label="inreview",shape=box];
   rejected [label="rejected",shape=box];
   draft -> inreview [label="submit"];
