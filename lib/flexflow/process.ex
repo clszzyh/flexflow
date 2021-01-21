@@ -51,7 +51,7 @@ defmodule Flexflow.Process do
                 state: :created,
                 __counter__: 0,
                 __loop_counter__: 0,
-                __graphviz_attributes__: [aize: "\"4,4\""],
+                __graphviz_attributes__: [size: "\"4,4\""],
                 args: %{},
                 opts: [],
                 histories: [],
