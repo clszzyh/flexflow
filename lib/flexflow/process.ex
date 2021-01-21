@@ -7,6 +7,7 @@ defmodule Flexflow.Process do
   alias Flexflow.Context
   alias Flexflow.History
   alias Flexflow.Node
+  alias Flexflow.ProcessManager
   alias Flexflow.Telemetry
   alias Flexflow.Transition
   alias Flexflow.Util
@@ -48,6 +49,7 @@ defmodule Flexflow.Process do
           | {:noreply, term}
           | {:stop, term, term}
           | {:stop, term, term, t()}
+  @type server_return :: ProcessManager.server_return()
 
   @enforce_keys [:module, :nodes, :start_node, :transitions, :__identities__]
   defstruct @enforce_keys ++
@@ -223,8 +225,8 @@ defmodule Flexflow.Process do
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}),
         do: struct!(@__process__, name: name(), id: id, __args__: args)
 
-      @spec start(Flexflow.id(), Flexflow.process_args()) :: Process.result()
-      def start(id, args \\ %{}), do: Process.new(__MODULE__, id, args)
+      @spec start(Flexflow.id(), Flexflow.process_args()) :: Process.server_return()
+      def start(id, args \\ %{}), do: Process.start(__MODULE__, id, args)
 
       Module.delete_attribute(__MODULE__, :__nodes__)
       Module.delete_attribute(__MODULE__, :__opts__)
@@ -256,6 +258,9 @@ defmodule Flexflow.Process do
     |> telemetry_invoke(:process_init, &init/1)
     |> telemetry_invoke(:process_loop, &loop/1)
   end
+
+  @spec start(module(), Flexflow.id(), Flexflow.process_args()) :: server_return()
+  def start(module, id, args \\ %{}), do: ProcessManager.server({module, id}, args)
 
   @spec init(t()) :: result()
   def init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do

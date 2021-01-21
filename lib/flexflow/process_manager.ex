@@ -6,6 +6,8 @@ defmodule Flexflow.ProcessManager do
 
   alias Flexflow.Util
 
+  @type server_return :: {:ok | :exist, pid} | {:error, term()}
+
   def start_link(module) do
     unless Util.local_behaviour(module) in [Flexflow.Process] do
       raise ArgumentError, "#{module} is not a valid process"
@@ -19,8 +21,7 @@ defmodule Flexflow.ProcessManager do
     DynamicSupervisor.init(strategy: :one_for_one, extra_arguments: [module])
   end
 
-  @spec server(Flexflow.process_identity(), Flexflow.process_args()) ::
-          {:ok | :exist, pid} | {:error, term()}
+  @spec server(Flexflow.process_identity(), Flexflow.process_args()) :: server_return
   def server({module, id}, opts \\ %{}) do
     case start_child({module, id}, opts) do
       {:ok, pid} -> {:ok, pid}
@@ -40,8 +41,7 @@ defmodule Flexflow.ProcessManager do
     end
   end
 
-  @spec start_child(Flexflow.process_identity(), Flexflow.process_args()) ::
-          {:ok, pid} | {:error, {:already_started, pid}} | {:error, term()}
+  @spec start_child(Flexflow.process_identity(), Flexflow.process_args()) :: server_return
   defp start_child({module, id}, opts) do
     module
     |> server_pid()
