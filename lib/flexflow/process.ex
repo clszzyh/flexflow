@@ -42,6 +42,7 @@ defmodule Flexflow.Process do
   @type identity :: {:node | :transition, Flexflow.key_normalize()}
   @type handle_cast_return :: {:noreply, t()} | {:stop, term(), t()}
   @type handle_info_return :: {:noreply, t()} | {:stop, term(), t()}
+  @type handle_continue_return :: {:noreply, t()} | {:stop, term(), t()}
   @type handle_call_return ::
           {:reply, term, t()}
           | {:noreply, term}
@@ -72,7 +73,16 @@ defmodule Flexflow.Process do
   @callback handle_call(t(), term(), GenServer.from()) :: handle_call_return()
   @callback handle_cast(t(), term()) :: handle_cast_return()
   @callback handle_info(t(), term()) :: handle_info_return()
+  @callback handle_continue(t(), term()) :: handle_continue_return()
   @callback terminate(t(), term()) :: term()
+
+  @optional_callbacks [
+    handle_call: 3,
+    handle_cast: 2,
+    handle_info: 2,
+    handle_continue: 2,
+    terminate: 2
+  ]
 
   defmacro __using__(opts) do
     quote do
@@ -110,18 +120,6 @@ defmodule Flexflow.Process do
 
       @impl true
       def init(o), do: {:ok, o}
-
-      @impl true
-      def handle_call(process, term, from), do: unquote(__MODULE__).call(process, term, from)
-
-      @impl true
-      def handle_cast(process, term), do: unquote(__MODULE__).cast(process, term)
-
-      @impl true
-      def handle_info(process, term), do: unquote(__MODULE__).info(process, term)
-
-      @impl true
-      def terminate(process, term), do: unquote(__MODULE__).terminate(process, term)
 
       defoverridable unquote(__MODULE__)
     end
@@ -226,7 +224,7 @@ defmodule Flexflow.Process do
         do: struct!(@__process__, name: name(), id: id, __args__: args)
 
       @spec start(Flexflow.id(), Flexflow.process_args()) :: Process.result()
-      def start(id, args \\ %{}), do: Process.start(__MODULE__, id, args)
+      def start(id, args \\ %{}), do: Process.new(__MODULE__, id, args)
 
       Module.delete_attribute(__MODULE__, :__nodes__)
       Module.delete_attribute(__MODULE__, :__opts__)
@@ -250,6 +248,15 @@ defmodule Flexflow.Process do
 
   ###### Api ######
 
+  @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: result()
+  def new(module, id, args \\ %{}) do
+    p = module.new(id, args)
+
+    {:ok, p}
+    |> telemetry_invoke(:process_init, &init/1)
+    |> telemetry_invoke(:process_loop, &loop/1)
+  end
+
   @spec init(t()) :: result()
   def init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
     (Map.to_list(nodes) ++ Map.to_list(transitions))
@@ -272,15 +279,6 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec start(module(), Flexflow.id(), Flexflow.process_args()) :: result()
-  def start(module, id, args \\ %{}) do
-    p = module.new(id, args)
-
-    {:ok, p}
-    |> telemetry_invoke(:process_init, &init/1)
-    |> telemetry_invoke(:process_loop, &loop/1)
-  end
-
   @spec call(t(), term(), GenServer.from() | nil) :: handle_call_return()
   def call(%__MODULE__{} = p, input, from \\ nil) do
     {:stop, {:call, input, from}, p}
@@ -294,6 +292,11 @@ defmodule Flexflow.Process do
   @spec info(t(), term()) :: handle_info_return()
   def info(%__MODULE__{} = p, input) do
     {:stop, {:info, input}, p}
+  end
+
+  @spec continue(t(), term()) :: handle_continue_return()
+  def continue(%__MODULE__{} = p, input) do
+    {:stop, {:continue, input}, p}
   end
 
   @spec terminate(t(), term()) :: term()

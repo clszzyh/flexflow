@@ -17,7 +17,7 @@ defmodule Flexflow.ProcessServer do
   @impl true
   def init({module, id, opts}) do
     module
-    |> Process.start(id, opts)
+    |> Process.new(id, opts)
     |> case do
       {:ok, p} -> {:ok, p}
       {:error, reason} -> {:stop, reason}
@@ -30,22 +30,27 @@ defmodule Flexflow.ProcessServer do
   end
 
   @impl true
-  def handle_call(input, from, %{module: module} = state) do
-    module.handle_call(state, input, from)
+  def handle_call(input, from, state) do
+    Process.call(state, input, from)
   end
 
   @impl true
-  def handle_cast(input, %{module: module} = state) do
-    module.handle_cast(state, input)
+  def handle_cast(input, state) do
+    Process.cast(state, input)
   end
 
   @impl true
-  def handle_info(input, %{module: module} = state) do
-    module.handle_info(state, input)
+  def handle_info(input, state) do
+    Process.info(state, input)
   end
 
   @impl true
-  def terminate(reason, %{module: module} = state) do
-    module.terminate(state, reason)
+  def handle_continue(input, state) do
+    Process.info(state, input)
+  end
+
+  @impl true
+  def terminate(reason, state) do
+    Process.terminate(state, reason)
   end
 end
