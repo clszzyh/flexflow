@@ -12,9 +12,9 @@ defmodule Flexflow.ProcessParentManager do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
+  @spec register(module()) :: {:ok, pid()} | {:error, term()}
   def register(module) do
-    {:ok, _pid} = DynamicSupervisor.start_child(__MODULE__, {Flexflow.ProcessManager, module})
-    :ok
+    DynamicSupervisor.start_child(__MODULE__, {Flexflow.ProcessManager, module})
   end
 
   def children do

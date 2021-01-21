@@ -12,3 +12,7 @@ alias Flexflow.Events
 alias Flexflow.Transitions
 
 alias Flexflow.ModuleRegistry
+
+alias Flexflow.ProcessParentManager
+alias Flexflow.ProcessManager
+alias Flexflow.Server

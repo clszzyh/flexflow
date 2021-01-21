@@ -44,9 +44,12 @@ defmodule Flexflow.ModuleRegistry do
     kind = Util.local_behaviour(module)
     name = module.name()
 
-    if kind == Flexflow.Process do
-      :ok = Flexflow.ProcessParentManager.register(module)
-    end
+    {:ok, _} =
+      if kind == Flexflow.Process do
+        Flexflow.ProcessParentManager.register(module)
+      else
+        {:ok, :ignore}
+      end
 
     case Map.get(state, kind) do
       nil ->

@@ -4,7 +4,13 @@ defmodule Flexflow.ProcessManager do
   use DynamicSupervisor
   use Flexflow.ProcessRegistry
 
+  alias Flexflow.Util
+
   def start_link(module) do
+    unless Util.local_behaviour(module) in [Flexflow.Process] do
+      raise ArgumentError, "#{module} is not a valid process"
+    end
+
     DynamicSupervisor.start_link(__MODULE__, module, name: via_tuple(module))
   end
 
@@ -13,17 +19,35 @@ defmodule Flexflow.ProcessManager do
     DynamicSupervisor.init(strategy: :one_for_one, extra_arguments: [module])
   end
 
-  @spec server(Flexflow.process_identity(), Flexflow.process_args()) :: {:ok | :exist, pid}
+  @spec server(Flexflow.process_identity(), Flexflow.process_args()) ::
+          {:ok | :exist, pid} | {:error, term()}
   def server({module, id}, opts \\ %{}) do
     case start_child({module, id}, opts) do
       {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, pid}} -> {:exist, pid}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec server_pid(module) :: {:ok, pid} | {:error, term()}
+  def server_pid(module) do
+    case pid(module) do
+      nil ->
+        Flexflow.ProcessParentManager.register(module)
+
+      pid ->
+        {:ok, pid}
     end
   end
 
   @spec start_child(Flexflow.process_identity(), Flexflow.process_args()) ::
-          {:ok, pid} | {:error, {:already_started, pid}}
+          {:ok, pid} | {:error, {:already_started, pid}} | {:error, term()}
   defp start_child({module, id}, opts) do
-    DynamicSupervisor.start_child(pid(module), {Flexflow.ProcessServer, {id, opts}})
+    module
+    |> server_pid()
+    |> case do
+      {:ok, srv} -> DynamicSupervisor.start_child(srv, {Flexflow.ProcessServer, {id, opts}})
+      {:error, reason} -> {:error, reason}
+    end
   end
 end
