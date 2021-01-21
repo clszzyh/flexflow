@@ -74,6 +74,9 @@ defmodule Flexflow.Node do
   def attribute(:start), do: [shape: "doublecircle", color: "\".7 .3 1.0\""]
   def attribute(:end), do: [shape: "circle", color: "red"]
 
+  @spec key(t()) :: Flexflow.key_normalize()
+  def key(%{module: module, name: name}), do: {module, name}
+
   @spec new({Flexflow.key(), Flexflow.node_opts()}) :: t()
   def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 

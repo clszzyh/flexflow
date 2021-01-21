@@ -70,6 +70,8 @@ defmodule FlexflowTest do
 
     assert P1.new().nodes == %{n1_s => n1, n2_s => n2, n3_s => n3, n4_s => n4}
     assert P1.new().transitions == %{t1_s => t1, t2_s => t2, t3_s => t3}
+
+    assert P1.new().start_node == n1_s
     assert Enum.count(P1.new().graph.vertices) == 4
   end
 

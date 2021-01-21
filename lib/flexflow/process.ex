@@ -30,6 +30,7 @@ defmodule Flexflow.Process do
           histories: [History.t()],
           context: Context.t(),
           transitions: Flexflow.transitions(),
+          start_node: Flexflow.key_normalize(),
           state: state(),
           __identities__: [identity],
           __graphviz_attributes__: keyword(),
@@ -42,7 +43,7 @@ defmodule Flexflow.Process do
 
   @type identity :: {:node | :transition, Flexflow.key_normalize()}
 
-  @enforce_keys [:graph, :module, :nodes, :transitions, :__identities__]
+  @enforce_keys [:graph, :module, :nodes, :start_node, :transitions, :__identities__]
   defstruct @enforce_keys ++
               [
                 :name,
@@ -148,14 +149,14 @@ defmodule Flexflow.Process do
 
   @spec new(module(), [Node.t()], [Transition.edge_tuple()], [identity]) :: t()
   def new(module, nodes, edge_list, identities) do
-    vertices = nodes |> Enum.map(&{&1.module, &1.name})
+    vertices = nodes |> Enum.map(&Node.key/1)
     edges = Enum.map(edge_list, &elem(&1, 0))
-
+    start_node = nodes |> Enum.find(&Node.start?/1) |> Node.key()
     graph = Graph.new() |> Graph.add_vertices(vertices) |> Graph.add_edges(edges)
 
     nodes =
       Map.new(nodes, fn o ->
-        k = {o.module, o.name}
+        k = Node.key(o)
 
         {k,
          %{
@@ -169,6 +170,7 @@ defmodule Flexflow.Process do
       graph: graph,
       nodes: nodes,
       module: module,
+      start_node: start_node,
       __identities__: identities,
       transitions: for({k, v} <- edge_list, into: %{}, do: {k.label, v})
     }
