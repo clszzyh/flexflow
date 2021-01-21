@@ -19,7 +19,7 @@ defmodule Flexflow.ProcessServer do
     module
     |> Process.new(id, opts)
     |> case do
-      {:ok, p} -> {:ok, p}
+      {:ok, p} -> {:ok, p, {:continue, :loop}}
       {:error, reason} -> {:stop, reason}
     end
   end
@@ -46,7 +46,7 @@ defmodule Flexflow.ProcessServer do
 
   @impl true
   def handle_continue(input, state) do
-    Process.info(state, input)
+    Process.continue(state, input)
   end
 
   @impl true

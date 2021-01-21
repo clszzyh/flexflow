@@ -49,7 +49,7 @@ defmodule Flexflow.Process do
           | {:noreply, term}
           | {:stop, term, term}
           | {:stop, term, term, t()}
-  @type server_return :: ProcessManager.server_return()
+  @type server_return :: {:ok | :exist, pid} | {:error, term()}
 
   @enforce_keys [:module, :nodes, :start_node, :transitions, :__identities__]
   defstruct @enforce_keys ++
@@ -70,7 +70,7 @@ defmodule Flexflow.Process do
   @callback name :: Flexflow.name()
 
   @doc "Invoked when process is started, after nodes and transitions `init`, see `Flexflow.Api.init/1`"
-  @callback init(t() | {:error, term()}) :: result()
+  @callback init(t()) :: result()
 
   @callback handle_call(t(), term(), GenServer.from()) :: handle_call_return()
   @callback handle_cast(t(), term()) :: handle_cast_return()
@@ -79,6 +79,7 @@ defmodule Flexflow.Process do
   @callback terminate(t(), term()) :: term()
 
   @optional_callbacks [
+    init: 1,
     handle_call: 3,
     handle_cast: 2,
     handle_info: 2,
@@ -119,9 +120,6 @@ defmodule Flexflow.Process do
 
       @impl true
       def name, do: @__name__
-
-      @impl true
-      def init(o), do: {:ok, o}
 
       defoverridable unquote(__MODULE__)
     end
@@ -252,11 +250,9 @@ defmodule Flexflow.Process do
 
   @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def new(module, id, args \\ %{}) do
-    p = module.new(id, args)
-
-    {:ok, p}
+    id
+    |> module.new(args)
     |> telemetry_invoke(:process_init, &init/1)
-    |> telemetry_invoke(:process_loop, &loop/1)
   end
 
   @spec start(module(), Flexflow.id(), Flexflow.process_args()) :: server_return()
@@ -277,10 +273,18 @@ defmodule Flexflow.Process do
           {:halt, {key, reason}}
       end
     end)
-    |> module.init()
     |> case do
-      {:error, reason} -> {:error, reason}
-      {:ok, %__MODULE__{} = p} -> {:ok, %{p | state: :active}}
+      {:error, reason} ->
+        {:error, reason}
+
+      %__MODULE__{} = p ->
+        p = %{p | state: :active}
+
+        if function_exported?(module, :init, 1) do
+          module.init(p)
+        else
+          {:ok, p}
+        end
     end
   end
 
@@ -300,6 +304,13 @@ defmodule Flexflow.Process do
   end
 
   @spec continue(t(), term()) :: handle_continue_return()
+  def continue(%__MODULE__{} = p, :loop) do
+    case telemetry_invoke(p, :process_loop, &loop/1) do
+      {:ok, p} -> {:noreply, p}
+      {:error, reason} -> {:stop, reason, p}
+    end
+  end
+
   def continue(%__MODULE__{} = p, input) do
     {:stop, {:continue, input}, p}
   end
@@ -332,10 +343,8 @@ defmodule Flexflow.Process do
     {:ok, %{p | __loop_counter__: loop_counter + 1, __counter__: counter + 1}}
   end
 
-  @spec telemetry_invoke(result(), atom(), (t() -> result())) :: result()
-  def telemetry_invoke({:error, reason}, _, _), do: {:error, reason}
-
-  def telemetry_invoke({:ok, p}, name, f) do
+  @spec telemetry_invoke(t(), atom(), (t() -> result())) :: result()
+  defp telemetry_invoke(p, name, f) do
     Telemetry.span(
       name,
       fn ->
