@@ -289,18 +289,30 @@ defmodule Flexflow.Process do
   end
 
   @spec call(t(), term(), GenServer.from() | nil) :: handle_call_return()
-  def call(%__MODULE__{} = p, input, from \\ nil) do
-    {:stop, {:call, input, from}, p}
+  def call(%__MODULE__{module: module} = p, input, from \\ nil) do
+    if function_exported?(module, :handle_call, 3) do
+      module.handle_call(p, input, from)
+    else
+      {:reply, :ok, p}
+    end
   end
 
   @spec cast(t(), term()) :: handle_cast_return()
-  def cast(%__MODULE__{} = p, input) do
-    {:stop, {:cast, input}, p}
+  def cast(%__MODULE__{module: module} = p, input) do
+    if function_exported?(module, :handle_cast, 2) do
+      module.handle_cast(p, input)
+    else
+      {:noreply, p}
+    end
   end
 
   @spec info(t(), term()) :: handle_info_return()
-  def info(%__MODULE__{} = p, input) do
-    {:stop, {:info, input}, p}
+  def info(%__MODULE__{module: module} = p, input) do
+    if function_exported?(module, :handle_info, 2) do
+      module.handle_info(p, input)
+    else
+      {:noreply, p}
+    end
   end
 
   @spec continue(t(), term()) :: handle_continue_return()
@@ -311,13 +323,21 @@ defmodule Flexflow.Process do
     end
   end
 
-  def continue(%__MODULE__{} = p, input) do
-    {:stop, {:continue, input}, p}
+  def continue(%__MODULE__{module: module} = p, input) do
+    if function_exported?(module, :handle_continue, 2) do
+      module.handle_continue(p, input)
+    else
+      {:noreply, p}
+    end
   end
 
   @spec terminate(t(), term()) :: term()
-  def terminate(%__MODULE__{} = _p, _reason) do
-    :ok
+  def terminate(%__MODULE__{module: module} = p, reason) do
+    if function_exported?(module, :terminate, 2) do
+      module.terminate(p, reason)
+    else
+      :ok
+    end
   end
 
   @max_loop_limit Config.get(:max_loop_limit)
