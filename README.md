@@ -11,14 +11,18 @@
 ## Usage
 
 ```elixir
-defmodule Verify do
+defmodule Review do
   @moduledoc false
 
-  defmodule Uncertified do
+  defmodule Draft do
     use Flexflow.Node
   end
 
-  defmodule Certified do
+  defmodule Inreview do
+    use Flexflow.Node
+  end
+
+  defmodule Reviewed do
     use Flexflow.Node
   end
 
@@ -30,43 +34,44 @@ defmodule Verify do
     use Flexflow.Node
   end
 
-  defmodule Cert do
+  defmodule Submit do
     use Flexflow.Transition
-    @impl true
-    def handle_enter(_, _, _), do: :pass
+  end
+
+  defmodule Agree do
+    use Flexflow.Transition
   end
 
   defmodule Modify do
     use Flexflow.Transition
-    @impl true
-    def handle_enter(_, _, _), do: :pass
   end
 
   defmodule Reject do
     use Flexflow.Transition
-    @impl true
-    def handle_enter(_, _, _), do: :pass
   end
 
   defmodule Cancel do
     use Flexflow.Transition
-    @impl true
-    def handle_enter(_, _, _), do: :pass
   end
 
   use Flexflow.Process, version: 1
 
-  start_node Uncertified
-  end_node Certified
-  intermediate_node Rejected
+  start_node Draft
   end_node Canceled
+  end_node Reviewed
+  intermediate_node Rejected
+  intermediate_node Inreview
 
-  transition Cert, Uncertified ~> Certified
-  transition Modify, Uncertified ~> Uncertified
-  transition Reject, Uncertified ~> Rejected
-  transition Cancel, Uncertified ~> Canceled
-  transition Modify, Rejected ~> Uncertified
+  transition Submit, Draft ~> Inreview
+  transition Modify, Draft ~> Draft
+  transition Cancel, Draft ~> Canceled
+
+  transition Submit, Rejected ~> Inreview
+  transition Modify, Rejected ~> Rejected
   transition Cancel, Rejected ~> Canceled
+
+  transition Agree, Inreview ~> Reviewed
+  transition Reject, Inreview ~> Rejected
 end
 ```
 
@@ -79,18 +84,21 @@ end
 
 ```dot
 // custom_mark10
-digraph verify {
+digraph review {
   size = "4,4";
-  uncertified [label=uncertified,shape=doublecircle,color=".7 .3 1.0"];
-  certified [label=certified,shape=circle,color=red];
-  rejected [label=rejected,shape=box];
+  draft [label=draft,shape=doublecircle,color=".7 .3 1.0"];
   canceled [label=canceled,shape=circle,color=red];
-  uncertified -> certified [label=cert];
-  uncertified -> uncertified [label=modify,color=blue];
-  uncertified -> rejected [label=reject];
-  uncertified -> canceled [label=cancel];
-  rejected -> uncertified [label=modify];
+  reviewed [label=reviewed,shape=circle,color=red];
+  rejected [label=rejected,shape=box];
+  inreview [label=inreview,shape=box];
+  draft -> inreview [label=submit];
+  draft -> draft [label=modify,color=blue];
+  draft -> canceled [label=cancel];
+  rejected -> inreview [label=submit];
+  rejected -> rejected [label=modify,color=blue];
   rejected -> canceled [label=cancel];
+  inreview -> reviewed [label=agree];
+  inreview -> rejected [label=reject];
 }
 // custom_mark10
 ```

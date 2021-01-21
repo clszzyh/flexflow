@@ -18,7 +18,7 @@ defmodule Flexflow.Dot do
   @doc """
   ## Example
 
-      iex> #{__MODULE__}.serialize(Verify.new())
+      iex> #{__MODULE__}.serialize(Review.new())
       #{verify_dot}
   """
   def serialize(p) do

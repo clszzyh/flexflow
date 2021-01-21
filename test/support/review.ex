@@ -1,4 +1,4 @@
-defmodule FlexflowVerifyTest do
+defmodule FlexflowReviewTest do
   @moduledoc false
 
   @external_resource Path.join([__DIR__, "../../README.md"])
@@ -14,7 +14,7 @@ defmodule FlexflowVerifyTest do
       |> Enum.find_value(fn x ->
         case x do
           {"pre", _, [{"code", [{"class", "elixir"} | _], [code], _}], _} ->
-            {{:module, Verify, _bytecode, :ok}, _} = Code.eval_string(code)
+            {{:module, Review, _bytecode, :ok}, _} = Code.eval_string(code)
 
           _ ->
             nil

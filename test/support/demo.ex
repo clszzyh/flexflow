@@ -7,8 +7,6 @@ for i <- 1..10 do
   defmodule String.to_atom("Elixir.T#{i}") do
     @moduledoc false
     use Flexflow.Transition
-    @impl true
-    def handle_enter(_, _, _), do: :pass
   end
 end
 
