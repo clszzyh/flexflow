@@ -21,15 +21,12 @@ defmodule P1 do
 
   start_node N1, foo: %{aaa: :bbb}
   intermediate_node N2
+
   transition T1, N1 ~> N2, foo: :baz
 
   intermediate_node N3
-  intermediate_node N4
-  end_node N5
-  intermediate_node N6
+  end_node N4
+
   transition T2, N2 ~> N3
   transition {T2, "1"}, N2 ~> N4
-  transition {T2, "2"}, N2 ~> N5
-  transition {T2, "3"}, N2 ~> N6
-  transition {T2, "4"}, N4 ~> N1
 end

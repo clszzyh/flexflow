@@ -11,8 +11,6 @@ defmodule Flexflow.Process do
   alias Flexflow.Transition
   alias Flexflow.Util
 
-  alias Graph.Reducers.Dfs
-
   @states [:created, :active, :loop]
 
   @typedoc """
@@ -21,9 +19,6 @@ defmodule Flexflow.Process do
   #{inspect(@states)}
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
-  @typep path :: %{
-           Flexflow.key_normalize() => %{Flexflow.key_normalize() => Flexflow.key_normalize()}
-         }
   @type t :: %__MODULE__{
           module: module(),
           graph: Graph.t(),
@@ -36,7 +31,6 @@ defmodule Flexflow.Process do
           context: Context.t(),
           transitions: Flexflow.transitions(),
           state: state(),
-          __path__: path(),
           __identities__: [identity],
           __graphviz_attributes__: keyword(),
           __loop_counter__: integer(),
@@ -48,7 +42,7 @@ defmodule Flexflow.Process do
 
   @type identity :: {:node | :transition, Flexflow.key_normalize()}
 
-  @enforce_keys [:graph, :module, :nodes, :transitions, :__path__, :__identities__]
+  @enforce_keys [:graph, :module, :nodes, :transitions, :__identities__]
   defstruct @enforce_keys ++
               [
                 :name,
@@ -159,27 +153,24 @@ defmodule Flexflow.Process do
 
     graph = Graph.new() |> Graph.add_vertices(vertices) |> Graph.add_edges(edges)
 
-    path =
-      Dfs.map(graph, fn o ->
-        map =
-          for v <- Graph.out_neighbors(graph, o), into: %{} do
-            [edge] = Graph.edges(graph, o, v)
-            {v, edge.label}
-          end
+    nodes =
+      Map.new(nodes, fn o ->
+        k = {o.module, o.name}
 
-        {o, map}
+        {k,
+         %{
+           o
+           | __in_edges__: for(e <- Graph.in_edges(graph, k), do: {e.label, e.v1}),
+             __out_edges__: for(e <- Graph.out_edges(graph, k), do: {e.label, e.v2})
+         }}
       end)
-      |> Map.new()
-
-    transitions = for {k, v} <- edge_list, into: %{}, do: {k.label, v}
 
     %__MODULE__{
       graph: graph,
-      nodes: Map.new(nodes, &{{&1.module, &1.name}, &1}),
+      nodes: nodes,
       module: module,
-      __path__: path,
       __identities__: identities,
-      transitions: transitions
+      transitions: for({k, v} <- edge_list, into: %{}, do: {k.label, v})
     }
   end
 
