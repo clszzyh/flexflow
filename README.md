@@ -92,19 +92,19 @@ end
 // custom_mark10
 digraph review {
   size = "4,4";
-  "draft" [label="draft",shape=doublecircle,color=".7 .3 1.0"];
-  "canceled" [label="canceled",shape=circle,color=red];
-  "Already reviewed" [label="Already reviewed",shape=circle,color=red];
-  "inreview" [label="inreview",shape=box];
-  "rejected" [label="rejected",shape=box];
-  "draft" -> "inreview" [label="submit"];
-  "draft" -> "draft" [label="modify",color=blue];
-  "draft" -> "canceled" [label="cancel"];
-  "rejected" -> "inreview" [label="submit"];
-  "rejected" -> "rejected" [label="modify",color=blue];
-  "rejected" -> "canceled" [label="cancel"];
-  "inreview" -> "rejected" [label="reject"];
-  "inreview" -> "Already reviewed" [label="agree"];
+  draft [label=draft,shape=doublecircle,color=".7 .3 1.0"];
+  canceled [label=canceled,shape=circle,color=red];
+  Already_reviewed [label=Already_reviewed,shape=circle,color=red];
+  inreview [label=inreview,shape=box];
+  rejected [label=rejected,shape=box];
+  draft -> inreview [label=submit];
+  draft -> draft [label=modify,color=blue];
+  draft -> canceled [label=cancel];
+  rejected -> inreview [label=submit];
+  rejected -> rejected [label=modify,color=blue];
+  rejected -> canceled [label=cancel];
+  inreview -> rejected [label=reject];
+  inreview -> Already_reviewed [label=agree];
 }
 // custom_mark10
 ```
