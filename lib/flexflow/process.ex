@@ -184,15 +184,19 @@ defmodule Flexflow.Process do
       case node.kind do
         :start ->
           if Enum.empty?(node.__out_edges__),
-            do: raise(ArgumentError, "Out edges of {#{node.module}, #{node.name}} is empty")
+            do: raise(ArgumentError, "Out edges of #{inspect(Node.key(node))} is empty")
 
         :end ->
           if Enum.empty?(node.__in_edges__),
-            do: raise(ArgumentError, "In edges of {#{node.module}, #{node.name}} is empty")
+            do: raise(ArgumentError, "In edges of #{inspect(Node.key(node))} is empty")
 
         :intermediate ->
           :ok
       end
+    end
+
+    for {_, %{__out_edges__: [], __in_edges__: []} = node} <- process.nodes do
+      raise ArgumentError, "#{inspect(Node.key(node))} is isolated"
     end
   end
 

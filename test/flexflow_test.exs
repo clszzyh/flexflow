@@ -155,7 +155,14 @@ defmodule FlexflowTest do
         end_node N3
         transition T1, N2 ~> N3
       end,
-      "Out edges of {N1, \"n1\"} is empty"
+      "Out edges of {N1, \"n1\"} is empty",
+      quote do
+        start_node N1
+        intermediate_node N2
+        end_node N3
+        transition T1, N1 ~> N3
+      end,
+      "{N2, \"n2\"} is isolated"
     ]
 
     for {ast, msg} <- Enum.chunk_every(data, 2) do
