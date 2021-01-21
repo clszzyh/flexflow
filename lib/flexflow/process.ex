@@ -21,7 +21,6 @@ defmodule Flexflow.Process do
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{
           module: module(),
-          graph: Graph.t(),
           name: Flexflow.name() | nil,
           args: Flexflow.process_args(),
           id: Flexflow.id() | nil,
@@ -43,7 +42,7 @@ defmodule Flexflow.Process do
 
   @type identity :: {:node | :transition, Flexflow.key_normalize()}
 
-  @enforce_keys [:graph, :module, :nodes, :start_node, :transitions, :__identities__]
+  @enforce_keys [:module, :nodes, :start_node, :transitions, :__identities__]
   defstruct @enforce_keys ++
               [
                 :name,
@@ -148,32 +147,25 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec new(module(), [Node.t()], [Transition.edge_tuple()], [identity]) :: t()
-  def new(module, nodes, edge_list, identities) do
-    vertices = nodes |> Enum.map(&Node.key/1)
-    edges = Enum.map(edge_list, &elem(&1, 0))
+  @spec new(module(), [Node.t()], [Transition.t()], [identity]) :: t()
+  def new(module, nodes, transitions, identities) do
     start_node = nodes |> Enum.find(&Node.start?/1) |> Node.key()
-    graph = Graph.new() |> Graph.add_vertices(vertices) |> Graph.add_edges(edges)
 
     nodes =
       Map.new(nodes, fn o ->
         k = Node.key(o)
+        in_edges = for(t <- transitions, t.to == k, do: {Transition.key(t), t.from})
+        out_edges = for(t <- transitions, t.from == k, do: {Transition.key(t), t.to})
 
-        {k,
-         %{
-           o
-           | __in_edges__: for(e <- Graph.in_edges(graph, k), do: {e.label, e.v1}),
-             __out_edges__: for(e <- Graph.out_edges(graph, k), do: {e.label, e.v2})
-         }}
+        {k, %{o | __in_edges__: in_edges, __out_edges__: out_edges}}
       end)
 
     %__MODULE__{
-      graph: graph,
       nodes: nodes,
       module: module,
       start_node: start_node,
       __identities__: identities,
-      transitions: for({k, v} <- edge_list, into: %{}, do: {k.label, v})
+      transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t})
     }
   end
 

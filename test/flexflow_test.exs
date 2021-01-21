@@ -17,7 +17,6 @@ defmodule FlexflowTest do
     assert P1.new("p1", %{foo: :bar}).id == "p1"
     assert P1.new().name == "p1_new"
     assert P1.new().opts == [hello: %{foo: :zzzz}]
-    assert P1.new().graph.__struct__ == Graph
     assert P1.new().module == P1
 
     n1_s = {N1, "n1"}
@@ -59,20 +58,10 @@ defmodule FlexflowTest do
              transition: t3_s
            ]
 
-    assert P1.new().graph ==
-             Graph.new()
-             |> Graph.add_vertices([n1_s, n2_s, n3_s, n4_s])
-             |> Graph.add_edges([
-               Graph.Edge.new(n1_s, n2_s, label: t1_s),
-               Graph.Edge.new(n2_s, n3_s, label: t2_s),
-               Graph.Edge.new(n2_s, n4_s, label: t3_s)
-             ])
-
     assert P1.new().nodes == %{n1_s => n1, n2_s => n2, n3_s => n3, n4_s => n4}
     assert P1.new().transitions == %{t1_s => t1, t2_s => t2, t3_s => t3}
 
     assert P1.new().start_node == n1_s
-    assert Enum.count(P1.new().graph.vertices) == 4
   end
 
   test "init" do

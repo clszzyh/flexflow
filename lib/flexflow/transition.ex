@@ -7,7 +7,6 @@ defmodule Flexflow.Transition do
   alias Flexflow.Node
   alias Flexflow.Process
   alias Flexflow.Util
-  alias Graph.Edge
 
   @states [:created, :initial]
 
@@ -27,9 +26,6 @@ defmodule Flexflow.Transition do
           from: Flexflow.key_normalize(),
           to: Flexflow.key_normalize()
         }
-
-  @type edge :: Edge.t()
-  @type edge_tuple :: {edge, t()}
 
   @enforce_keys [:name, :module, :from, :to]
   defstruct @enforce_keys ++
@@ -68,8 +64,11 @@ defmodule Flexflow.Transition do
     end
   end
 
+  @spec key(t()) :: Flexflow.key_normalize()
+  def key(%{module: module, name: name}), do: {module, name}
+
   @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, Flexflow.node_opts()}, [Node.t()]) ::
-          edge_tuple
+          t()
   def new({o, {from, to}, opts}, nodes) when is_atom(o) do
     new({Util.normalize_module({o, from, to}), {from, to}, opts}, nodes)
   end
@@ -90,7 +89,7 @@ defmodule Flexflow.Transition do
     {attributes, opts} = Keyword.pop(opts, :attributes, [])
     attributes = attributes ++ if from == to, do: [color: "blue"], else: []
 
-    transition = %__MODULE__{
+    %__MODULE__{
       module: o,
       name: name,
       __graphviz_attributes__: attributes,
@@ -98,8 +97,6 @@ defmodule Flexflow.Transition do
       from: from,
       to: to
     }
-
-    {Edge.new(from, to, label: {o, name}), transition}
   end
 
   # @spec enter(t(), Node.t(), Process.t()) :: {:ok, Process.t()} | {:error, atom()}
@@ -111,20 +108,20 @@ defmodule Flexflow.Transition do
   #   end
   # end
 
-  @spec validate([edge_tuple()]) :: [edge_tuple()]
+  @spec validate([t()]) :: [t()]
   def validate(transitions) do
     if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
 
-    for {_, %__MODULE__{module: module, name: name}} <- transitions, reduce: [] do
+    for %__MODULE__{module: module, name: name} <- transitions, reduce: [] do
       ary ->
         o = {module, name}
         if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice")
         ary ++ [o]
     end
 
-    for {%Edge{v1: v1, v2: v2}, _} <- transitions, reduce: [] do
+    for %__MODULE__{from: from, to: to} <- transitions, reduce: [] do
       ary ->
-        o = {v1, v2}
+        o = {from, to}
         if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice")
         ary ++ [o]
     end

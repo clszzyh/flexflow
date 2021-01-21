@@ -69,7 +69,6 @@ defmodule Flexflow.MixProject do
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:earmark_parser, "~> 1.4", runtime: false},
       {:ex_doc, "~> 0.22", runtime: false},
-      {:libgraph, "~> 0.13"},
       {:telemetry, "~> 0.4.0"}
     ]
   end
