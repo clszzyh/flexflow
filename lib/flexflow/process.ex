@@ -37,7 +37,6 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-
   @type identity :: {:node | :transition, Flexflow.key_normalize()}
 
   @enforce_keys [:module, :nodes, :start_node, :transitions, :__identities__]
@@ -124,9 +123,7 @@ defmodule Flexflow.Process do
 
   @spec new(module(), [Node.t()], [Transition.t()], [identity]) :: t()
   def new(module, nodes, transitions, identities) do
-    start_node = nodes |> Enum.find(&Node.start?/1) |> Node.key()
-
-    nodes =
+    new_nodes =
       Map.new(nodes, fn o ->
         k = Node.key(o)
         in_edges = for(t <- transitions, t.to == k, do: {Transition.key(t), t.from})
@@ -136,9 +133,9 @@ defmodule Flexflow.Process do
       end)
 
     %__MODULE__{
-      nodes: nodes,
+      nodes: new_nodes,
       module: module,
-      start_node: start_node,
+      start_node: nodes |> Enum.find(&Node.start?/1) |> Node.key(),
       transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t}),
       __identities__: identities
     }
