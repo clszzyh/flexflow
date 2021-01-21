@@ -141,7 +141,21 @@ defmodule FlexflowTest do
         intermediate_node N2
         transition T1, N1 ~> N2
       end,
-      "Need one or more end node"
+      "Need one or more end node",
+      quote do
+        start_node N1
+        intermediate_node N2
+        end_node N3
+        transition T1, N1 ~> N2
+      end,
+      "In edges of {N3, \"n3\"} is empty",
+      quote do
+        start_node N1
+        intermediate_node N2
+        end_node N3
+        transition T1, N2 ~> N3
+      end,
+      "Out edges of {N1, \"n1\"} is empty"
     ]
 
     for {ast, msg} <- Enum.chunk_every(data, 2) do

@@ -114,6 +114,7 @@ defmodule Flexflow.Process do
       Module.register_attribute(__MODULE__, :__identities__, accumulate: true)
 
       @before_compile unquote(__MODULE__)
+      @after_compile unquote(__MODULE__)
 
       @__name__ Flexflow.Util.module_name(__MODULE__)
 
@@ -174,6 +175,25 @@ defmodule Flexflow.Process do
       __identities__: identities,
       transitions: for({k, v} <- edge_list, into: %{}, do: {k.label, v})
     }
+  end
+
+  def __after_compile__(env, _bytecode) do
+    process = env.module.new()
+
+    for {_, node} <- process.nodes do
+      case node.kind do
+        :start ->
+          if Enum.empty?(node.__out_edges__),
+            do: raise(ArgumentError, "Out edges of {#{node.module}, #{node.name}} is empty")
+
+        :end ->
+          if Enum.empty?(node.__in_edges__),
+            do: raise(ArgumentError, "In edges of {#{node.module}, #{node.name}} is empty")
+
+        :intermediate ->
+          :ok
+      end
+    end
   end
 
   defmacro __before_compile__(env) do
