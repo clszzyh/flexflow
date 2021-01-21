@@ -65,7 +65,7 @@ defmodule FlexflowTest do
   end
 
   test "init" do
-    {:ok, p} = Flexflow.Api.start(P1, "p1")
+    {:ok, p} = Flexflow.Process.start(P1, "p1")
     assert p.state == :active
     assert p.id == "p1"
     assert p.nodes[{N1, "n1"}].state == :initial

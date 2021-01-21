@@ -3,7 +3,7 @@ defmodule Flexflow.ProcessServer do
   Server
   """
 
-  alias Flexflow.Api
+  alias Flexflow.Process
 
   use Flexflow.ProcessRegistry
   use GenServer
@@ -17,7 +17,7 @@ defmodule Flexflow.ProcessServer do
   @impl true
   def init({module, id, opts}) do
     module
-    |> Api.start(id, opts)
+    |> Process.start(id, opts)
     |> case do
       {:ok, p} -> {:ok, p}
       {:error, reason} -> {:stop, reason}

@@ -3,9 +3,11 @@ defmodule Flexflow.Process do
   Process
   """
 
+  alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.History
   alias Flexflow.Node
+  alias Flexflow.Telemetry
   alias Flexflow.Transition
   alias Flexflow.Util
 
@@ -74,7 +76,6 @@ defmodule Flexflow.Process do
 
   defmacro __using__(opts) do
     quote do
-      alias Flexflow.Api
       alias Flexflow.Nodes
       alias Flexflow.Transitions
 
@@ -111,16 +112,16 @@ defmodule Flexflow.Process do
       def init(o), do: {:ok, o}
 
       @impl true
-      def handle_call(process, term, from), do: Api.call(process, term, from)
+      def handle_call(process, term, from), do: unquote(__MODULE__).call(process, term, from)
 
       @impl true
-      def handle_cast(process, term), do: Api.cast(process, term)
+      def handle_cast(process, term), do: unquote(__MODULE__).cast(process, term)
 
       @impl true
-      def handle_info(process, term), do: Api.info(process, term)
+      def handle_info(process, term), do: unquote(__MODULE__).info(process, term)
 
       @impl true
-      def terminate(process, term), do: Api.terminate(process, term)
+      def terminate(process, term), do: unquote(__MODULE__).terminate(process, term)
 
       defoverridable unquote(__MODULE__)
     end
@@ -144,26 +145,6 @@ defmodule Flexflow.Process do
       @__transitions__ {key, tuple, opts}
       @__identities__ {:transition, Tuple.insert_at(tuple, 0, key)}
     end
-  end
-
-  @spec new(module(), [Node.t()], [Transition.t()], [identity]) :: t()
-  def new(module, nodes, transitions, identities) do
-    new_nodes =
-      Map.new(nodes, fn o ->
-        k = Node.key(o)
-        in_edges = for(t <- transitions, t.to == k, do: {Transition.key(t), t.from})
-        out_edges = for(t <- transitions, t.from == k, do: {Transition.key(t), t.to})
-
-        {k, %{o | __in_edges__: in_edges, __out_edges__: out_edges}}
-      end)
-
-    %__MODULE__{
-      nodes: new_nodes,
-      module: module,
-      start_node: nodes |> Enum.find(&Node.start?/1) |> Node.key(),
-      transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t}),
-      __identities__: identities
-    }
   end
 
   def __after_compile__(env, _bytecode) do
@@ -197,7 +178,7 @@ defmodule Flexflow.Process do
       |> Enum.map(&Node.new/1)
       |> Node.validate()
 
-    edges =
+    transitions =
       env.module
       |> Module.get_attribute(:__transitions__)
       |> Enum.reverse()
@@ -210,10 +191,24 @@ defmodule Flexflow.Process do
       |> Enum.reverse()
       |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v)} end)
 
-    process = new(env.module, nodes, edges, identities)
+    new_nodes =
+      Map.new(nodes, fn o ->
+        k = Node.key(o)
+        in_edges = for(t <- transitions, t.to == k, do: {Transition.key(t), t.from})
+        out_edges = for(t <- transitions, t.from == k, do: {Transition.key(t), t.to})
+
+        {k, %{o | __in_edges__: in_edges, __out_edges__: out_edges}}
+      end)
+
+    process = %__MODULE__{
+      nodes: new_nodes,
+      module: env.module,
+      start_node: nodes |> Enum.find(&Node.start?/1) |> Node.key(),
+      transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t}),
+      __identities__: identities
+    }
 
     quote bind_quoted: [module: __MODULE__, process: Macro.escape(process)] do
-      alias Flexflow.Api
       alias Flexflow.Process
 
       unless Module.get_attribute(__MODULE__, :moduledoc) do
@@ -231,7 +226,7 @@ defmodule Flexflow.Process do
         do: struct!(@__process__, name: name(), id: id, __args__: args)
 
       @spec start(Flexflow.id(), Flexflow.process_args()) :: Process.result()
-      def start(id, args \\ %{}), do: Api.start(__MODULE__, id, args)
+      def start(id, args \\ %{}), do: Process.start(__MODULE__, id, args)
 
       Module.delete_attribute(__MODULE__, :__nodes__)
       Module.delete_attribute(__MODULE__, :__opts__)
@@ -252,4 +247,94 @@ defmodule Flexflow.Process do
 
   @impl true
   def pop(struct, key), do: Map.pop(struct, key)
+
+  ###### Api ######
+
+  @spec init(t()) :: result()
+  def init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
+    (Map.to_list(nodes) ++ Map.to_list(transitions))
+    |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
+      case module.init(o, p) do
+        {:ok, %Node{} = node} ->
+          {:cont, put_in(p, [:nodes, key], %{node | state: :initial})}
+
+        {:ok, %Transition{} = transition} ->
+          {:cont, put_in(p, [:transitions, key], %{transition | state: :initial})}
+
+        {:error, reason} ->
+          {:halt, {key, reason}}
+      end
+    end)
+    |> module.init()
+    |> case do
+      {:error, reason} -> {:error, reason}
+      {:ok, %__MODULE__{} = p} -> {:ok, %{p | state: :active}}
+    end
+  end
+
+  @spec start(module(), Flexflow.id(), Flexflow.process_args()) :: result()
+  def start(module, id, args \\ %{}) do
+    p = module.new(id, args)
+
+    {:ok, p}
+    |> telemetry_invoke(:process_init, &init/1)
+    |> telemetry_invoke(:process_loop, &loop/1)
+  end
+
+  @spec call(t(), term(), GenServer.from() | nil) :: handle_call_return()
+  def call(%__MODULE__{} = p, input, from \\ nil) do
+    {:stop, {:call, input, from}, p}
+  end
+
+  @spec cast(t(), term()) :: handle_cast_return()
+  def cast(%__MODULE__{} = p, input) do
+    {:stop, {:cast, input}, p}
+  end
+
+  @spec info(t(), term()) :: handle_info_return()
+  def info(%__MODULE__{} = p, input) do
+    {:stop, {:info, input}, p}
+  end
+
+  @spec terminate(t(), term()) :: term()
+  def terminate(%__MODULE__{} = _p, _reason) do
+    :ok
+  end
+
+  @max_loop_limit Config.get(:max_loop_limit)
+
+  @spec loop(t()) :: result()
+  def loop(%{state: state} = p) when state in [:active],
+    do: loop(%{p | state: :loop, __loop_counter__: 0})
+
+  def loop(%{state: :loop, __loop_counter__: 50} = p), do: {:ok, %{p | state: :active}}
+
+  def loop(%{state: :loop} = p) do
+    case next(p) do
+      {:error, reason} -> {:error, reason}
+      {:ok, p} -> loop(p)
+    end
+  end
+
+  @spec next(t()) :: result()
+  def next(%{__loop_counter__: loop_counter}) when loop_counter > @max_loop_limit,
+    do: {:error, :exceed_loop_limit}
+
+  def next(%{__loop_counter__: loop_counter, __counter__: counter} = p) do
+    {:ok, %{p | __loop_counter__: loop_counter + 1, __counter__: counter + 1}}
+  end
+
+  @spec telemetry_invoke(result(), atom(), (t() -> result())) :: result()
+  def telemetry_invoke({:error, reason}, _, _), do: {:error, reason}
+
+  def telemetry_invoke({:ok, p}, name, f) do
+    Telemetry.span(
+      name,
+      fn ->
+        {state, result} = f.(p)
+        {{state, result}, %{state: state}}
+      end,
+      %{id: p.id}
+    )
+  end
 end
