@@ -90,9 +90,11 @@ defmodule Flexflow.Node do
     }
   end
 
+  @spec start?(t()) :: boolean()
   def start?(%__MODULE__{kind: :start}), do: true
   def start?(%__MODULE__{}), do: false
 
+  @spec end?(t()) :: boolean()
   def end?(%__MODULE__{kind: :end}), do: true
   def end?(%__MODULE__{}), do: false
 
