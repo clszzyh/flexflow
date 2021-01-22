@@ -29,7 +29,7 @@ defmodule Flexflow.Transition do
           from: Flexflow.key_normalize(),
           to: Flexflow.key_normalize(),
           __opts__: options,
-          __graphviz_attributes__: keyword(),
+          __graphviz__: keyword(),
           __context__: Context.t()
         }
 
@@ -38,7 +38,7 @@ defmodule Flexflow.Transition do
               [
                 state: :created,
                 __opts__: [],
-                __graphviz_attributes__: [],
+                __graphviz__: [],
                 __context__: Context.new()
               ]
 
@@ -111,7 +111,7 @@ defmodule Flexflow.Transition do
       name: name,
       from: from,
       to: to,
-      __graphviz_attributes__: attributes,
+      __graphviz__: attributes,
       __opts__: opts
     }
   end

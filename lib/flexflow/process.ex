@@ -33,7 +33,7 @@ defmodule Flexflow.Process do
           __context__: Context.t(),
           __histories__: [History.t()],
           __identities__: [identity],
-          __graphviz_attributes__: keyword(),
+          __graphviz__: keyword(),
           __loop_counter__: integer(),
           __counter__: integer(),
           __tasks__: %{reference() => term()}
@@ -60,7 +60,7 @@ defmodule Flexflow.Process do
                 state: :created,
                 __counter__: 0,
                 __loop_counter__: 0,
-                __graphviz_attributes__: [size: "\"4,4\""],
+                __graphviz__: [size: "\"4,4\""],
                 __args__: %{},
                 __tasks__: %{},
                 __opts__: [],
@@ -292,8 +292,8 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec call(t(), term(), GenServer.from() | nil) :: handle_call_return()
-  def call(%__MODULE__{module: module} = p, input, from \\ nil) do
+  @spec handle_call(t(), term(), GenServer.from() | nil) :: handle_call_return()
+  def handle_call(%__MODULE__{module: module} = p, input, from \\ nil) do
     if function_exported?(module, :handle_call, 3) do
       module.handle_call(p, input, from)
     else
@@ -301,8 +301,8 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec cast(t(), term()) :: handle_cast_return()
-  def cast(%__MODULE__{module: module} = p, input) do
+  @spec handle_cast(t(), term()) :: handle_cast_return()
+  def handle_cast(%__MODULE__{module: module} = p, input) do
     if function_exported?(module, :handle_cast, 2) do
       module.handle_cast(p, input)
     else
@@ -310,22 +310,22 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec info(t(), term()) :: handle_info_return()
-  def info(%__MODULE__{} = p, {ref, result}) when is_reference(ref) do
+  @spec handle_info(t(), term()) :: handle_info_return()
+  def handle_info(%__MODULE__{} = p, {ref, result}) when is_reference(ref) do
     Process.demonitor(ref, [:flush])
     {input, p} = pop_in(p.tasks[ref])
     IO.puts(inspect({:ok, input, result}))
     {:noreply, p}
   end
 
-  def info(%__MODULE__{} = p, {:DOWN, ref, :process, _monitor_pid, reason})
+  def handle_info(%__MODULE__{} = p, {:DOWN, ref, :process, _monitor_pid, reason})
       when is_reference(ref) do
     {input, p} = pop_in(p.tasks[ref])
     IO.puts(inspect({:error, input, reason}))
     {:noreply, p}
   end
 
-  def info(%__MODULE__{module: module} = p, input) do
+  def handle_info(%__MODULE__{module: module} = p, input) do
     if function_exported?(module, :handle_info, 2) do
       module.handle_info(p, input)
     else
@@ -333,15 +333,15 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec continue(t(), term()) :: handle_continue_return()
-  def continue(%__MODULE__{} = p, :loop) do
+  @spec handle_continue(t(), term()) :: handle_continue_return()
+  def handle_continue(%__MODULE__{} = p, :loop) do
     case telemetry_invoke(p, :process_loop, &loop/1) do
       {:ok, p} -> {:noreply, p}
       {:error, reason} -> {:stop, reason, p}
     end
   end
 
-  def continue(%__MODULE__{module: module} = p, input) do
+  def handle_continue(%__MODULE__{module: module} = p, input) do
     if function_exported?(module, :handle_continue, 2) do
       module.handle_continue(p, input)
     else

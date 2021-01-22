@@ -29,7 +29,7 @@ defmodule FlexflowTest do
     t2 = %T{
       module: T2,
       name: "t2_by_n2",
-      __graphviz_attributes__: [style: "bold", color: "red"],
+      __graphviz__: [style: "bold", color: "red"],
       from: n2_s,
       to: n3_s,
       __opts__: [async: true]

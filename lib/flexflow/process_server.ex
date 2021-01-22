@@ -31,22 +31,22 @@ defmodule Flexflow.ProcessServer do
 
   @impl true
   def handle_call(input, from, state) do
-    Process.call(state, input, from)
+    Process.handle_call(state, input, from)
   end
 
   @impl true
   def handle_cast(input, state) do
-    Process.cast(state, input)
+    Process.handle_cast(state, input)
   end
 
   @impl true
   def handle_info(input, state) do
-    Process.info(state, input)
+    Process.handle_info(state, input)
   end
 
   @impl true
   def handle_continue(input, state) do
-    Process.continue(state, input)
+    Process.handle_continue(state, input)
   end
 
   @impl true
