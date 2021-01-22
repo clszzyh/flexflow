@@ -3,5 +3,5 @@ defmodule Flexflow.Nodes.End do
   End
   """
 
-  use Flexflow.Node
+  use Flexflow.Node, kind: :end
 end

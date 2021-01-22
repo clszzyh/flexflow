@@ -58,10 +58,10 @@ defmodule Review do
   use Flexflow.Process, version: 1
 
   ## Define a start node
-  start_node Draft
+  intermediate_node Draft, kind: :start
   ## Define an end node with custom name
-  end_node {Reviewed, "Already reviewed"}
-  end_node Canceled
+  intermediate_node {Reviewed, "Already reviewed"}, kind: :end
+  intermediate_node Canceled, kind: :end
   ## Define an intermediate node
   intermediate_node Inreview
   intermediate_node Rejected

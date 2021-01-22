@@ -71,6 +71,11 @@ defmodule FlexflowTest do
     assert P1.new().transitions == %{t1_s => t1, t2_s => t2, t3_s => t3}
   end
 
+  test "p2" do
+    {:ok, p} = Flexflow.Process.new(P2, "p2")
+    assert p.state == :active
+  end
+
   test "init" do
     {:ok, p} = Flexflow.Process.new(P1, "p1")
     assert p.state == :active
@@ -128,35 +133,35 @@ defmodule FlexflowTest do
       end,
       "Need a start node",
       quote do
-        start_node N1
-        start_node N2
+        intermediate_node N1, kind: :start
+        intermediate_node N2, kind: :start
         transition T1, N1 ~> N2
       end,
       "Only need one start node",
       quote do
-        start_node N1
+        intermediate_node N1, kind: :start
         intermediate_node N2
         transition T1, N1 ~> N2
       end,
       "Need one or more end node",
       quote do
-        start_node N1
+        intermediate_node N1, kind: :start
         intermediate_node N2
-        end_node N3
+        intermediate_node N3, kind: :end
         transition T1, N1 ~> N2
       end,
       "In edges of {N3, \"n3\"} is empty",
       quote do
-        start_node N1
+        intermediate_node N1, kind: :start
         intermediate_node N2
-        end_node N3
+        intermediate_node N3, kind: :end
         transition T1, N2 ~> N3
       end,
       "Out edges of {N1, \"n1\"} is empty",
       quote do
-        start_node N1
+        intermediate_node N1, kind: :start
         intermediate_node N2
-        end_node N3
+        intermediate_node N3, kind: :end
         transition T1, N1 ~> N3
       end,
       "{N2, \"n2\"} is isolated"

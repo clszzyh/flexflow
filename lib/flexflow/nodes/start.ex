@@ -3,5 +3,5 @@ defmodule Flexflow.Nodes.Start do
   Start
   """
 
-  use Flexflow.Node
+  use Flexflow.Node, kind: :start
 end
