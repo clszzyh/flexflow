@@ -49,18 +49,6 @@ defmodule Flexflow.Util do
 
   def normalize_module({o, name}, _) when is_atom(o) and is_binary(name), do: {o, name}
 
-  @spec guess_event_module(binary(), [Event.t()]) :: {module(), binary()}
-  def guess_event_module(o, events) when is_binary(o) do
-    events
-    |> Enum.find(fn %Event{name: name} -> name == o end)
-    |> case do
-      %Event{module: module, name: name} -> {module, name}
-      _ -> raise ArgumentError, "Could not find module `#{o}`"
-    end
-  end
-
-  def guess_event_module(o, _), do: o
-
   @spec make_id :: Flexflow.id()
   def make_id do
     to_string(System.unique_integer([:positive]))
@@ -85,6 +73,7 @@ defmodule Flexflow.Util do
     |> Macro.underscore()
   end
 
+  @spec modules :: [module()]
   def modules do
     case :code.get_mode() do
       :interactive -> (:erlang.loaded() ++ get_modules_from_applications()) |> Enum.uniq()
@@ -110,10 +99,12 @@ defmodule Flexflow.Util do
     :ets.match(:ac_tab, {{:loaded, :"$1"}, :_})
   end
 
+  @spec implement_modules([module()]) :: [module()]
   def implement_modules(behaviours \\ @local_behaviours) do
     for module <- modules(), local_behaviour(module) in behaviours, do: module
   end
 
+  @spec defined?(module()) :: boolean()
   def defined?(module) when is_atom(module) do
     module
     |> Code.ensure_compiled()
@@ -123,6 +114,7 @@ defmodule Flexflow.Util do
     end
   end
 
+  @spec local_behaviour(module()) :: module() | nil
   def local_behaviour(module) do
     module
     |> defined?()

@@ -6,7 +6,6 @@ defmodule Flexflow.Process do
   alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.Event
-  # alias Flexflow.Events.{Bypass, End, Start}
   alias Flexflow.History
   alias Flexflow.ProcessManager
   alias Flexflow.TaskSupervisor
@@ -33,7 +32,7 @@ defmodule Flexflow.Process do
           __opts__: keyword(),
           __context__: Context.t(),
           __histories__: [History.t()],
-          __identities__: [identity],
+          __definitions__: [definition],
           __graphviz__: keyword(),
           __loop_counter__: integer(),
           __counter__: integer(),
@@ -42,7 +41,7 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type identity :: {:event | :transition, Flexflow.key_normalize()}
+  @type definition :: {:event | :transition, Flexflow.key_normalize()}
   @type handle_cast_return :: {:noreply, t()} | {:stop, term(), t()}
   @type handle_info_return :: {:noreply, t()} | {:stop, term(), t()}
   @type handle_continue_return :: {:noreply, t()} | {:stop, term(), t()}
@@ -53,7 +52,8 @@ defmodule Flexflow.Process do
           | {:stop, term, term, t()}
   @type server_return :: {:ok | :exist, pid} | {:error, term()}
 
-  @enforce_keys [:module, :events, :transitions, :__identities__]
+  @enforce_keys [:module, :events, :transitions, :__definitions__]
+  # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
   defstruct @enforce_keys ++
               [
                 :name,
@@ -101,9 +101,9 @@ defmodule Flexflow.Process do
 
       import unquote(__MODULE__), only: [event: 1, event: 2, ~>: 2, transition: 2, transition: 3]
 
-      Module.register_attribute(__MODULE__, :__events__, accumulate: true)
-      Module.register_attribute(__MODULE__, :__transitions__, accumulate: true)
-      Module.register_attribute(__MODULE__, :__identities__, accumulate: true)
+      for attribute <- [:__events__, :__transitions__, :__definitions__] do
+        Module.register_attribute(__MODULE__, attribute, accumulate: true)
+      end
 
       @before_compile unquote(__MODULE__)
       @after_compile unquote(__MODULE__)
@@ -120,14 +120,14 @@ defmodule Flexflow.Process do
   defmacro event(key, opts \\ []) do
     quote bind_quoted: [key: key, opts: opts] do
       @__events__ {key, opts}
-      @__identities__ {:event, key}
+      @__definitions__ {:event, key}
     end
   end
 
   defmacro transition(key, tuple, opts \\ []) do
     quote bind_quoted: [key: key, tuple: tuple, opts: opts] do
       @__transitions__ {key, tuple, opts}
-      @__identities__ {:transition, Tuple.insert_at(tuple, 0, key)}
+      @__definitions__ {:transition, Tuple.insert_at(tuple, 0, key)}
     end
   end
 
@@ -136,19 +136,12 @@ defmodule Flexflow.Process do
   def __after_compile__(env, _bytecode) do
     process = env.module.new()
 
-    for {_, event} <- process.events do
-      case event.kind do
-        :start ->
-          if Enum.empty?(event.__out_edges__),
-            do: raise(ArgumentError, "Out edges of `#{inspect(Event.key(event))}` is empty")
+    for {_, %{kind: :start, __out_edges__: []} = event} <- process.events do
+      raise(ArgumentError, "Out edges of `#{inspect(Event.key(event))}` is empty")
+    end
 
-        :end ->
-          if Enum.empty?(event.__in_edges__),
-            do: raise(ArgumentError, "In edges of `#{inspect(Event.key(event))}` is empty")
-
-        :intermediate ->
-          :ok
-      end
+    for {_, %{kind: :end, __in_edges__: []} = event} <- process.events do
+      raise(ArgumentError, "In edges of `#{inspect(Event.key(event))}` is empty")
     end
 
     for {_, %{__out_edges__: [], __in_edges__: []} = event} <- process.events do
@@ -171,9 +164,9 @@ defmodule Flexflow.Process do
       |> Enum.map(&Transition.new(&1, events))
       |> Transition.validate()
 
-    identities =
+    definitions =
       env.module
-      |> Module.get_attribute(:__identities__)
+      |> Module.get_attribute(:__definitions__)
       |> Enum.reverse()
       |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v, events)} end)
 
@@ -190,7 +183,7 @@ defmodule Flexflow.Process do
       events: new_events,
       module: env.module,
       transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t}),
-      __identities__: identities
+      __definitions__: definitions
     }
 
     quote bind_quoted: [module: __MODULE__, process: Macro.escape(process)] do
@@ -213,13 +206,17 @@ defmodule Flexflow.Process do
       @spec start(Flexflow.id(), Flexflow.process_args()) :: Process.server_return()
       def start(id, args \\ %{}), do: Process.start(__MODULE__, id, args)
 
-      Module.delete_attribute(__MODULE__, :__events__)
-      Module.delete_attribute(__MODULE__, :__opts__)
-      Module.delete_attribute(__MODULE__, :__transitions__)
-      Module.delete_attribute(__MODULE__, :__identities__)
-      Module.delete_attribute(__MODULE__, :__module__)
-      Module.delete_attribute(__MODULE__, :__name__)
-      Module.delete_attribute(__MODULE__, :__process__)
+      for attribute <- [
+            :__events__,
+            :__opts__,
+            :__transitions__,
+            :__definitions__,
+            :__module__,
+            :__name__,
+            :__process__
+          ] do
+        Module.delete_attribute(__MODULE__, attribute)
+      end
     end
   end
 

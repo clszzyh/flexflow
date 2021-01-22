@@ -63,7 +63,7 @@ defmodule FlexflowTest do
     t2_s = {T2, "t2_n2"}
     t3_s = {T2, "1"}
 
-    assert P1.new().__identities__ == [
+    assert P1.new().__definitions__ == [
              event: n1_s,
              event: n2_s,
              transition: t1_s,
