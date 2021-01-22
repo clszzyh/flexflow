@@ -5,6 +5,7 @@
 [![Hex.pm](https://img.shields.io/hexpm/dt/flexflow)](http://hex.pm/packages/flexflow)
 [![Documentation](https://img.shields.io/badge/hexdocs-latest-blue.svg)](https://hexdocs.pm/flexflow/readme.html)
 [![Last Updated](https://img.shields.io/github/last-commit/clszzyh/flexflow.svg)](https://github.com/clszzyh/flexflow/commits/master)
+![Lines of code](https://img.shields.io/tokei/lines/github/clszzyh/flexflow)
 
 <!-- MDOC -->
 
