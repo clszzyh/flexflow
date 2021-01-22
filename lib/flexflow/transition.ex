@@ -78,11 +78,11 @@ defmodule Flexflow.Transition do
 
   @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, options}, [Event.t()]) :: t()
   def new({o, {from, to}, opts}, events) when is_binary(from) do
-    new({o, {Util.guess_event_module(from, events), to}, opts}, events)
+    new({o, {Util.normalize_module(from, events), to}, opts}, events)
   end
 
   def new({o, {from, to}, opts}, events) when is_binary(to) do
-    new({o, {from, Util.guess_event_module(to, events)}, opts}, events)
+    new({o, {from, Util.normalize_module(to, events)}, opts}, events)
   end
 
   def new({o, {from, to}, opts}, events) when is_atom(o) do

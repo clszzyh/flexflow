@@ -175,7 +175,7 @@ defmodule Flexflow.Process do
       env.module
       |> Module.get_attribute(:__identities__)
       |> Enum.reverse()
-      |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v)} end)
+      |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v, events)} end)
 
     new_events =
       Map.new(events, fn o ->

@@ -185,21 +185,35 @@ defmodule FlexflowTest do
         event N3, kind: :end
         transition T1, "n" ~> N3
       end,
-      {14, "Event `n` is defined twice"}
+      {14, "Event `n` is defined twice"},
+      quote do
+        event {N1, "n"}, kind: :start
+        event N2
+        event N3, kind: :end
+        transition T1, "n" ~> N3
+        transition T2, "n" ~> N2
+      end,
+      {15, :ok}
     ]
 
     for [ast, {index, msg}] <- Enum.chunk_every(data, 2) do
-      assert_raise ArgumentError, msg, fn ->
-        Module.create(
-          Module.concat(P, to_string(index)),
-          [
-            quote do
-              use Flexflow.Process
-            end,
-            ast
-          ],
-          Macro.Env.location(__ENV__)
-        )
+      module_name = Module.concat(P, to_string(index))
+
+      body = [
+        quote do
+          use Flexflow.Process
+        end,
+        ast
+      ]
+
+      case msg do
+        :ok ->
+          Module.create(module_name, body, Macro.Env.location(__ENV__))
+
+        msg ->
+          assert_raise ArgumentError, msg, fn ->
+            Module.create(module_name, body, Macro.Env.location(__ENV__))
+          end
       end
     end
   end
