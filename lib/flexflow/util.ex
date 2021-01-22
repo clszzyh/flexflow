@@ -3,6 +3,8 @@ defmodule Flexflow.Util do
 
   @local_behaviours [Flexflow.Process, Flexflow.Transition, Flexflow.Event]
 
+  alias Flexflow.Event
+
   @spec normalize_module(Flexflow.key() | {Flexflow.key(), Flexflow.key(), Flexflow.key()}) ::
           Flexflow.key_normalize()
   def normalize_module({o, from, _to}) when is_atom(o) do
@@ -10,9 +12,28 @@ defmodule Flexflow.Util do
     {o, o.name() <> "_by_" <> from_name}
   end
 
-  def normalize_module(o) when is_atom(o), do: {o, o.name()}
+  def normalize_module(o) when is_atom(o) do
+    if function_exported?(o, :name, 0) do
+      {o, o.name()}
+    else
+      raise ArgumentError, "`#{o}` should have a `name/0` function"
+    end
+  end
+
   def normalize_module({{o, name}, _from, _to}) when is_atom(o), do: {o, name}
   def normalize_module({o, name}) when is_atom(o), do: {o, name}
+
+  @spec guess_event_module(binary(), [Event.t()]) :: {module(), binary()}
+  def guess_event_module(o, events) when is_binary(o) do
+    events
+    |> Enum.find(fn %Event{name: name} -> name == o end)
+    |> case do
+      %Event{module: module, name: name} -> {module, name}
+      _ -> raise ArgumentError, "Could not find module `#{o}`"
+    end
+  end
+
+  def guess_event_module(o, _), do: o
 
   @spec make_id :: Flexflow.id()
   def make_id do

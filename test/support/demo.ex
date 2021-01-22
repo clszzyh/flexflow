@@ -34,8 +34,8 @@ defmodule P2 do
 
   use Flexflow.Process
 
-  event Start
-  event End
+  event Flexflow.Events.Start
+  event Flexflow.Events.End
 
-  transition Pass, Start ~> End
+  transition Flexflow.Transitions.Pass, Flexflow.Events.Start ~> Flexflow.Events.End
 end

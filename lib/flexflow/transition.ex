@@ -77,13 +77,21 @@ defmodule Flexflow.Transition do
   def key(%{module: module, name: name}), do: {module, name}
 
   @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, options}, [Event.t()]) :: t()
+  def new({o, {from, to}, opts}, events) when is_binary(from) do
+    new({o, {Util.guess_event_module(from, events), to}, opts}, events)
+  end
+
+  def new({o, {from, to}, opts}, events) when is_binary(to) do
+    new({o, {from, Util.guess_event_module(to, events)}, opts}, events)
+  end
+
   def new({o, {from, to}, opts}, events) when is_atom(o) do
     new({Util.normalize_module({o, from, to}), {from, to}, opts}, events)
   end
 
   def new({{o, name}, {from, to}, opts}, events) do
     unless Util.local_behaviour(o) == __MODULE__ do
-      raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
+      raise ArgumentError, "`#{inspect(o)}` should implement #{__MODULE__}"
     end
 
     from = Util.normalize_module(from)
@@ -91,8 +99,8 @@ defmodule Flexflow.Transition do
 
     events = Map.new(events, &{{&1.module, &1.name}, &1})
 
-    events[from] || raise(ArgumentError, "#{inspect(from)} is not defined")
-    events[to] || raise(ArgumentError, "#{inspect(to)} is not defined")
+    events[from] || raise(ArgumentError, "`#{inspect(from)}` is not defined")
+    events[to] || raise(ArgumentError, "`#{inspect(to)}` is not defined")
 
     opts = opts ++ o.__opts__
     {attributes, opts} = Keyword.pop(opts, :attributes, [])
@@ -114,19 +122,19 @@ defmodule Flexflow.Transition do
 
   @spec validate([t()]) :: [t()]
   def validate(transitions) do
-    if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
+    if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty")
 
     for %__MODULE__{module: module, name: name} <- transitions, reduce: [] do
       ary ->
         o = {module, name}
-        if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice")
+        if o in ary, do: raise(ArgumentError, "Transition `#{inspect(o)}` is defined twice")
         ary ++ [o]
     end
 
     for %__MODULE__{from: from, to: to} <- transitions, reduce: [] do
       ary ->
         o = {from, to}
-        if o in ary, do: raise(ArgumentError, "Transition #{inspect(o)} is defined twice")
+        if o in ary, do: raise(ArgumentError, "Transition `#{inspect(o)}` is defined twice")
         ary ++ [o]
     end
 

@@ -6,6 +6,7 @@ defmodule Flexflow.Process do
   alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.Event
+  # alias Flexflow.Events.{Bypass, End, Start}
   alias Flexflow.History
   alias Flexflow.ProcessManager
   alias Flexflow.TaskSupervisor
@@ -139,11 +140,11 @@ defmodule Flexflow.Process do
       case event.kind do
         :start ->
           if Enum.empty?(event.__out_edges__),
-            do: raise(ArgumentError, "Out edges of #{inspect(Event.key(event))} is empty")
+            do: raise(ArgumentError, "Out edges of `#{inspect(Event.key(event))}` is empty")
 
         :end ->
           if Enum.empty?(event.__in_edges__),
-            do: raise(ArgumentError, "In edges of #{inspect(Event.key(event))} is empty")
+            do: raise(ArgumentError, "In edges of `#{inspect(Event.key(event))}` is empty")
 
         :intermediate ->
           :ok
@@ -151,7 +152,7 @@ defmodule Flexflow.Process do
     end
 
     for {_, %{__out_edges__: [], __in_edges__: []} = event} <- process.events do
-      raise ArgumentError, "#{inspect(Event.key(event))} is isolated"
+      raise ArgumentError, "`#{inspect(Event.key(event))}` is isolated"
     end
   end
 

@@ -123,15 +123,14 @@ defmodule Flexflow.Event do
 
     for %__MODULE__{module: module, name: name} <- events, reduce: [] do
       ary ->
-        o = {module, name}
-        if o in ary, do: raise(ArgumentError, "Event #{inspect(o)} is defined twice")
-        ary ++ [o]
+        if name in ary, do: raise(ArgumentError, "Event `#{name}` is defined twice")
+        ary ++ [{module, name}, name]
     end
 
     case Enum.filter(events, &start?/1) do
       [_] -> :ok
       [] -> raise(ArgumentError, "Need a start event")
-      [_, _ | _] -> raise(ArgumentError, "Only need one start event")
+      [_, _ | _] -> raise(ArgumentError, "Multiple start event found")
     end
 
     Enum.find(events, &end?/1) || raise(ArgumentError, "Need one or more end event")

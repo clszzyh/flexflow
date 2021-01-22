@@ -3,9 +3,15 @@ defmodule FlexflowTest do
   doctest Flexflow
 
   @moduletag capture_log: true
+  @moduletag :basic
 
   alias Flexflow.Event, as: N
   alias Flexflow.Transition, as: T
+
+  setup_all do
+    :ok = Application.ensure_started(:flexflow)
+    []
+  end
 
   test "version" do
     assert Flexflow.version()
@@ -90,87 +96,102 @@ defmodule FlexflowTest do
     data = [
       quote do
       end,
-      "Event is empty",
+      {0, "Event is empty"},
       quote do
-        event N1
+        event N1, kind: :start
+        event N2, kind: :end
       end,
-      "Transition is empty",
+      {1, "Transition is empty"},
       quote do
         event N0
       end,
-      "N0 should implement Elixir.Flexflow.Event",
+      {2, "`Elixir.N0` should have a `name/0` function"},
       quote do
         event N1
         event N2
         event N1
         transition T1, N1 ~> N2
       end,
-      "Event {N1, nil} is defined twice",
+      {3, "Event `n1` is defined twice"},
       quote do
-        event N1
-        transition T1, N1 ~> N4
+        event N1, kind: :start
+        event N2, kind: :end
+        transition T1, "n1" ~> N4
       end,
-      "{N4, nil} is not defined",
+      {4, "`{N4, \"n4\"}` is not defined"},
+      quote do
+        event N1, kind: :start
+        event N2, kind: :end
+        transition T1, "n1" ~> "n2"
+        transition T2, "n1" ~> "n2"
+      end,
+      {5, "Transition `{{N1, \"n1\"}, {N2, \"n2\"}}` is defined twice"},
+      quote do
+        event Flexflow.Events.Start
+        event Flexflow.Events.End
+        event N1
+        transition {T1, "t"}, Flexflow.Events.Start ~> Flexflow.Events.End
+        transition {T1, "t"}, N1 ~> Flexflow.Events.End
+      end,
+      {6, "Transition `{T1, \"t\"}` is defined twice"},
       quote do
         event N1
         event N2
         transition T1, N1 ~> N2
-        transition T2, N1 ~> N2
       end,
-      "Transition {{N1, nil}, {N2, nil}} is defined twice",
-      quote do
-        event N1
-        event N2
-        event N3
-        transition T1, N1 ~> N2
-        transition T1, N2 ~> N3
-      end,
-      "Transition {T1, nil} is defined twice",
-      quote do
-        event N1
-        event N2
-        transition T1, N1 ~> N2
-      end,
-      "Need a start event",
+      {7, "Need a start event"},
       quote do
         event N1, kind: :start
         event N2, kind: :start
         transition T1, N1 ~> N2
       end,
-      "Only need one start event",
+      {8, "Multiple start event found"},
       quote do
         event N1, kind: :start
         event N2
         transition T1, N1 ~> N2
       end,
-      "Need one or more end event",
+      {9, "Need one or more end event"},
       quote do
         event N1, kind: :start
         event N2
         event N3, kind: :end
         transition T1, N1 ~> N2
       end,
-      "In edges of {N3, \"n3\"} is empty",
+      {10, "In edges of `{N3, \"n3\"}` is empty"},
       quote do
         event N1, kind: :start
         event N2
         event N3, kind: :end
         transition T1, N2 ~> N3
       end,
-      "Out edges of {N1, \"n1\"} is empty",
+      {11, "Out edges of `{N1, \"n1\"}` is empty"},
       quote do
         event N1, kind: :start
         event N2
         event N3, kind: :end
         transition T1, N1 ~> N3
       end,
-      "{N2, \"n2\"} is isolated"
+      {12, "`{N2, \"n2\"}` is isolated"},
+      quote do
+        event N1, kind: :start
+        event N3, kind: :end
+        transition T1, "n" ~> N3
+      end,
+      {13, "Could not find module `n`"},
+      quote do
+        event {N1, "n"}, kind: :start
+        event {N2, "n"}
+        event N3, kind: :end
+        transition T1, "n" ~> N3
+      end,
+      {14, "Event `n` is defined twice"}
     ]
 
-    for {ast, msg} <- Enum.chunk_every(data, 2) do
+    for [ast, {index, msg}] <- Enum.chunk_every(data, 2) do
       assert_raise ArgumentError, msg, fn ->
         Module.create(
-          P,
+          Module.concat(P, to_string(index)),
           [
             quote do
               use Flexflow.Process
