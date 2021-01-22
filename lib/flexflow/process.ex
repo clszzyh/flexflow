@@ -5,8 +5,8 @@ defmodule Flexflow.Process do
 
   alias Flexflow.Config
   alias Flexflow.Context
+  alias Flexflow.Event
   alias Flexflow.History
-  alias Flexflow.Node
   alias Flexflow.ProcessManager
   alias Flexflow.TaskSupervisor
   alias Flexflow.Telemetry
@@ -25,7 +25,7 @@ defmodule Flexflow.Process do
           module: module(),
           name: Flexflow.name() | nil,
           id: Flexflow.id() | nil,
-          nodes: Flexflow.nodes(),
+          events: Flexflow.events(),
           transitions: Flexflow.transitions(),
           state: state(),
           __args__: Flexflow.process_args(),
@@ -41,7 +41,7 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type identity :: {:node | :transition, Flexflow.key_normalize()}
+  @type identity :: {:event | :transition, Flexflow.key_normalize()}
   @type handle_cast_return :: {:noreply, t()} | {:stop, term(), t()}
   @type handle_info_return :: {:noreply, t()} | {:stop, term(), t()}
   @type handle_continue_return :: {:noreply, t()} | {:stop, term(), t()}
@@ -52,7 +52,7 @@ defmodule Flexflow.Process do
           | {:stop, term, term, t()}
   @type server_return :: {:ok | :exist, pid} | {:error, term()}
 
-  @enforce_keys [:module, :nodes, :transitions, :__identities__]
+  @enforce_keys [:module, :events, :transitions, :__identities__]
   defstruct @enforce_keys ++
               [
                 :name,
@@ -71,7 +71,7 @@ defmodule Flexflow.Process do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Invoked when process is started, after nodes and transitions `init`, see `Flexflow.Api.init/1`"
+  @doc "Invoked when process is started, after events and transitions `init`, see `Flexflow.Api.init/1`"
   @callback init(t()) :: result()
 
   @callback handle_call(t(), term(), GenServer.from()) :: handle_call_return()
@@ -91,25 +91,16 @@ defmodule Flexflow.Process do
 
   defmacro __using__(opts) do
     quote do
-      alias Flexflow.Nodes
-      alias Flexflow.Nodes.{Bypass, End, Start}
-      alias Flexflow.Transitions
+      alias Flexflow.Events.{Bypass, End, Start}
       alias Flexflow.Transitions.Pass
 
       @__opts__ unquote(opts)
 
       @behaviour unquote(__MODULE__)
 
-      import unquote(__MODULE__),
-        only: [
-          intermediate_node: 1,
-          intermediate_node: 2,
-          ~>: 2,
-          transition: 2,
-          transition: 3
-        ]
+      import unquote(__MODULE__), only: [event: 1, event: 2, ~>: 2, transition: 2, transition: 3]
 
-      Module.register_attribute(__MODULE__, :__nodes__, accumulate: true)
+      Module.register_attribute(__MODULE__, :__events__, accumulate: true)
       Module.register_attribute(__MODULE__, :__transitions__, accumulate: true)
       Module.register_attribute(__MODULE__, :__identities__, accumulate: true)
 
@@ -125,60 +116,58 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro intermediate_node(key, opts \\ []), do: define_node(key, opts)
-  defmacro transition(key, tuple, opts \\ []), do: define_transition(key, tuple, opts)
-  def a ~> b, do: {a, b}
-
-  defp define_node(key, opts) do
+  defmacro event(key, opts \\ []) do
     quote bind_quoted: [key: key, opts: opts] do
-      @__nodes__ {key, opts}
-      @__identities__ {:node, key}
+      @__events__ {key, opts}
+      @__identities__ {:event, key}
     end
   end
 
-  defp define_transition(key, tuple, opts) do
+  defmacro transition(key, tuple, opts \\ []) do
     quote bind_quoted: [key: key, tuple: tuple, opts: opts] do
       @__transitions__ {key, tuple, opts}
       @__identities__ {:transition, Tuple.insert_at(tuple, 0, key)}
     end
   end
 
+  def a ~> b, do: {a, b}
+
   def __after_compile__(env, _bytecode) do
     process = env.module.new()
 
-    for {_, node} <- process.nodes do
-      case node.kind do
+    for {_, event} <- process.events do
+      case event.kind do
         :start ->
-          if Enum.empty?(node.__out_edges__),
-            do: raise(ArgumentError, "Out edges of #{inspect(Node.key(node))} is empty")
+          if Enum.empty?(event.__out_edges__),
+            do: raise(ArgumentError, "Out edges of #{inspect(Event.key(event))} is empty")
 
         :end ->
-          if Enum.empty?(node.__in_edges__),
-            do: raise(ArgumentError, "In edges of #{inspect(Node.key(node))} is empty")
+          if Enum.empty?(event.__in_edges__),
+            do: raise(ArgumentError, "In edges of #{inspect(Event.key(event))} is empty")
 
         :intermediate ->
           :ok
       end
     end
 
-    for {_, %{__out_edges__: [], __in_edges__: []} = node} <- process.nodes do
-      raise ArgumentError, "#{inspect(Node.key(node))} is isolated"
+    for {_, %{__out_edges__: [], __in_edges__: []} = event} <- process.events do
+      raise ArgumentError, "#{inspect(Event.key(event))} is isolated"
     end
   end
 
   defmacro __before_compile__(env) do
-    nodes =
+    events =
       env.module
-      |> Module.get_attribute(:__nodes__)
+      |> Module.get_attribute(:__events__)
       |> Enum.reverse()
-      |> Enum.map(&Node.new/1)
-      |> Node.validate()
+      |> Enum.map(&Event.new/1)
+      |> Event.validate()
 
     transitions =
       env.module
       |> Module.get_attribute(:__transitions__)
       |> Enum.reverse()
-      |> Enum.map(&Transition.new(&1, nodes))
+      |> Enum.map(&Transition.new(&1, events))
       |> Transition.validate()
 
     identities =
@@ -187,9 +176,9 @@ defmodule Flexflow.Process do
       |> Enum.reverse()
       |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v)} end)
 
-    new_nodes =
-      Map.new(nodes, fn o ->
-        k = Node.key(o)
+    new_events =
+      Map.new(events, fn o ->
+        k = Event.key(o)
         in_edges = for(t <- transitions, t.to == k, do: {Transition.key(t), t.from})
         out_edges = for(t <- transitions, t.from == k, do: {Transition.key(t), t.to})
 
@@ -197,7 +186,7 @@ defmodule Flexflow.Process do
       end)
 
     process = %__MODULE__{
-      nodes: new_nodes,
+      events: new_events,
       module: env.module,
       transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t}),
       __identities__: identities
@@ -223,7 +212,7 @@ defmodule Flexflow.Process do
       @spec start(Flexflow.id(), Flexflow.process_args()) :: Process.server_return()
       def start(id, args \\ %{}), do: Process.start(__MODULE__, id, args)
 
-      Module.delete_attribute(__MODULE__, :__nodes__)
+      Module.delete_attribute(__MODULE__, :__events__)
       Module.delete_attribute(__MODULE__, :__opts__)
       Module.delete_attribute(__MODULE__, :__transitions__)
       Module.delete_attribute(__MODULE__, :__identities__)
@@ -256,15 +245,15 @@ defmodule Flexflow.Process do
   def start(module, id, args \\ %{}), do: ProcessManager.server({module, id}, args)
 
   @spec init(t()) :: result()
-  def init(%__MODULE__{module: module, nodes: nodes, transitions: transitions} = p) do
-    (Map.to_list(nodes) ++ Map.to_list(transitions))
+  def init(%__MODULE__{module: module, events: events, transitions: transitions} = p) do
+    (Map.to_list(events) ++ Map.to_list(transitions))
     |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
       case module.init(o, p) do
-        {:ok, %Node{kind: :start} = node} ->
-          {:cont, put_in(p, [:nodes, key], %{node | state: :ready})}
+        {:ok, %Event{kind: :start} = event} ->
+          {:cont, put_in(p, [:events, key], %{event | state: :ready})}
 
-        {:ok, %Node{} = node} ->
-          {:cont, put_in(p, [:nodes, key], %{node | state: :initial})}
+        {:ok, %Event{} = event} ->
+          {:cont, put_in(p, [:events, key], %{event | state: :initial})}
 
         {:ok, %Transition{} = transition} ->
           {:cont, put_in(p, [:transitions, key], %{transition | state: :initial})}
@@ -378,14 +367,14 @@ defmodule Flexflow.Process do
   def next(%{__loop_counter__: loop_counter}) when loop_counter > @max_loop_limit,
     do: {:error, :deadlock_found}
 
-  def next(%{nodes: nodes, transitions: transitions} = p) do
-    ready_node_edges =
-      for {_, %Node{state: :ready, __out_edges__: [_ | _] = out_edges} = node} <- nodes,
+  def next(%{events: events, transitions: transitions} = p) do
+    ready_event_edges =
+      for {_, %Event{state: :ready, __out_edges__: [_ | _] = out_edges} = event} <- events,
           {t, n} <- out_edges do
-        {node, Map.fetch!(transitions, t), Map.fetch!(nodes, n)}
+        {event, Map.fetch!(transitions, t), Map.fetch!(events, n)}
       end
 
-    case ready_node_edges do
+    case ready_event_edges do
       [] -> {:ok, %{p | state: :waiting}}
       [_ | _] = a -> Enum.reduce(a, {:ok, p}, &Transition.dispatch/2)
     end

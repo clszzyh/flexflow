@@ -15,24 +15,24 @@ defmodule Review do
   @moduledoc false
 
   defmodule Draft do
-    use Flexflow.Node
+    use Flexflow.Event
   end
 
   defmodule Inreview do
-    use Flexflow.Node
+    use Flexflow.Event
   end
 
   defmodule Reviewed do
-    use Flexflow.Node
+    use Flexflow.Event
   end
 
   defmodule Rejected do
-    ## `async` mode means this node run's in a separated elixir process.
-    use Flexflow.Node, async: true
+    ## `async` mode means this event run's in a separated elixir process.
+    use Flexflow.Event, async: true
   end
 
   defmodule Canceled do
-    use Flexflow.Node
+    use Flexflow.Event
   end
 
   defmodule Submit do
@@ -57,14 +57,14 @@ defmodule Review do
 
   use Flexflow.Process, version: 1
 
-  ## Define a start node
-  intermediate_node Draft, kind: :start
-  ## Define an end node with custom name
-  intermediate_node {Reviewed, "Already reviewed"}, kind: :end
-  intermediate_node Canceled, kind: :end
-  ## Define an intermediate node
-  intermediate_node Inreview
-  intermediate_node Rejected
+  ## Define a start event
+  event Draft, kind: :start
+  ## Define an end event with custom name
+  event {Reviewed, "Already reviewed"}, kind: :end
+  event Canceled, kind: :end
+  ## Define an intermediate event
+  event Inreview
+  event Rejected
 
   ## Define a transition
   ## `a ~> b` is a shortcut of `{a, b}`

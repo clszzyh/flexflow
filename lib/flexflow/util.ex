@@ -1,7 +1,7 @@
 defmodule Flexflow.Util do
   @moduledoc false
 
-  @local_behaviours [Flexflow.Process, Flexflow.Transition, Flexflow.Node]
+  @local_behaviours [Flexflow.Process, Flexflow.Transition, Flexflow.Event]
 
   @spec normalize_module(Flexflow.key() | {Flexflow.key(), Flexflow.key(), Flexflow.key()}) ::
           Flexflow.key_normalize()

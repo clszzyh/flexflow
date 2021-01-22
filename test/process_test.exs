@@ -51,6 +51,6 @@ defmodule ProcessTest do
     process = Flexflow.ProcessServer.state(server_pid)
     assert process.id == "p1"
     assert process.state == :waiting
-    assert process.nodes[{N1, "n1"}].state == :completed
+    assert process.events[{N1, "n1"}].state == :completed
   end
 end

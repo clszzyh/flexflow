@@ -4,7 +4,7 @@ defmodule FlexflowTest do
 
   @moduletag capture_log: true
 
-  alias Flexflow.Node, as: N
+  alias Flexflow.Event, as: N
   alias Flexflow.Transition, as: T
 
   test "version" do
@@ -58,16 +58,16 @@ defmodule FlexflowTest do
     t3_s = {T2, "1"}
 
     assert P1.new().__identities__ == [
-             node: n1_s,
-             node: n2_s,
+             event: n1_s,
+             event: n2_s,
              transition: t1_s,
-             node: n3_s,
-             node: n4_s,
+             event: n3_s,
+             event: n4_s,
              transition: t2_s,
              transition: t3_s
            ]
 
-    assert P1.new().nodes == %{n1_s => n1, n2_s => n2, n3_s => n3, n4_s => n4}
+    assert P1.new().events == %{n1_s => n1, n2_s => n2, n3_s => n3, n4_s => n4}
     assert P1.new().transitions == %{t1_s => t1, t2_s => t2, t3_s => t3}
   end
 
@@ -80,8 +80,8 @@ defmodule FlexflowTest do
     {:ok, p} = Flexflow.Process.new(P1, "p1")
     assert p.state == :active
     assert p.id == "p1"
-    assert p.nodes[{N1, "n1"}].state == :ready
-    assert p.nodes[{N2, "n2"}].state == :initial
+    assert p.events[{N1, "n1"}].state == :ready
+    assert p.events[{N2, "n2"}].state == :initial
     assert p.transitions[{T1, "t1_by_n1"}].state == :initial
     assert p.transitions[{T1, "t1_by_n1"}]
   end
@@ -90,78 +90,78 @@ defmodule FlexflowTest do
     data = [
       quote do
       end,
-      "Node is empty",
+      "Event is empty",
       quote do
-        intermediate_node N1
+        event N1
       end,
       "Transition is empty",
       quote do
-        intermediate_node N0
+        event N0
       end,
-      "N0 should implement Elixir.Flexflow.Node",
+      "N0 should implement Elixir.Flexflow.Event",
       quote do
-        intermediate_node N1
-        intermediate_node N2
-        intermediate_node N1
+        event N1
+        event N2
+        event N1
         transition T1, N1 ~> N2
       end,
-      "Node {N1, nil} is defined twice",
+      "Event {N1, nil} is defined twice",
       quote do
-        intermediate_node N1
+        event N1
         transition T1, N1 ~> N4
       end,
       "{N4, nil} is not defined",
       quote do
-        intermediate_node N1
-        intermediate_node N2
+        event N1
+        event N2
         transition T1, N1 ~> N2
         transition T2, N1 ~> N2
       end,
       "Transition {{N1, nil}, {N2, nil}} is defined twice",
       quote do
-        intermediate_node N1
-        intermediate_node N2
-        intermediate_node N3
+        event N1
+        event N2
+        event N3
         transition T1, N1 ~> N2
         transition T1, N2 ~> N3
       end,
       "Transition {T1, nil} is defined twice",
       quote do
-        intermediate_node N1
-        intermediate_node N2
+        event N1
+        event N2
         transition T1, N1 ~> N2
       end,
-      "Need a start node",
+      "Need a start event",
       quote do
-        intermediate_node N1, kind: :start
-        intermediate_node N2, kind: :start
+        event N1, kind: :start
+        event N2, kind: :start
         transition T1, N1 ~> N2
       end,
-      "Only need one start node",
+      "Only need one start event",
       quote do
-        intermediate_node N1, kind: :start
-        intermediate_node N2
+        event N1, kind: :start
+        event N2
         transition T1, N1 ~> N2
       end,
-      "Need one or more end node",
+      "Need one or more end event",
       quote do
-        intermediate_node N1, kind: :start
-        intermediate_node N2
-        intermediate_node N3, kind: :end
+        event N1, kind: :start
+        event N2
+        event N3, kind: :end
         transition T1, N1 ~> N2
       end,
       "In edges of {N3, \"n3\"} is empty",
       quote do
-        intermediate_node N1, kind: :start
-        intermediate_node N2
-        intermediate_node N3, kind: :end
+        event N1, kind: :start
+        event N2
+        event N3, kind: :end
         transition T1, N2 ~> N3
       end,
       "Out edges of {N1, \"n1\"} is empty",
       quote do
-        intermediate_node N1, kind: :start
-        intermediate_node N2
-        intermediate_node N3, kind: :end
+        event N1, kind: :start
+        event N2
+        event N3, kind: :end
         transition T1, N1 ~> N3
       end,
       "{N2, \"n2\"} is isolated"

@@ -1,7 +1,7 @@
 # Used by "mix format"
 locals_without_parens = [
-  intermediate_node: 1,
-  intermediate_node: 2,
+  event: 1,
+  event: 2,
   ~>: 2,
   transition: 2,
   transition: 3

@@ -6,7 +6,7 @@ defmodule Flexflow.ModuleRegistry do
   alias Flexflow.Util
 
   @state %{
-    Flexflow.Node => %{},
+    Flexflow.Event => %{},
     Flexflow.Transition => %{},
     Flexflow.Process => %{}
   }

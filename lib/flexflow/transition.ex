@@ -4,7 +4,7 @@ defmodule Flexflow.Transition do
   """
 
   alias Flexflow.Context
-  alias Flexflow.Node
+  alias Flexflow.Event
   alias Flexflow.Process
   alias Flexflow.Util
 
@@ -18,7 +18,7 @@ defmodule Flexflow.Transition do
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @typedoc """
 
-    * `async` - `t:Flexflow.Node.option/0`
+    * `async` - `t:Flexflow.Event.option/0`
   """
   @type option :: {:async, boolean()}
   @type options :: [option]
@@ -76,12 +76,12 @@ defmodule Flexflow.Transition do
   @spec key(t()) :: Flexflow.key_normalize()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, options}, [Node.t()]) :: t()
-  def new({o, {from, to}, opts}, nodes) when is_atom(o) do
-    new({Util.normalize_module({o, from, to}), {from, to}, opts}, nodes)
+  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, options}, [Event.t()]) :: t()
+  def new({o, {from, to}, opts}, events) when is_atom(o) do
+    new({Util.normalize_module({o, from, to}), {from, to}, opts}, events)
   end
 
-  def new({{o, name}, {from, to}, opts}, nodes) do
+  def new({{o, name}, {from, to}, opts}, events) do
     unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
@@ -89,10 +89,10 @@ defmodule Flexflow.Transition do
     from = Util.normalize_module(from)
     to = Util.normalize_module(to)
 
-    nodes = Map.new(nodes, &{{&1.module, &1.name}, &1})
+    events = Map.new(events, &{{&1.module, &1.name}, &1})
 
-    nodes[from] || raise(ArgumentError, "#{inspect(from)} is not defined")
-    nodes[to] || raise(ArgumentError, "#{inspect(to)} is not defined")
+    events[from] || raise(ArgumentError, "#{inspect(from)} is not defined")
+    events[to] || raise(ArgumentError, "#{inspect(to)} is not defined")
 
     opts = opts ++ o.__opts__
     {attributes, opts} = Keyword.pop(opts, :attributes, [])
@@ -133,13 +133,13 @@ defmodule Flexflow.Transition do
     transitions
   end
 
-  @spec dispatch({Node.t(), t(), Node.t()}, Process.result()) :: Process.result()
+  @spec dispatch({Event.t(), t(), Event.t()}, Process.result()) :: Process.result()
   def dispatch(_, {:error, reason}), do: {:error, reason}
 
   def dispatch(
-        {%Node{module: from_module, name: from_name}, %__MODULE__{}, %Node{}},
+        {%Event{module: from_module, name: from_name}, %__MODULE__{}, %Event{}},
         {:ok, p}
       ) do
-    {:ok, put_in(p.nodes[{from_module, from_name}].state, :completed)}
+    {:ok, put_in(p.events[{from_module, from_name}].state, :completed)}
   end
 end

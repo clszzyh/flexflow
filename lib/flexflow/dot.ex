@@ -55,7 +55,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
 
   def name(%Flexflow.Process{
         __identities__: identities,
-        nodes: nodes,
+        events: events,
         transitions: transitions,
         __graphviz__: attributes
       }) do
@@ -63,7 +63,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
 
     identities =
       Enum.map(identities, fn
-        {:node, key} -> Map.fetch!(nodes, key)
+        {:event, key} -> Map.fetch!(events, key)
         {:transition, key} -> Map.fetch!(transitions, key)
       end)
 
@@ -73,7 +73,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
   end
 end
 
-defimpl Flexflow.DotProtocol, for: Flexflow.Node do
+defimpl Flexflow.DotProtocol, for: Flexflow.Event do
   def prefix(_), do: "  "
   def suffix(_), do: ";\n"
   def name(%{name: name}), do: Flexflow.Dot.escape(name)
