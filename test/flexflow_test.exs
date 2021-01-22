@@ -9,7 +9,7 @@ defmodule FlexflowTest do
   alias Flexflow.Transition, as: T
 
   setup_all do
-    :ok = Application.ensure_started(:flexflow)
+    _ = Flexflow.ModuleRegistry.state()
     []
   end
 
@@ -92,129 +92,130 @@ defmodule FlexflowTest do
     assert p.transitions[{T1, "t1_by_n1"}]
   end
 
-  test "process compile raise" do
-    data = [
-      quote do
-      end,
-      {0, "Event is empty"},
-      quote do
-        event N1, kind: :start
-        event N2, kind: :end
-      end,
-      {1, "Transition is empty"},
-      quote do
-        event N0
-      end,
-      {2, "`Elixir.N0` should have a `name/0` function"},
-      quote do
-        event N1
-        event N2
-        event N1
-        transition T1, N1 ~> N2
-      end,
-      {3, "Event `n1` is defined twice"},
-      quote do
-        event N1, kind: :start
-        event N2, kind: :end
-        transition T1, "n1" ~> N4
-      end,
-      {4, "`{N4, \"n4\"}` is not defined"},
-      quote do
-        event N1, kind: :start
-        event N2, kind: :end
-        transition T1, "n1" ~> "n2"
-        transition T2, "n1" ~> "n2"
-      end,
-      {5, "Transition `{{N1, \"n1\"}, {N2, \"n2\"}}` is defined twice"},
-      quote do
-        event Flexflow.Events.Start
-        event Flexflow.Events.End
-        event N1
-        transition {T1, "t"}, Flexflow.Events.Start ~> Flexflow.Events.End
-        transition {T1, "t"}, N1 ~> Flexflow.Events.End
-      end,
-      {6, "Transition `{T1, \"t\"}` is defined twice"},
-      quote do
-        event N1
-        event N2
-        transition T1, N1 ~> N2
-      end,
-      {7, "Need a start event"},
-      quote do
-        event N1, kind: :start
-        event N2, kind: :start
-        transition T1, N1 ~> N2
-      end,
-      {8, "Multiple start event found"},
-      quote do
-        event N1, kind: :start
-        event N2
-        transition T1, N1 ~> N2
-      end,
-      {9, "Need one or more end event"},
-      quote do
-        event N1, kind: :start
-        event N2
-        event N3, kind: :end
-        transition T1, N1 ~> N2
-      end,
-      {10, "In edges of `{N3, \"n3\"}` is empty"},
-      quote do
-        event N1, kind: :start
-        event N2
-        event N3, kind: :end
-        transition T1, N2 ~> N3
-      end,
-      {11, "Out edges of `{N1, \"n1\"}` is empty"},
-      quote do
-        event N1, kind: :start
-        event N2
-        event N3, kind: :end
-        transition T1, N1 ~> N3
-      end,
-      {12, "`{N2, \"n2\"}` is isolated"},
-      quote do
-        event N1, kind: :start
-        event N3, kind: :end
-        transition T1, "n" ~> N3
-      end,
-      {13, "Could not find module `n`"},
-      quote do
-        event {N1, "n"}, kind: :start
-        event {N2, "n"}
-        event N3, kind: :end
-        transition T1, "n" ~> N3
-      end,
-      {14, "Event `n` is defined twice"},
-      quote do
-        event {N1, "n"}, kind: :start
-        event N2
-        event N3, kind: :end
-        transition T1, "n" ~> N3
-        transition T2, "n" ~> N2
-      end,
-      {15, :ok}
-    ]
+  @data %{
+    """
+      event {N1, "n"}, kind: :start
+      event N2
+      event N3, kind: :end
+      transition T1, "n" ~> N3
+      transition T2, "n" ~> N2
+    """ => :ok,
+    """
+      event Start
+      event Bypass
+      event N3, kind: :end
+      transition T1, "start" ~> N3
+      transition T2, "start" ~> Bypass
+    """ => :ok,
+    "" => "Event is empty",
+    """
+      event N1, kind: :start
+      event N2, kind: :end
+    """ => "Transition is empty",
+    """
+      event N0
+    """ => "`Elixir.N0` should have a `name/0` function",
+    """
+      event N1
+      event N2
+      event N1
+      transition T1, N1 ~> N2
+    """ => "Event `n1` is defined twice",
+    """
+      event N1, kind: :start
+      event N2, kind: :end
+      transition T1, "n1" ~> N4
+    """ => "`{N4, \"n4\"}` is not defined",
+    """
+      event N1, kind: :start
+      event N2, kind: :end
+      transition T1, "n1" ~> "n2"
+      transition T2, "n1" ~> "n2"
+    """ => "Transition `{{N1, \"n1\"}, {N2, \"n2\"}}` is defined twice",
+    """
+      event Start
+      event End
+      event N1
+      transition {T1, "t"}, Start ~> End
+      transition {T1, "t"}, N1 ~> End
+    """ => "Transition `{T1, \"t\"}` is defined twice",
+    """
+      event N1
+      event N2
+      transition T1, N1 ~> N2
+    """ => "Need a start event",
+    """
+      event N1, kind: :start
+      event N2, kind: :start
+      transition T1, N1 ~> N2
+    """ => "Multiple start event found",
+    """
+      event N1, kind: :start
+      event N2
+      transition T1, N1 ~> N2
+    """ => "Need one or more end event",
+    """
+      event N1, kind: :start
+      event N2
+      event N3, kind: :end
+      transition T1, N1 ~> N2
+    """ => "In edges of `{N3, \"n3\"}` is empty",
+    """
+      event N1, kind: :start
+      event N2
+      event N3, kind: :end
+      transition T1, N2 ~> N3
+    """ => "Out edges of `{N1, \"n1\"}` is empty",
+    """
+      event N1, kind: :start
+      event N2
+      event N3, kind: :end
+      transition T1, N1 ~> N3
+    """ => "`{N2, \"n2\"}` is isolated",
+    """
+      event N1, kind: :start
+      event N3, kind: :end
+      transition T1, "n" ~> N3
+    """ => "Could not find module `n`",
+    """
+      event {N1, "n"}, kind: :start
+      event {N2, "n"}
+      event N3, kind: :end
+      transition T1, "n" ~> N3
+    """ => "Event `n` is defined twice"
+  }
 
-    for [ast, {index, msg}] <- Enum.chunk_every(data, 2) do
-      module_name = Module.concat(P, to_string(index))
+  for {{code, msg}, index} <- Enum.with_index(@data) do
+    module_name = Module.concat(["NP#{index}"])
 
-      body = [
-        quote do
-          use Flexflow.Process
-        end,
-        ast
-      ]
+    body = """
+    defmodule #{module_name} do
+      use Flexflow.Process
+      #{code}
+    end
+    """
 
+    name = "[#{index}] #{msg}"
+
+    test_ast =
       case msg do
         :ok ->
-          Module.create(module_name, body, Macro.Env.location(__ENV__))
+          quote do
+            test unquote(name) do
+              Code.eval_string(unquote(body))
+            end
+          end
 
         msg ->
-          assert_raise ArgumentError, msg, fn ->
-            Module.create(module_name, body, Macro.Env.location(__ENV__))
+          quote do
+            test unquote(name) do
+              assert_raise ArgumentError, unquote(msg), fn ->
+                Code.eval_string(unquote(body))
+              end
+            end
           end
       end
-    end
+
+    Module.eval_quoted(__MODULE__, test_ast)
   end
 end
