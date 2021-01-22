@@ -95,10 +95,10 @@ defmodule FlexflowTest do
   @data %{
     """
       event {N1, "n"}, kind: :start
-      event N2
+      event "n2"
       event N3, kind: :end
-      transition T1, "n" ~> N3
-      transition T2, "n" ~> N2
+      transition "T1", "n" ~> N3
+      transition T2, "n" ~> "n2"
     """ => :ok,
     """
       event Start

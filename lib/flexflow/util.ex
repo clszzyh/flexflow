@@ -4,6 +4,8 @@ defmodule Flexflow.Util do
   @local_behaviours [Flexflow.Process, Flexflow.Transition, Flexflow.Event]
 
   alias Flexflow.Event
+  alias Flexflow.Events.Bypass
+  alias Flexflow.Transitions.Pass
 
   @spec normalize_module(
           Flexflow.key()
@@ -13,6 +15,8 @@ defmodule Flexflow.Util do
         ) ::
           Flexflow.key_normalize()
   def normalize_module(o, events \\ [])
+
+  def normalize_module({o, _from, _to}, _events) when is_binary(o), do: {Pass, o}
 
   def normalize_module({o, from, _to}, events) when is_atom(o) do
     {_, from_name} = normalize_module(from, events)
@@ -27,6 +31,8 @@ defmodule Flexflow.Util do
       _ -> raise ArgumentError, "Could not find module `#{o}`"
     end
   end
+
+  def normalize_module(o, []) when is_binary(o), do: {Bypass, o}
 
   def normalize_module(o, _) when is_atom(o) do
     if function_exported?(o, :name, 0) do

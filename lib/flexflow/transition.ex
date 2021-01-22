@@ -85,7 +85,7 @@ defmodule Flexflow.Transition do
     new({o, {from, Util.normalize_module(to, events)}, opts}, events)
   end
 
-  def new({o, {from, to}, opts}, events) when is_atom(o) do
+  def new({o, {from, to}, opts}, events) when is_atom(o) or is_binary(o) do
     new({Util.normalize_module({o, from, to}), {from, to}, opts}, events)
   end
 
