@@ -60,7 +60,7 @@ end
 <summary><img src="https://g.gravizo.com/source/custom_mark10?https%3A%2F%2Fraw.githubusercontent.com%2Fclszzyh%2Fflexflow%2Fmaster%2FREADME.md"></summary>
 
 ```dot
-// custom_mark10
+// custom_mark
 digraph review {
   size ="4,4";
   draft [label="draft",shape=doublecircle,color=".7 .3 1.0"];
@@ -77,7 +77,7 @@ digraph review {
   reviewing -> rejected [label="reject"];
   reviewing -> reviewed [label="agree",style=bold,color=red];
 }
-// custom_mark10
+// custom_mark
 ```
 </details>
 

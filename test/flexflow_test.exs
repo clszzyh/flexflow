@@ -30,11 +30,11 @@ defmodule FlexflowTest do
     n3_s = {N3, "n3"}
     n4_s = {N4, "n4"}
 
-    t1 = %T{module: T1, name: "t1_by_n1", __opts__: [foo: :baz], from: n1_s, to: n2_s}
+    t1 = %T{module: T1, name: "t1_n1", __opts__: [foo: :baz], from: n1_s, to: n2_s}
 
     t2 = %T{
       module: T2,
-      name: "t2_by_n2",
+      name: "t2_n2",
       __graphviz__: [style: "bold", color: "red"],
       from: n2_s,
       to: n3_s,
@@ -48,19 +48,19 @@ defmodule FlexflowTest do
     n3 = N.new({n3_s, async: true})
     n4 = N.new({n4_s, kind: :end})
 
-    n1 = %{n1 | __out_edges__: [{{T1, "t1_by_n1"}, {N2, "n2"}}]}
+    n1 = %{n1 | __out_edges__: [{{T1, "t1_n1"}, {N2, "n2"}}]}
 
     n2 = %{
       n2
-      | __in_edges__: [{{T1, "t1_by_n1"}, {N1, "n1"}}],
-        __out_edges__: [{{T2, "t2_by_n2"}, {N3, "n3"}}, {{T2, "1"}, {N4, "n4"}}]
+      | __in_edges__: [{{T1, "t1_n1"}, {N1, "n1"}}],
+        __out_edges__: [{{T2, "t2_n2"}, {N3, "n3"}}, {{T2, "1"}, {N4, "n4"}}]
     }
 
-    n3 = %{n3 | __in_edges__: [{{T2, "t2_by_n2"}, {N2, "n2"}}]}
+    n3 = %{n3 | __in_edges__: [{{T2, "t2_n2"}, {N2, "n2"}}]}
     n4 = %{n4 | __in_edges__: [{{T2, "1"}, {N2, "n2"}}]}
 
-    t1_s = {T1, "t1_by_n1"}
-    t2_s = {T2, "t2_by_n2"}
+    t1_s = {T1, "t1_n1"}
+    t2_s = {T2, "t2_n2"}
     t3_s = {T2, "1"}
 
     assert P1.new().__identities__ == [
@@ -88,8 +88,8 @@ defmodule FlexflowTest do
     assert p.id == "p1"
     assert p.events[{N1, "n1"}].state == :ready
     assert p.events[{N2, "n2"}].state == :initial
-    assert p.transitions[{T1, "t1_by_n1"}].state == :initial
-    assert p.transitions[{T1, "t1_by_n1"}]
+    assert p.transitions[{T1, "t1_n1"}].state == :initial
+    assert p.transitions[{T1, "t1_n1"}]
   end
 
   @data %{

@@ -6,11 +6,13 @@ defmodule Flexflow.Dot do
   * http://www.graphviz.org/doc/info/attrs.html
   """
 
+  alias Flexflow.DotProtocol
+
   verify_dot =
     [__DIR__, "../../README.md"]
     |> Path.join()
     |> File.read!()
-    |> String.split("custom_mark10")
+    |> String.split("custom_mark")
     |> Enum.fetch!(2)
     |> String.trim()
     |> inspect
@@ -23,7 +25,7 @@ defmodule Flexflow.Dot do
   """
   def serialize(p) do
     attributes =
-      case Flexflow.DotProtocol.attributes(p) do
+      case DotProtocol.attributes(p) do
         [] ->
           ""
 
@@ -32,8 +34,7 @@ defmodule Flexflow.Dot do
           " [#{s}]"
       end
 
-    Flexflow.DotProtocol.prefix(p) <>
-      Flexflow.DotProtocol.name(p) <> attributes <> Flexflow.DotProtocol.suffix(p)
+    DotProtocol.prefix(p) <> DotProtocol.name(p) <> attributes <> DotProtocol.suffix(p)
   end
 
   def escape(name) when is_binary(name) do
@@ -53,7 +54,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
   def suffix(_), do: "}\n//"
   def attributes(_), do: []
 
-  def name(%Flexflow.Process{
+  def name(%{
         __identities__: identities,
         events: events,
         transitions: transitions,
