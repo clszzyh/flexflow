@@ -89,6 +89,6 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Transition do
   def name(%{from: {_, from_name}, to: {_, to_name}}),
     do: "#{Flexflow.Dot.escape(from_name)} -> #{Flexflow.Dot.escape(to_name)}"
 
-  def attributes(%{module: module, __graphviz__: attributes}),
-    do: [label: inspect(module.name())] ++ attributes
+  def attributes(%{name: name, __graphviz__: attributes}),
+    do: [label: inspect(name)] ++ attributes
 end

@@ -20,7 +20,7 @@ defmodule Flexflow.Util do
 
   def normalize_module({o, from, _to}, events) when is_atom(o) do
     {_, from_name} = normalize_module(from, events)
-    {o, o.name() <> "_by_" <> from_name}
+    {o, o.name() <> "_" <> from_name}
   end
 
   def normalize_module(o, [_ | _] = events) when is_binary(o) do

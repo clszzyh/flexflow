@@ -12,26 +12,9 @@
 
 ```elixir
 defmodule Review do
-  @moduledoc false
+  use Flexflow.Process, version: 1
 
-  defmodule Draft do
-    use Flexflow.Event
-  end
-
-  defmodule Inreview do
-    use Flexflow.Event
-  end
-
-  defmodule Reviewed do
-    use Flexflow.Event
-  end
-
-  defmodule Rejected do
-    ## `async` mode means this event run's in a separated elixir process.
-    use Flexflow.Event, async: true
-  end
-
-  defmodule Canceled do
+  defmodule Reviewing do
     use Flexflow.Event
   end
 
@@ -39,48 +22,33 @@ defmodule Review do
     use Flexflow.Transition
   end
 
-  defmodule Agree do
-    use Flexflow.Transition
-  end
-
-  defmodule Modify do
-    use Flexflow.Transition
-  end
-
-  defmodule Reject do
-    use Flexflow.Transition
-  end
-
-  defmodule Cancel do
-    use Flexflow.Transition
-  end
-
-  use Flexflow.Process, version: 1
-
-  ## Define a start event
-  event Draft, kind: :start
-  ## Define an end event with custom name
-  event {Reviewed, "Already reviewed"}, kind: :end
-  event Canceled, kind: :end
-  ## Define an intermediate event
-  event Inreview
-  event Rejected
+  ## Start event
+  event {Start, "draft"}
+  ## End event
+  event {End, "reviewed"}
+  event {End, "canceled"}
+  ## Intermediate event
+  event "rejected"
+  ## Custom event
+  event Reviewing
 
   ## Define a transition
   ## `a ~> b` is a shortcut of `{a, b}`
-  transition Submit, Draft ~> Inreview
-  transition Modify, Draft ~> Draft
-  transition Cancel, Draft ~> Canceled
+  transition "modify1", "draft" ~> "draft"
+  transition "cancel1", "draft" ~> "canceled"
 
-  ## Define a transition with custom name
-  transition {Submit, "Submit rejected"}, Rejected ~> Inreview
-  transition Modify, Rejected ~> Rejected
-  transition Cancel, Rejected ~> Canceled
+  ## Custom transition
+  transition Submit, "draft" ~> Reviewing
 
-  ## Define a transition
-  transition Reject, Inreview ~> Rejected
+  transition "modify2", "rejected" ~> "rejected"
+  transition "cancel2", "rejected" ~> "canceled"
+
+  ## With custom name
+  transition {Submit, "submit2"}, "rejected" ~> Reviewing
+
+  transition "reject", Reviewing ~> "rejected"
   ## `async` mode means this transition run's in a separated elixir process.
-  transition Agree, Inreview ~> {Reviewed, "Already reviewed"}, async: true
+  transition "agree", Reviewing ~> "reviewed", async: true
 end
 ```
 
@@ -96,18 +64,18 @@ end
 digraph review {
   size ="4,4";
   draft [label="draft",shape=doublecircle,color=".7 .3 1.0"];
-  Already_reviewed [label="Already reviewed",shape=circle,color=red];
+  reviewed [label="reviewed",shape=circle,color=red];
   canceled [label="canceled",shape=circle,color=red];
-  inreview [label="inreview",shape=box];
-  rejected [label="rejected",style=bold,color=red,shape=box];
-  draft -> inreview [label="submit"];
-  draft -> draft [label="modify",color=blue];
-  draft -> canceled [label="cancel"];
-  rejected -> inreview [label="submit"];
-  rejected -> rejected [label="modify",color=blue];
-  rejected -> canceled [label="cancel"];
-  inreview -> rejected [label="reject"];
-  inreview -> Already_reviewed [label="agree",style=bold,color=red];
+  rejected [label="rejected",shape=box];
+  reviewing [label="reviewing",shape=box];
+  draft -> draft [label="modify1",color=blue];
+  draft -> canceled [label="cancel1"];
+  draft -> reviewing [label="submit_draft"];
+  rejected -> rejected [label="modify2",color=blue];
+  rejected -> canceled [label="cancel2"];
+  rejected -> reviewing [label="submit2"];
+  reviewing -> rejected [label="reject"];
+  reviewing -> reviewed [label="agree",style=bold,color=red];
 }
 // custom_mark10
 ```
