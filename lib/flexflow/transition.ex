@@ -48,9 +48,6 @@ defmodule Flexflow.Transition do
   @doc "Invoked when process is started"
   @callback init(t(), Process.t()) :: {:ok, t()}
 
-  # @doc "Invoked when process is enter this transition"
-  # @callback handle_enter(t(), Node.t(), Process.t()) :: :pass | :stop
-
   defmacro __using__(opts \\ []) do
     quote do
       @behaviour unquote(__MODULE__)
@@ -62,7 +59,6 @@ defmodule Flexflow.Transition do
       end
 
       @__name__ Flexflow.Util.module_name(__MODULE__)
-
       def __opts__, do: unquote(opts)
 
       @impl true
@@ -116,15 +112,6 @@ defmodule Flexflow.Transition do
     }
   end
 
-  # @spec enter(t(), Node.t(), Process.t()) :: {:ok, Process.t()} | {:error, atom()}
-  # def enter(%__MODULE__{module: module} = transition, node, process) do
-  #   case module.handle_enter(transition, node, process) do
-  #     :pass -> {:ok, process}
-  #     :stop -> {:error, :stop}
-  #     other -> raise ArgumentError, "Unmatched return value #{inspect(other)}"
-  #   end
-  # end
-
   @spec validate([t()]) :: [t()]
   def validate(transitions) do
     if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty!")
@@ -144,5 +131,15 @@ defmodule Flexflow.Transition do
     end
 
     transitions
+  end
+
+  @spec dispatch({Node.t(), t(), Node.t()}, Process.result()) :: Process.result()
+  def dispatch(_, {:error, reason}), do: {:error, reason}
+
+  def dispatch(
+        {%Node{module: from_module, name: from_name}, %__MODULE__{}, %Node{}},
+        {:ok, p}
+      ) do
+    {:ok, put_in(p.nodes[{from_module, from_name}].state, :completed)}
   end
 end

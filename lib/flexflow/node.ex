@@ -21,14 +21,15 @@ defmodule Flexflow.Node do
   """
   @type option :: {:async, boolean()}
   @type options :: [option]
+  @type edge :: {Flexflow.key_normalize(), Flexflow.key_normalize()}
   @type t :: %__MODULE__{
           module: module(),
           state: state(),
           name: Flexflow.name(),
           kind: kind(),
           __graphviz__: keyword(),
-          __in_edges__: [{Flexflow.key_normalize(), Flexflow.key_normalize()}],
-          __out_edges__: [{Flexflow.key_normalize(), Flexflow.key_normalize()}],
+          __in_edges__: [edge()],
+          __out_edges__: [edge()],
           __context__: Context.t(),
           __opts__: options
         }

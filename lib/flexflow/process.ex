@@ -13,7 +13,7 @@ defmodule Flexflow.Process do
   alias Flexflow.Transition
   alias Flexflow.Util
 
-  @states [:created, :active, :loop, :paused]
+  @states [:created, :active, :loop, :waiting, :paused]
 
   @typedoc """
   Process state
@@ -367,7 +367,7 @@ defmodule Flexflow.Process do
   @max_loop_limit Config.get(:max_loop_limit)
 
   @spec loop(t()) :: result()
-  def loop(%{state: :paused} = p), do: {:ok, p}
+  def loop(%{state: ignore_state} = p) when ignore_state in [:waiting, :paused], do: {:ok, p}
   def loop(%{state: :active} = p), do: loop(%{p | state: :loop, __loop_counter__: 0})
 
   def loop(%{state: :loop, __loop_counter__: loop_counter, __counter__: counter} = p) do
@@ -382,13 +382,17 @@ defmodule Flexflow.Process do
   def next(%{__loop_counter__: loop_counter}) when loop_counter > @max_loop_limit,
     do: {:error, :deadlock_found}
 
-  def next(%{__loop_counter__: 100} = p), do: {:ok, %{p | state: :active}}
+  def next(%{nodes: nodes, transitions: transitions} = p) do
+    ready_node_edges =
+      for {_, %Node{state: :ready, __out_edges__: [_ | _] = out_edges} = node} <- nodes,
+          {t, n} <- out_edges do
+        {node, Map.fetch!(transitions, t), Map.fetch!(nodes, n)}
+      end
 
-  def next(%{nodes: nodes} = p) do
-    for {_, %Node{state: :ready}} <- nodes do
+    case ready_node_edges do
+      [] -> {:ok, %{p | state: :waiting}}
+      [_ | _] = a -> Enum.reduce(a, {:ok, p}, &Transition.dispatch/2)
     end
-
-    {:ok, p}
   end
 
   @spec telemetry_invoke(t(), atom(), (t() -> result())) :: result()

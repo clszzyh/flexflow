@@ -40,15 +40,17 @@ defmodule ProcessTest do
     {:exist, pid2} = P1.start("p1")
     assert pid == pid2
 
+    assert Flexflow.ProcessManager.children(P1) == [
+             %{kind: :worker, module: Flexflow.ProcessServer, pid: pid}
+           ]
+
     server_pid = Flexflow.ProcessServer.pid({P1, "p1"})
 
     assert server_pid == pid
 
     process = Flexflow.ProcessServer.state(server_pid)
     assert process.id == "p1"
-
-    assert Flexflow.ProcessManager.children(P1) == [
-             %{kind: :worker, module: Flexflow.ProcessServer, pid: pid}
-           ]
+    assert process.state == :waiting
+    assert process.nodes[{N1, "n1"}].state == :completed
   end
 end
