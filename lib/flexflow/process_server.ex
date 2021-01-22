@@ -8,7 +8,7 @@ defmodule Flexflow.ProcessServer do
   use Flexflow.ProcessRegistry
   use GenServer
 
-  def start_link({module, id, opts}) do
+  def start_link(module, {id, opts}) do
     GenServer.start_link(__MODULE__, {module, id, opts}, name: via_tuple({module, id}))
   end
 

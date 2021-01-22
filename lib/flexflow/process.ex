@@ -8,6 +8,7 @@ defmodule Flexflow.Process do
   alias Flexflow.History
   alias Flexflow.Node
   alias Flexflow.ProcessManager
+  alias Flexflow.TaskSupervisor
   alias Flexflow.Telemetry
   alias Flexflow.Transition
   alias Flexflow.Util
@@ -35,7 +36,8 @@ defmodule Flexflow.Process do
           __identities__: [identity],
           __graphviz_attributes__: keyword(),
           __loop_counter__: integer(),
-          __counter__: integer()
+          __counter__: integer(),
+          __tasks__: %{reference() => term()}
         }
 
   @typedoc "Init result"
@@ -61,6 +63,7 @@ defmodule Flexflow.Process do
                 __loop_counter__: 0,
                 __graphviz_attributes__: [size: "\"4,4\""],
                 __args__: %{},
+                __tasks__: %{},
                 __opts__: [],
                 __histories__: [],
                 __context__: Context.new()
@@ -307,6 +310,20 @@ defmodule Flexflow.Process do
   end
 
   @spec info(t(), term()) :: handle_info_return()
+  def info(%__MODULE__{} = p, {ref, result}) when is_reference(ref) do
+    Process.demonitor(ref, [:flush])
+    {input, p} = pop_in(p.tasks[ref])
+    IO.puts(inspect({:ok, input, result}))
+    {:noreply, p}
+  end
+
+  def info(%__MODULE__{} = p, {:DOWN, ref, :process, _monitor_pid, reason})
+      when is_reference(ref) do
+    {input, p} = pop_in(p.tasks[ref])
+    IO.puts(inspect({:error, input, reason}))
+    {:noreply, p}
+  end
+
   def info(%__MODULE__{module: module} = p, input) do
     if function_exported?(module, :handle_info, 2) do
       module.handle_info(p, input)
@@ -353,6 +370,12 @@ defmodule Flexflow.Process do
       {:error, reason} -> {:error, reason}
       {:ok, p} -> loop(p)
     end
+  end
+
+  @spec async(t(), (... -> term()), [term()]) :: t()
+  def async(%__MODULE__{} = p, f, args) when is_function(f) and is_list(args) do
+    task = Task.Supervisor.async_nolink(TaskSupervisor, fn -> apply(f, args) end)
+    put_in(p.__tasks__[task.ref], args)
   end
 
   @spec next(t()) :: result()
