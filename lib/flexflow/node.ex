@@ -16,6 +16,9 @@ defmodule Flexflow.Node do
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type kind :: :start | :end | :intermediate
+  @typedoc """
+  * `async` - invoke using a separated task (except init callback), default `false`
+  """
   @type option :: {:async, boolean()}
   @type options :: [option]
   @type t :: %__MODULE__{
@@ -92,7 +95,9 @@ defmodule Flexflow.Node do
     {kind, opts} = Keyword.pop(opts, :kind, :intermediate)
     {attributes, opts} = Keyword.pop(opts, :attributes, attribute(kind))
     async = Keyword.get(opts, :async, false)
-    attributes = if async, do: attributes ++ [style: "bold"], else: attributes
+
+    attributes =
+      if async, do: Keyword.merge([style: "bold", color: "red"], attributes), else: attributes
 
     %__MODULE__{
       module: o,

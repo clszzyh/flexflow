@@ -99,7 +99,7 @@ digraph review {
   Already_reviewed [label="Already reviewed",shape=circle,color=red];
   canceled [label="canceled",shape=circle,color=red];
   inreview [label="inreview",shape=box];
-  rejected [label="rejected",shape=box,style=bold];
+  rejected [label="rejected",style=bold,color=red,shape=box];
   draft -> inreview [label="submit"];
   draft -> draft [label="modify",color=blue];
   draft -> canceled [label="cancel"];
@@ -107,7 +107,7 @@ digraph review {
   rejected -> rejected [label="modify",color=blue];
   rejected -> canceled [label="cancel"];
   inreview -> rejected [label="reject"];
-  inreview -> Already_reviewed [label="agree",style=bold];
+  inreview -> Already_reviewed [label="agree",style=bold,color=red];
 }
 // custom_mark10
 ```

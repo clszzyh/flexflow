@@ -13,7 +13,7 @@ defmodule Flexflow.Process do
   alias Flexflow.Transition
   alias Flexflow.Util
 
-  @states [:created, :active, :loop]
+  @states [:created, :active, :loop, :paused]
 
   @typedoc """
   Process state
@@ -27,7 +27,6 @@ defmodule Flexflow.Process do
           id: Flexflow.id() | nil,
           nodes: Flexflow.nodes(),
           transitions: Flexflow.transitions(),
-          start_node: Flexflow.key_normalize(),
           state: state(),
           __args__: Flexflow.process_args(),
           __opts__: keyword(),
@@ -53,7 +52,7 @@ defmodule Flexflow.Process do
           | {:stop, term, term, t()}
   @type server_return :: {:ok | :exist, pid} | {:error, term()}
 
-  @enforce_keys [:module, :nodes, :start_node, :transitions, :__identities__]
+  @enforce_keys [:module, :nodes, :transitions, :__identities__]
   defstruct @enforce_keys ++
               [
                 :name,
@@ -204,7 +203,6 @@ defmodule Flexflow.Process do
     process = %__MODULE__{
       nodes: new_nodes,
       module: env.module,
-      start_node: nodes |> Enum.find(&Node.start?/1) |> Node.key(),
       transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t}),
       __identities__: identities
     }
@@ -266,6 +264,9 @@ defmodule Flexflow.Process do
     (Map.to_list(nodes) ++ Map.to_list(transitions))
     |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
       case module.init(o, p) do
+        {:ok, %Node{kind: :start} = node} ->
+          {:cont, put_in(p, [:nodes, key], %{node | state: :ready})}
+
         {:ok, %Node{} = node} ->
           {:cont, put_in(p, [:nodes, key], %{node | state: :initial})}
 
@@ -357,33 +358,37 @@ defmodule Flexflow.Process do
     end
   end
 
-  @max_loop_limit Config.get(:max_loop_limit)
-
-  @spec loop(t()) :: result()
-  def loop(%{state: state} = p) when state in [:active],
-    do: loop(%{p | state: :loop, __loop_counter__: 0})
-
-  def loop(%{state: :loop, __loop_counter__: 50} = p), do: {:ok, %{p | state: :active}}
-
-  def loop(%{state: :loop} = p) do
-    case next(p) do
-      {:error, reason} -> {:error, reason}
-      {:ok, p} -> loop(p)
-    end
-  end
-
   @spec async(t(), (... -> term()), [term()]) :: t()
   def async(%__MODULE__{} = p, f, args) when is_function(f) and is_list(args) do
     task = Task.Supervisor.async_nolink(TaskSupervisor, fn -> apply(f, args) end)
     put_in(p.__tasks__[task.ref], args)
   end
 
+  @max_loop_limit Config.get(:max_loop_limit)
+
+  @spec loop(t()) :: result()
+  def loop(%{state: :paused} = p), do: {:ok, p}
+  def loop(%{state: :active} = p), do: loop(%{p | state: :loop, __loop_counter__: 0})
+
+  def loop(%{state: :loop, __loop_counter__: loop_counter, __counter__: counter} = p) do
+    case next(%{p | __loop_counter__: loop_counter + 1, __counter__: counter + 1}) do
+      {:error, reason} -> {:error, reason}
+      {:ok, %{state: :loop} = p} -> loop(p)
+      {:ok, p} -> {:ok, p}
+    end
+  end
+
   @spec next(t()) :: result()
   def next(%{__loop_counter__: loop_counter}) when loop_counter > @max_loop_limit,
-    do: {:error, :exceed_loop_limit}
+    do: {:error, :deadlock_found}
 
-  def next(%{__loop_counter__: loop_counter, __counter__: counter} = p) do
-    {:ok, %{p | __loop_counter__: loop_counter + 1, __counter__: counter + 1}}
+  def next(%{__loop_counter__: 100} = p), do: {:ok, %{p | state: :active}}
+
+  def next(%{nodes: nodes} = p) do
+    for {_, %Node{state: :ready}} <- nodes do
+    end
+
+    {:ok, p}
   end
 
   @spec telemetry_invoke(t(), atom(), (t() -> result())) :: result()

@@ -6,7 +6,7 @@ defmodule Flexflow.ProcessServer do
   alias Flexflow.Process
 
   use Flexflow.ProcessRegistry
-  use GenServer
+  use GenServer, restart: :temporary
 
   def start_link(module, {id, opts}) do
     GenServer.start_link(__MODULE__, {module, id, opts}, name: via_tuple({module, id}))

@@ -29,7 +29,7 @@ defmodule FlexflowTest do
     t2 = %T{
       module: T2,
       name: "t2_by_n2",
-      __graphviz_attributes__: [{:style, "bold"}],
+      __graphviz_attributes__: [style: "bold", color: "red"],
       from: n2_s,
       to: n3_s,
       __opts__: [async: true]
@@ -69,15 +69,14 @@ defmodule FlexflowTest do
 
     assert P1.new().nodes == %{n1_s => n1, n2_s => n2, n3_s => n3, n4_s => n4}
     assert P1.new().transitions == %{t1_s => t1, t2_s => t2, t3_s => t3}
-
-    assert P1.new().start_node == n1_s
   end
 
   test "init" do
     {:ok, p} = Flexflow.Process.new(P1, "p1")
     assert p.state == :active
     assert p.id == "p1"
-    assert p.nodes[{N1, "n1"}].state == :initial
+    assert p.nodes[{N1, "n1"}].state == :ready
+    assert p.nodes[{N2, "n2"}].state == :initial
     assert p.transitions[{T1, "t1_by_n1"}].state == :initial
     assert p.transitions[{T1, "t1_by_n1"}]
   end
