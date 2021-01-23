@@ -16,7 +16,7 @@ defmodule Flexflow.Transition do
   #{inspect(@states)}
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
-  @type options :: keyword()
+  @type options :: Keyword.t()
   @type key :: Flexflow.key() | String.t()
   @type t :: %__MODULE__{
           module: module(),
@@ -25,7 +25,7 @@ defmodule Flexflow.Transition do
           from: Flexflow.key_normalize(),
           to: Flexflow.key_normalize(),
           __opts__: options,
-          __graphviz__: keyword(),
+          __graphviz__: Keyword.t(),
           __context__: Context.t()
         }
 

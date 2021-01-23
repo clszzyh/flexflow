@@ -7,7 +7,6 @@ alias Flexflow.Transition, as: T
 
 alias Flexflow.Process, as: P
 
-alias Flexflow.Process
 alias Flexflow.Events
 alias Flexflow.Transitions
 
@@ -16,3 +15,5 @@ alias Flexflow.ModuleRegistry
 alias Flexflow.ProcessParentManager
 alias Flexflow.ProcessManager
 alias Flexflow.ProcessServer
+
+alias Flexflow.TaskSupervisor

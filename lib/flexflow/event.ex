@@ -18,7 +18,7 @@ defmodule Flexflow.Event do
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type state_change :: [state()]
   @type kind :: :start | :end | :intermediate
-  @type options :: keyword()
+  @type options :: Keyword.t()
   @type edge :: {Flexflow.key_normalize(), Flexflow.key_normalize()}
   @type before_change_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
   @type t :: %__MODULE__{
@@ -26,8 +26,8 @@ defmodule Flexflow.Event do
           state: state(),
           name: Flexflow.name(),
           kind: kind(),
-          __async__: boolean(),
-          __graphviz__: keyword(),
+          __async__: Keyword.t() | false,
+          __graphviz__: Keyword.t(),
           __in_edges__: [edge()],
           __out_edges__: [edge()],
           __context__: Context.t(),
@@ -77,7 +77,7 @@ defmodule Flexflow.Event do
     end
   end
 
-  @spec attribute(kind()) :: keyword()
+  @spec attribute(kind()) :: Keyword.t()
   defp attribute(:intermediate), do: [shape: "box"]
   defp attribute(:start), do: [shape: "doublecircle", color: "\".7 .3 1.0\""]
   defp attribute(:end), do: [shape: "circle", color: "red"]
@@ -168,17 +168,17 @@ defmodule Flexflow.Event do
   end
 
   @spec change(state_change(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
-  def change(target_state, %__MODULE__{module: module, name: name, __async__: true} = e, p) do
-    f = fn -> do_change(target_state, e, p) end
-    p = Process.async(p, f, &callback/4, {module, name})
-    {:ok, put_in(p, [:events, {module, name}], %{e | state: :pending})}
-  end
-
   def change(target_state, %__MODULE__{module: module, name: name, __async__: false} = e, p) do
     case do_change(target_state, e, p) do
       {:ok, %__MODULE__{} = e} -> {:ok, put_in(p, [:events, {module, name}], e)}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  def change(target_state, %__MODULE__{module: module, name: name} = e, p) do
+    f = fn -> do_change(target_state, e, p) end
+    p = Process.async(p, f, &callback/4, {module, name})
+    {:ok, put_in(p, [:events, {module, name}], %{e | state: :pending})}
   end
 
   @spec callback(Flexflow.key_normalize(), Process.t(), :ok | :error, term) :: Process.result()

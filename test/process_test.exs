@@ -52,10 +52,12 @@ defmodule ProcessTest do
     assert process.id == "p1"
     assert process.state == :waiting
     assert process.events[{N1, "n1"}].state == :completed
-    assert process.events[{N3, "n3"}].state == :initial
-
     assert process.events[{N2, "n2"}].state == :initial
     assert process.transitions[{T1, "t1_n1"}].state == :initial
+
+    Process.sleep(60)
+    process = Flexflow.state({P1, "p1"})
+    assert process.events[{N3, "n3"}].state == :initial
   end
 
   test "p2" do
@@ -63,12 +65,12 @@ defmodule ProcessTest do
     process = Flexflow.state({P2, "p2"})
     assert process.id == "p2"
     assert process.__args__ == %{custom: :value}
-    assert process.events[{P2.Slow, "slow"}].__async__ == true
+    assert process.events[{P2.Slow, "slow"}].__async__ == [timeout: 5000]
     assert process.events[{P2.Slow, "slow"}].state == :pending
   end
 
   test "p2 slow ok" do
-    {:ok, _pid} = Flexflow.start({P2, "slow_ok"}, %{slow: :ok})
+    {:ok, _pid} = Flexflow.start({P2, "slow_ok"}, %{slow: :ok, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, "slow_ok"})
     assert process.events[{P2.Slow, "slow"}].state == :initial
@@ -76,7 +78,7 @@ defmodule ProcessTest do
   end
 
   test "p2 slow other" do
-    {:ok, _pid} = Flexflow.start({P2, "slow_other"}, %{slow: :other})
+    {:ok, _pid} = Flexflow.start({P2, "slow_other"}, %{slow: :other, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, "slow_other"})
     assert process.events[{P2.Slow, "slow"}].state == :initial
@@ -85,7 +87,7 @@ defmodule ProcessTest do
   end
 
   test "p2 slow error" do
-    {:ok, _pid} = Flexflow.start({P2, "slow_error"}, %{slow: :error})
+    {:ok, _pid} = Flexflow.start({P2, "slow_error"}, %{slow: :error, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, "slow_error"})
     assert process.events[{P2.Slow, "slow"}].state == :error
@@ -93,8 +95,17 @@ defmodule ProcessTest do
     assert process.events[{P2.Slow, "slow"}].__context__.result == :custom_error
   end
 
+  # test "p2 timeout" do
+  #   {:ok, _pid} = Flexflow.start({P2, "p2 timeout"}, %{slow: :error, sleep: 10_000})
+  #   Process.sleep(12_000)
+  #   process = Flexflow.state({P2, "p2 timeout"})
+  #   assert process.events[{P2.Slow, "slow"}].state == :error
+  #   assert process.events[{P2.Slow, "slow"}].__context__.state == :error
+  #   assert process.events[{P2.Slow, "slow"}].__context__.result == :custom_error
+  # end
+
   test "p2 slow raise" do
-    {:ok, _pid} = Flexflow.start({P2, "slow_raise"}, %{slow: :raise})
+    {:ok, _pid} = Flexflow.start({P2, "slow_raise"}, %{slow: :raise, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, "slow_raise"})
     assert process.events[{P2.Slow, "slow"}].state == :error

@@ -27,10 +27,10 @@ defmodule Flexflow.Process do
           events: Flexflow.events(),
           transitions: Flexflow.transitions(),
           __args__: Flexflow.process_args(),
-          __opts__: keyword(),
+          __opts__: Keyword.t(),
           __context__: Context.t(),
           __definitions__: [definition],
-          __graphviz__: keyword(),
+          __graphviz__: Keyword.t(),
           __loop__: integer(),
           __counter__: integer(),
           __tasks__: %{reference() => term()}
@@ -280,11 +280,11 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec async(t(), (() -> ret), (arg, t(), :ok | :error, ret -> result()), arg) :: t()
-        when arg: term(), ret: term()
-  def async(%__MODULE__{} = p, f, callback, value)
+  @spec async(t(), (() -> r), (arg, t(), :ok | :error, r -> result()), arg, Keyword.t()) :: t()
+        when arg: term(), r: term()
+  def async(%__MODULE__{} = p, f, callback, value, opts \\ [])
       when is_function(f, 0) and is_function(callback, 4) do
-    task = Task.Supervisor.async_nolink(TaskSupervisor, f)
+    task = Task.Supervisor.async_nolink(TaskSupervisor, f, opts)
     put_in(p.__tasks__[task.ref], {callback, value})
   end
 

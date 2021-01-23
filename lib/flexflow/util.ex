@@ -11,7 +11,7 @@ defmodule Flexflow.Util do
 
   @spec normalize_module(
           Flexflow.key()
-          | binary()
+          | String.t()
           | {Flexflow.key(), Flexflow.key(), Flexflow.key()},
           [Event.t()]
         ) ::
@@ -63,7 +63,7 @@ defmodule Flexflow.Util do
       "foo_bar"
   """
 
-  @spec module_name(atom()) :: binary()
+  @spec module_name(atom()) :: String.t()
   def module_name(module) do
     module
     |> to_string

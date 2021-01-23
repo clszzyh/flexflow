@@ -37,8 +37,8 @@ defmodule P2 do
     use Flexflow.Event
 
     @impl true
-    def before_change({:created, [:initial]}, event, %{__args__: %{slow: strategy}}) do
-      Process.sleep(50)
+    def before_change({:created, [:initial]}, event, %{__args__: %{slow: strategy, sleep: sleep}}) do
+      Process.sleep(sleep)
 
       case strategy do
         :ok -> {:ok, event}
@@ -48,14 +48,14 @@ defmodule P2 do
       end
     end
 
-    def before_change(_, o, _), do: {:ok, o}
+    def before_change(o, _, %{__args__: args}), do: raise(inspect({:not_supported, o, args}))
   end
 
   use Flexflow.Process
 
   event Start
   event End
-  event Slow, async: true
+  event Slow, async: [timeout: 5000]
 
   transition "first", Start ~> Slow
   transition "last", Slow ~> End
