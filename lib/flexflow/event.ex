@@ -152,30 +152,30 @@ defmodule Flexflow.Event do
   end
 
   @spec change(state_change(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
-  def change(
-        target_state,
-        %__MODULE__{module: module, name: name, state: before_state, __async__: true} = e,
-        p
-      )
-      when {before_state, target_state} in @state_changes do
-    f = fn -> module.before_change({before_state, target_state}, e, p) end
-    p = Process.async(p, f, {module, name})
+  def change(target_state, %__MODULE__{module: module, name: name, __async__: true} = e, p) do
+    f = fn -> do_change(target_state, e, p) end
+    p = Process.async(p, f, &callback/4, {module, name})
     {:ok, put_in(p, [:events, {module, name}], %{e | state: :pending})}
   end
 
-  def change(
-        target_state,
-        %__MODULE__{module: module, name: name, state: before_state, __async__: false} = e,
-        p
-      )
-      when {before_state, target_state} in @state_changes do
-    module.before_change({before_state, target_state}, e, p)
-    |> case do
-      {:ok, e} ->
-        {:ok, put_in(p, [:events, {module, name}], %{e | state: List.last(target_state)})}
-
-      {:error, reason} ->
-        {:error, reason}
+  def change(target_state, %__MODULE__{module: module, name: name, __async__: false} = e, p) do
+    case do_change(target_state, e, p) do
+      {:ok, e} -> {:ok, put_in(p, [:events, {module, name}], e)}
+      {:error, reason} -> {:error, reason}
     end
+  end
+
+  @spec do_change(state_change(), t(), Process.t()) :: {:ok, t()} | {:error, term()}
+  def do_change(target_state, %__MODULE__{module: module, state: before_state} = e, p)
+      when {before_state, target_state} in @state_changes do
+    case module.before_change({before_state, target_state}, e, p) do
+      {:ok, e} -> {:ok, %{e | state: List.last(target_state)}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec callback(Flexflow.key_normalize(), Process.t(), :ok | :error, term) :: Process.result()
+  def callback({module, name}, %Process{} = p, :ok, {:ok, %__MODULE__{} = e}) do
+    {:ok, put_in(p, [:events, {module, name}], e)}
   end
 end

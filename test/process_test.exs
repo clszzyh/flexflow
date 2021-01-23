@@ -52,5 +52,9 @@ defmodule ProcessTest do
     assert process.id == "p1"
     assert process.state == :waiting
     assert process.events[{N1, "n1"}].state == :completed
+    assert process.events[{N3, "n3"}].state == :initial
+
+    assert process.events[{N2, "n2"}].state == :initial
+    assert process.transitions[{T1, "t1_n1"}].state == :initial
   end
 end

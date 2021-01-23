@@ -73,17 +73,6 @@ defmodule FlexflowTest do
     assert p.state == :created
   end
 
-  test "init" do
-    {:ok, _pid} = Flexflow.start({P1, "init"})
-    p = Flexflow.state({P1, "init"})
-    assert p.state == :waiting
-    assert p.id == "init"
-    assert p.events[{N1, "n1"}].state == :completed
-    assert p.events[{N2, "n2"}].state == :initial
-    assert p.transitions[{T1, "t1_n1"}].state == :initial
-    assert p.transitions[{T1, "t1_n1"}]
-  end
-
   @data %{
     """
       event {N1, "n"}, kind: :start
