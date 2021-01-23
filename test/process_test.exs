@@ -48,7 +48,7 @@ defmodule ProcessTest do
 
     assert server_pid == pid
 
-    process = Flexflow.ProcessServer.state(server_pid)
+    process = Flexflow.state({P1, "p1"})
     assert process.id == "p1"
     assert process.state == :waiting
     assert process.events[{N1, "n1"}].state == :completed

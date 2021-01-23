@@ -49,7 +49,6 @@ defmodule Flexflow.Process do
           | {:noreply, term}
           | {:stop, term, term}
           | {:stop, term, term, t()}
-  @type server_return :: {:ok | :exist, pid} | {:error, term()}
 
   @enforce_keys [:module, :events, :transitions, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
