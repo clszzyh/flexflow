@@ -16,36 +16,27 @@ defmodule Flexflow.ProcessServer do
 
   @impl true
   def init({module, id, opts}) do
-    {:ok, Process.new(module, id, opts), {:continue, :init}}
+    {:ok, Process.new(module, id, opts), {:continue, :after_init}}
   end
 
   @impl true
-  def handle_call(:state, _from, state) do
-    {:reply, state, state}
-  end
+  def handle_call(:state, _from, p), do: {:reply, p, p}
+  def handle_call(input, from, p), do: p |> Process.handle_call(input, from) |> reply_return(p)
 
   @impl true
-  def handle_call(input, from, state) do
-    Process.handle_call(state, input, from)
-  end
+  def handle_cast(input, p), do: p |> Process.handle_cast(input) |> noreply_return(p)
 
   @impl true
-  def handle_cast(input, state) do
-    Process.handle_cast(state, input)
-  end
+  def handle_info(input, p), do: p |> Process.handle_info(input) |> noreply_return(p)
 
   @impl true
-  def handle_info(input, state) do
-    Process.handle_info(state, input)
-  end
+  def terminate(reason, state), do: Process.terminate(state, reason)
 
   @impl true
-  def handle_continue(input, state) do
-    Process.handle_continue(state, input)
-  end
+  def handle_continue(:after_init, p), do: p |> Process.after_init() |> noreply_return(p)
 
-  @impl true
-  def terminate(reason, state) do
-    Process.terminate(state, reason)
-  end
+  defp reply_return({:ok, p}, _p), do: {:reply, p, p}
+  defp reply_return({:error, reason}, p), do: {:stop, reason, p}
+  defp noreply_return({:ok, p}, _p), do: {:noreply, p}
+  defp noreply_return({:error, reason}, p), do: {:stop, reason, p}
 end

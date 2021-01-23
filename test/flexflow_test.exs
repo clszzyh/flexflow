@@ -83,10 +83,10 @@ defmodule FlexflowTest do
     """ => :ok,
     """
       event Start
-      event Bypass
+      event "foo"
       event N3, kind: :end
       transition T1, "start" ~> N3
-      transition T2, "start" ~> Bypass
+      transition T2, "start" ~> "foo"
     """ => :ok,
     "" => "Event is empty",
     """

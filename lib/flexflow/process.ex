@@ -6,7 +6,6 @@ defmodule Flexflow.Process do
   alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.Event
-  alias Flexflow.History
   alias Flexflow.TaskSupervisor
   alias Flexflow.Telemetry
   alias Flexflow.Transition
@@ -30,10 +29,9 @@ defmodule Flexflow.Process do
           __args__: Flexflow.process_args(),
           __opts__: keyword(),
           __context__: Context.t(),
-          __histories__: [History.t()],
           __definitions__: [definition],
           __graphviz__: keyword(),
-          __loop_counter__: integer(),
+          __loop__: integer(),
           __counter__: integer(),
           __tasks__: %{reference() => term()}
         }
@@ -41,14 +39,6 @@ defmodule Flexflow.Process do
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
   @type definition :: {:event | :transition, Flexflow.key_normalize()}
-  @type handle_cast_return :: {:noreply, t()} | {:stop, term(), t()}
-  @type handle_info_return :: {:noreply, t()} | {:stop, term(), t()}
-  @type handle_continue_return :: {:noreply, t()} | {:stop, term(), t()}
-  @type handle_call_return ::
-          {:reply, term, t()}
-          | {:noreply, term}
-          | {:stop, term, term}
-          | {:stop, term, term, t()}
 
   @enforce_keys [:module, :events, :transitions, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
@@ -58,12 +48,11 @@ defmodule Flexflow.Process do
                 :id,
                 state: :created,
                 __counter__: 0,
-                __loop_counter__: 0,
+                __loop__: 0,
                 __graphviz__: [size: "\"4,4\""],
                 __args__: %{},
                 __tasks__: %{},
                 __opts__: [],
-                __histories__: [],
                 __context__: Context.new()
               ]
 
@@ -73,20 +62,12 @@ defmodule Flexflow.Process do
   @doc "Invoked when process is started, after events and transitions `init`, see `Flexflow.Api.init/1`"
   @callback init(t()) :: result()
 
-  @callback handle_call(t(), term(), GenServer.from()) :: handle_call_return()
-  @callback handle_cast(t(), term()) :: handle_cast_return()
-  @callback handle_info(t(), term()) :: handle_info_return()
-  @callback handle_continue(t(), term()) :: handle_continue_return()
+  @callback handle_call(t(), term(), GenServer.from()) :: result()
+  @callback handle_cast(t(), term()) :: result()
+  @callback handle_info(t(), term()) :: result()
   @callback terminate(t(), term()) :: term()
 
-  @optional_callbacks [
-    init: 1,
-    handle_call: 3,
-    handle_cast: 2,
-    handle_info: 2,
-    handle_continue: 2,
-    terminate: 2
-  ]
+  @optional_callbacks [handle_call: 3, handle_cast: 2, handle_info: 2, terminate: 2]
 
   defmacro __using__(opts) do
     quote do
@@ -110,6 +91,9 @@ defmodule Flexflow.Process do
 
       @impl true
       def name, do: @__name__
+
+      @impl true
+      def init(p), do: {:ok, p}
 
       defoverridable unquote(__MODULE__)
     end
@@ -230,80 +214,60 @@ defmodule Flexflow.Process do
 
   @spec init(t()) :: result()
   def init(%__MODULE__{module: module} = p) do
-    with %__MODULE__{} = p <- Event.init(p), %__MODULE__{} = p <- Transition.init(p) do
-      p = %{p | state: :active}
-
-      if function_exported?(module, :init, 1) do
-        module.init(p)
-      else
-        {:ok, p}
-      end
+    with %__MODULE__{} = p <- Event.init(p),
+         %__MODULE__{} = p <- Transition.init(p),
+         {:ok, %__MODULE__{} = p} <- module.init(p) do
+      {:ok, %{p | state: :active}}
     else
       {:error, reason} -> {:error, reason}
     end
   end
 
-  @spec handle_call(t(), term(), GenServer.from() | nil) :: handle_call_return()
+  @spec after_init(t()) :: result()
+  def after_init(%__MODULE__{} = p) do
+    with {:ok, p} <- Telemetry.invoke_process(p, :process_init, &init/1),
+         {:ok, p} <- Telemetry.invoke_process(p, :process_loop, &loop/1) do
+      {:ok, p}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec handle_call(t(), term(), GenServer.from() | nil) :: result()
   def handle_call(%__MODULE__{module: module} = p, input, from \\ nil) do
     if function_exported?(module, :handle_call, 3) do
       module.handle_call(p, input, from)
     else
-      {:reply, :ok, p}
+      {:ok, p}
     end
   end
 
-  @spec handle_cast(t(), term()) :: handle_cast_return()
+  @spec handle_cast(t(), term()) :: result()
   def handle_cast(%__MODULE__{module: module} = p, input) do
     if function_exported?(module, :handle_cast, 2) do
       module.handle_cast(p, input)
     else
-      {:noreply, p}
+      {:ok, p}
     end
   end
 
-  @spec handle_info(t(), term()) :: handle_info_return()
+  @spec handle_info(t(), term()) :: result()
   def handle_info(p, {ref, result}) when is_reference(ref) do
     Process.demonitor(ref, [:flush])
     {{f, first_arg}, p} = pop_in(p.__tasks__[ref])
-
-    case apply(f, [first_arg, p, :ok, result]) do
-      {:ok, p} -> {:noreply, p}
-      {:error, reason} -> {:stop, reason, p}
-    end
+    apply(f, [first_arg, p, :ok, result])
   end
 
   def handle_info(p, {:DOWN, ref, :process, _monitor_pid, reason}) when is_reference(ref) do
     {{f, first_arg}, p} = pop_in(p.__tasks__[ref])
-
-    case apply(f, [first_arg, p, :error, reason]) do
-      {:ok, p} -> {:noreply, p}
-      {:error, reason} -> {:stop, reason, p}
-    end
+    apply(f, [first_arg, p, :error, reason])
   end
 
   def handle_info(%__MODULE__{module: module} = p, input) do
     if function_exported?(module, :handle_info, 2) do
       module.handle_info(p, input)
     else
-      {:noreply, p}
-    end
-  end
-
-  @spec handle_continue(t(), term()) :: handle_continue_return()
-  def handle_continue(%__MODULE__{} = p, :init) do
-    with {:ok, p} <- Telemetry.invoke_process(p, :process_init, &init/1),
-         {:ok, p} <- Telemetry.invoke_process(p, :process_loop, &loop/1) do
-      {:noreply, p}
-    else
-      {:error, reason} -> {:stop, reason, p}
-    end
-  end
-
-  def handle_continue(%__MODULE__{module: module} = p, input) do
-    if function_exported?(module, :handle_continue, 2) do
-      module.handle_continue(p, input)
-    else
-      {:noreply, p}
+      {:ok, p}
     end
   end
 
@@ -326,10 +290,10 @@ defmodule Flexflow.Process do
 
   @spec loop(t()) :: result()
   def loop(%{state: ignore_state} = p) when ignore_state in [:waiting, :paused], do: {:ok, p}
-  def loop(%{state: :active} = p), do: loop(%{p | state: :loop, __loop_counter__: 0})
+  def loop(%{state: :active} = p), do: loop(%{p | state: :loop, __loop__: 0})
 
-  def loop(%{state: :loop, __loop_counter__: loop_counter, __counter__: counter} = p) do
-    case next(%{p | __loop_counter__: loop_counter + 1, __counter__: counter + 1}) do
+  def loop(%{state: :loop, __loop__: loop, __counter__: counter} = p) do
+    case next(%{p | __loop__: loop + 1, __counter__: counter + 1}) do
       {:error, reason} -> {:error, reason}
       {:ok, %{state: :loop} = p} -> loop(p)
       {:ok, p} -> {:ok, p}
@@ -339,8 +303,7 @@ defmodule Flexflow.Process do
   @max_loop_limit Config.get(:max_loop_limit)
 
   @spec next(t()) :: result()
-  def next(%{__loop_counter__: loop_counter}) when loop_counter > @max_loop_limit,
-    do: {:error, :deadlock_found}
+  def next(%{__loop__: loop}) when loop > @max_loop_limit, do: {:error, :deadlock_found}
 
   def next(%{events: events, transitions: transitions} = p) do
     for {_, %{state: :ready, __out_edges__: [_ | _] = edges} = e} <- events, {t, n} <- edges do
