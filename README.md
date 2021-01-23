@@ -25,8 +25,8 @@ defmodule Review do
 
   ## Start event
   event {Start, "draft"}
-  ## End event
-  event {End, "reviewed"}
+  ## End event, `async` mode means this transition run's in a separated elixir process.
+  event {End, "reviewed"}, async: true
   event {End, "canceled"}
   ## Intermediate event
   event "rejected"
@@ -48,8 +48,7 @@ defmodule Review do
   transition {Submit, "submit2"}, "rejected" ~> Reviewing
 
   transition "reject", Reviewing ~> "rejected"
-  ## `async` mode means this transition run's in a separated elixir process.
-  transition "agree", Reviewing ~> "reviewed", async: true
+  transition "agree", Reviewing ~> "reviewed"
 end
 ```
 
@@ -65,7 +64,7 @@ end
 digraph review {
   size ="4,4";
   draft [label="draft",shape=doublecircle,color=".7 .3 1.0"];
-  reviewed [label="reviewed",shape=circle,color=red];
+  reviewed [label="reviewed",style=bold,shape=circle,color=red];
   canceled [label="canceled",shape=circle,color=red];
   rejected [label="rejected",shape=box];
   reviewing [label="reviewing",shape=box];
@@ -76,7 +75,7 @@ digraph review {
   rejected -> canceled [label="cancel2"];
   rejected -> reviewing [label="submit2"];
   reviewing -> rejected [label="reject"];
-  reviewing -> reviewed [label="agree",style=bold,color=red];
+  reviewing -> reviewed [label="agree"];
 }
 // custom_mark
 ```

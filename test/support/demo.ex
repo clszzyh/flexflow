@@ -25,7 +25,7 @@ defmodule P1 do
   event N3, async: true
   event N4, kind: :end
 
-  transition T2, N2 ~> N3, async: true
+  transition T2, N2 ~> N3
   transition {T2, "1"}, N2 ~> N4
 end
 

@@ -266,14 +266,14 @@ defmodule Flexflow.Process do
   @spec handle_info(t(), term()) :: handle_info_return()
   def handle_info(%__MODULE__{} = p, {ref, result}) when is_reference(ref) do
     Process.demonitor(ref, [:flush])
-    {input, p} = pop_in(p.tasks[ref])
+    {input, p} = pop_in(p.__tasks__[ref])
     IO.puts(inspect({:ok, input, result}))
     {:noreply, p}
   end
 
   def handle_info(%__MODULE__{} = p, {:DOWN, ref, :process, _monitor_pid, reason})
       when is_reference(ref) do
-    {input, p} = pop_in(p.tasks[ref])
+    {input, p} = pop_in(p.__tasks__[ref])
     IO.puts(inspect({:error, input, reason}))
     {:noreply, p}
   end
@@ -313,10 +313,10 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec async(t(), (... -> term()), [term()]) :: t()
-  def async(%__MODULE__{} = p, f, args) when is_function(f) and is_list(args) do
-    task = Task.Supervisor.async_nolink(TaskSupervisor, fn -> apply(f, args) end)
-    put_in(p.__tasks__[task.ref], args)
+  @spec async(t(), (() -> term()), term()) :: t()
+  def async(%__MODULE__{} = p, f, value) when is_function(f, 0) do
+    task = Task.Supervisor.async_nolink(TaskSupervisor, f)
+    put_in(p.__tasks__[task.ref], value)
   end
 
   @max_loop_limit Config.get(:max_loop_limit)

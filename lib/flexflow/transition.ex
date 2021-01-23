@@ -16,12 +16,7 @@ defmodule Flexflow.Transition do
   #{inspect(@states)}
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
-  @typedoc """
-
-    * `async` - `t:Flexflow.Event.option/0`
-  """
-  @type option :: {:async, boolean()}
-  @type options :: [option]
+  @type options :: keyword()
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
@@ -99,10 +94,6 @@ defmodule Flexflow.Transition do
     opts = opts ++ o.__opts__
     {attributes, opts} = Keyword.pop(opts, :attributes, [])
     attributes = attributes ++ if from == to, do: [color: "blue"], else: []
-    async = Keyword.get(opts, :async, false)
-
-    attributes =
-      if async, do: Keyword.merge([style: "bold", color: "red"], attributes), else: attributes
 
     %__MODULE__{
       module: o,

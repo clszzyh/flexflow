@@ -7,7 +7,7 @@ defmodule Flexflow.Event do
   alias Flexflow.Process
   alias Flexflow.Util
 
-  @states [:created, :initial, :ready, :completed]
+  @states [:created, :initial, :ready, :completed, :pending]
   @state_changes [created: [:initial], created: [:initial, :ready], initial: [:ready]]
 
   @typedoc """
@@ -18,17 +18,14 @@ defmodule Flexflow.Event do
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type state_change :: [state()]
   @type kind :: :start | :end | :intermediate
-  @typedoc """
-  * `async` - invoke using a separated task (except init callback), default `false`
-  """
-  @type option :: {:async, boolean()}
-  @type options :: [option]
+  @type options :: keyword()
   @type edge :: {Flexflow.key_normalize(), Flexflow.key_normalize()}
   @type t :: %__MODULE__{
           module: module(),
           state: state(),
           name: Flexflow.name(),
           kind: kind(),
+          __async__: boolean(),
           __graphviz__: keyword(),
           __in_edges__: [edge()],
           __out_edges__: [edge()],
@@ -40,6 +37,7 @@ defmodule Flexflow.Event do
   defstruct @enforce_keys ++
               [
                 state: :created,
+                __async__: false,
                 __graphviz__: [],
                 __in_edges__: [],
                 __out_edges__: [],
@@ -100,13 +98,13 @@ defmodule Flexflow.Event do
     {attributes, opts} = Keyword.pop(opts, :attributes, attribute(kind))
     async = Keyword.get(opts, :async, false)
 
-    attributes =
-      if async, do: Keyword.merge([style: "bold", color: "red"], attributes), else: attributes
+    attributes = if async, do: Keyword.merge([style: "bold"], attributes), else: attributes
 
     %__MODULE__{
       module: o,
       name: name,
       kind: kind,
+      __async__: async,
       __opts__: opts,
       __graphviz__: attributes
     }
@@ -154,7 +152,22 @@ defmodule Flexflow.Event do
   end
 
   @spec change(state_change(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
-  def change(target_state, %__MODULE__{module: module, name: name, state: before_state} = e, p)
+  def change(
+        target_state,
+        %__MODULE__{module: module, name: name, state: before_state, __async__: true} = e,
+        p
+      )
+      when {before_state, target_state} in @state_changes do
+    f = fn -> module.before_change({before_state, target_state}, e, p) end
+    p = Process.async(p, f, {module, name})
+    {:ok, put_in(p, [:events, {module, name}], %{e | state: :pending})}
+  end
+
+  def change(
+        target_state,
+        %__MODULE__{module: module, name: name, state: before_state, __async__: false} = e,
+        p
+      )
       when {before_state, target_state} in @state_changes do
     module.before_change({before_state, target_state}, e, p)
     |> case do
