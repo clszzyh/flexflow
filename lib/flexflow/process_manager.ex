@@ -1,5 +1,7 @@
 defmodule Flexflow.ProcessManager do
-  @moduledoc false
+  @moduledoc """
+  ProcessManager
+  """
 
   use DynamicSupervisor
   use Flexflow.ProcessRegistry

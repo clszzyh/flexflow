@@ -7,7 +7,6 @@ defmodule Flexflow.Process do
   alias Flexflow.Context
   alias Flexflow.Event
   alias Flexflow.History
-  alias Flexflow.ProcessManager
   alias Flexflow.TaskSupervisor
   alias Flexflow.Telemetry
   alias Flexflow.Transition
@@ -203,9 +202,6 @@ defmodule Flexflow.Process do
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}),
         do: struct!(@__process__, name: name(), id: id, __args__: args)
 
-      @spec start(Flexflow.id(), Flexflow.process_args()) :: Process.server_return()
-      def start(id, args \\ %{}), do: Process.start(__MODULE__, id, args)
-
       for attribute <- [
             :__events__,
             :__opts__,
@@ -238,9 +234,6 @@ defmodule Flexflow.Process do
     |> module.new(args)
     |> telemetry_invoke(:process_init, &init/1)
   end
-
-  @spec start(module(), Flexflow.id(), Flexflow.process_args()) :: server_return()
-  def start(module, id, args \\ %{}), do: ProcessManager.server({module, id}, args)
 
   @spec init(t()) :: result()
   def init(%__MODULE__{module: module, events: events, transitions: transitions} = p) do

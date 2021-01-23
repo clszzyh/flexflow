@@ -36,8 +36,8 @@ defmodule ProcessTest do
   end
 
   test "start process" do
-    {:ok, pid} = P1.start("p1")
-    {:exist, pid2} = P1.start("p1")
+    {:ok, pid} = Flexflow.start({P1, "p1"})
+    {:exist, pid2} = Flexflow.start({P1, "p1"})
     assert pid == pid2
 
     assert Flexflow.ProcessManager.children(P1) == [

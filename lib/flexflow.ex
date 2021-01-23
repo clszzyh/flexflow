@@ -6,6 +6,8 @@ defmodule Flexflow do
   def version, do: @version
 
   alias Flexflow.Event
+  # alias Flexflow.Process
+  alias Flexflow.ProcessManager
   alias Flexflow.Transition
 
   @type process_identity :: {module(), id()}
@@ -19,4 +21,6 @@ defmodule Flexflow do
 
   @type events :: %{key_normalize() => Event.t()}
   @type transitions :: %{key_normalize() => Transition.t()}
+
+  defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
 end
