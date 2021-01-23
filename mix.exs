@@ -75,7 +75,7 @@ defmodule Flexflow.MixProject do
 
   defp aliases do
     [
-      cloc: "cmd cloc --exclude-dir=_build,deps,doc,.github .",
+      cloc: "cmd cloc --exclude-dir=_build,deps,doc .",
       ci: [
         "compile --warnings-as-errors --force --verbose",
         "format --check-formatted",

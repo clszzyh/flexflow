@@ -32,10 +32,31 @@ end
 defmodule P2 do
   @moduledoc false
 
+  defmodule Slow do
+    @moduledoc false
+    use Flexflow.Event
+
+    @impl true
+    def before_change({:created, [:initial]}, event, %{__args__: %{slow: strategy}}) do
+      Process.sleep(50)
+
+      case strategy do
+        :ok -> {:ok, event}
+        :error -> {:error, :custom_error}
+        :other -> {:ok, :other}
+        :raise -> raise("fooo")
+      end
+    end
+
+    def before_change(_, o, _), do: {:ok, o}
+  end
+
   use Flexflow.Process
 
-  event Flexflow.Events.Start
-  event Flexflow.Events.End
+  event Start
+  event End
+  event Slow, async: true
 
-  transition Flexflow.Transitions.Pass, Flexflow.Events.Start ~> Flexflow.Events.End
+  transition "first", Start ~> Slow
+  transition "last", Slow ~> End
 end

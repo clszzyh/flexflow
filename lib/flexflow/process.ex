@@ -24,9 +24,9 @@ defmodule Flexflow.Process do
           module: module(),
           name: Flexflow.name() | nil,
           id: Flexflow.id() | nil,
+          state: state(),
           events: Flexflow.events(),
           transitions: Flexflow.transitions(),
-          state: state(),
           __args__: Flexflow.process_args(),
           __opts__: keyword(),
           __context__: Context.t(),
@@ -217,13 +217,11 @@ defmodule Flexflow.Process do
 
   @behaviour Access
   @impl true
-  def fetch(struct, key), do: Map.fetch(struct, key)
+  def fetch(struct, k), do: Map.fetch(struct, k)
   @impl true
-  def get_and_update(struct, key, fun) when is_function(fun, 1),
-    do: Map.get_and_update(struct, key, fun)
-
+  def get_and_update(struct, k, f) when is_function(f, 1), do: Map.get_and_update(struct, k, f)
   @impl true
-  def pop(struct, key), do: Map.pop(struct, key)
+  def pop(struct, k), do: Map.pop(struct, k)
 
   ###### Api ######
 
@@ -264,7 +262,7 @@ defmodule Flexflow.Process do
   end
 
   @spec handle_info(t(), term()) :: handle_info_return()
-  def handle_info(%__MODULE__{} = p, {ref, result}) when is_reference(ref) do
+  def handle_info(p, {ref, result}) when is_reference(ref) do
     Process.demonitor(ref, [:flush])
     {{f, first_arg}, p} = pop_in(p.__tasks__[ref])
 
@@ -274,8 +272,7 @@ defmodule Flexflow.Process do
     end
   end
 
-  def handle_info(%__MODULE__{} = p, {:DOWN, ref, :process, _monitor_pid, reason})
-      when is_reference(ref) do
+  def handle_info(p, {:DOWN, ref, :process, _monitor_pid, reason}) when is_reference(ref) do
     {{f, first_arg}, p} = pop_in(p.__tasks__[ref])
 
     case apply(f, [first_arg, p, :error, reason]) do
@@ -319,16 +316,13 @@ defmodule Flexflow.Process do
     end
   end
 
-  @spec async(t(), (() -> term()), (first_arg, t(), :ok | :error, term() -> result()), first_arg) ::
-          t()
-        when first_arg: term()
+  @spec async(t(), (() -> ret), (arg, t(), :ok | :error, ret -> result()), arg) :: t()
+        when arg: term(), ret: term()
   def async(%__MODULE__{} = p, f, callback, value)
       when is_function(f, 0) and is_function(callback, 4) do
     task = Task.Supervisor.async_nolink(TaskSupervisor, f)
     put_in(p.__tasks__[task.ref], {callback, value})
   end
-
-  @max_loop_limit Config.get(:max_loop_limit)
 
   @spec loop(t()) :: result()
   def loop(%{state: ignore_state} = p) when ignore_state in [:waiting, :paused], do: {:ok, p}
@@ -342,18 +336,17 @@ defmodule Flexflow.Process do
     end
   end
 
+  @max_loop_limit Config.get(:max_loop_limit)
+
   @spec next(t()) :: result()
   def next(%{__loop_counter__: loop_counter}) when loop_counter > @max_loop_limit,
     do: {:error, :deadlock_found}
 
   def next(%{events: events, transitions: transitions} = p) do
-    ready_event_edges =
-      for {_, %Event{state: :ready, __out_edges__: [_ | _] = out_edges} = event} <- events,
-          {t, n} <- out_edges do
-        {event, Map.fetch!(transitions, t), Map.fetch!(events, n)}
-      end
-
-    case ready_event_edges do
+    for {_, %{state: :ready, __out_edges__: [_ | _] = edges} = e} <- events, {t, n} <- edges do
+      {e, Map.fetch!(transitions, t), Map.fetch!(events, n)}
+    end
+    |> case do
       [] -> {:ok, %{p | state: :waiting}}
       [_ | _] = a -> Enum.reduce(a, {:ok, p}, &Transition.dispatch/2)
     end

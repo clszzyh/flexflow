@@ -7,7 +7,7 @@ defmodule Flexflow.Event do
   alias Flexflow.Process
   alias Flexflow.Util
 
-  @states [:created, :initial, :ready, :completed, :pending]
+  @states [:created, :initial, :ready, :completed, :pending, :error]
   @state_changes [created: [:initial], created: [:initial, :ready], initial: [:ready]]
 
   @typedoc """
@@ -20,6 +20,7 @@ defmodule Flexflow.Event do
   @type kind :: :start | :end | :intermediate
   @type options :: keyword()
   @type edge :: {Flexflow.key_normalize(), Flexflow.key_normalize()}
+  @type before_change_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
   @type t :: %__MODULE__{
           module: module(),
           state: state(),
@@ -49,8 +50,7 @@ defmodule Flexflow.Event do
   @callback name :: Flexflow.name()
 
   @doc "Invoked before event state changes"
-  @callback before_change({state(), state_change()}, t(), Process.t()) ::
-              {:ok, t()} | {:error, term()}
+  @callback before_change({state(), state_change()}, t(), Process.t()) :: before_change_result()
 
   defmacro __using__(opts \\ []) do
     quote do
@@ -69,7 +69,7 @@ defmodule Flexflow.Event do
       def name, do: @__name__
 
       @impl true
-      def before_change(_, o, _), do: {:ok, o}
+      def before_change(_, _, _), do: :ok
 
       defoverridable unquote(__MODULE__)
 
@@ -78,9 +78,9 @@ defmodule Flexflow.Event do
   end
 
   @spec attribute(kind()) :: keyword()
-  def attribute(:intermediate), do: [shape: "box"]
-  def attribute(:start), do: [shape: "doublecircle", color: "\".7 .3 1.0\""]
-  def attribute(:end), do: [shape: "circle", color: "red"]
+  defp attribute(:intermediate), do: [shape: "box"]
+  defp attribute(:start), do: [shape: "doublecircle", color: "\".7 .3 1.0\""]
+  defp attribute(:end), do: [shape: "circle", color: "red"]
 
   @spec key(t()) :: Flexflow.key_normalize()
   def key(%{module: module, name: name}), do: {module, name}
@@ -151,6 +151,22 @@ defmodule Flexflow.Event do
     end)
   end
 
+  @spec do_change(state_change(), t(), Process.t()) :: {:ok, t()} | {:error, term()}
+  defp do_change(target_state, %__MODULE__{module: module, state: before_state} = e, p)
+       when {before_state, target_state} in @state_changes do
+    module.before_change({before_state, target_state}, e, p)
+    |> case do
+      :ok -> {:ok, %__MODULE__{e | __context__: %Context{state: :ok}}}
+      {:ok, %__MODULE__{} = e} -> {:ok, %__MODULE__{e | __context__: %Context{state: :ok}}}
+      {:ok, term} -> {:ok, %__MODULE__{e | __context__: %Context{state: :ok, result: term}}}
+      {:error, reason} -> {:error, reason}
+    end
+    |> case do
+      {:ok, %__MODULE__{} = e} -> {:ok, %{e | state: List.last(target_state)}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   @spec change(state_change(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
   def change(target_state, %__MODULE__{module: module, name: name, __async__: true} = e, p) do
     f = fn -> do_change(target_state, e, p) end
@@ -160,16 +176,7 @@ defmodule Flexflow.Event do
 
   def change(target_state, %__MODULE__{module: module, name: name, __async__: false} = e, p) do
     case do_change(target_state, e, p) do
-      {:ok, e} -> {:ok, put_in(p, [:events, {module, name}], e)}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  @spec do_change(state_change(), t(), Process.t()) :: {:ok, t()} | {:error, term()}
-  def do_change(target_state, %__MODULE__{module: module, state: before_state} = e, p)
-      when {before_state, target_state} in @state_changes do
-    case module.before_change({before_state, target_state}, e, p) do
-      {:ok, e} -> {:ok, %{e | state: List.last(target_state)}}
+      {:ok, %__MODULE__{} = e} -> {:ok, put_in(p, [:events, {module, name}], e)}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -177,5 +184,18 @@ defmodule Flexflow.Event do
   @spec callback(Flexflow.key_normalize(), Process.t(), :ok | :error, term) :: Process.result()
   def callback({module, name}, %Process{} = p, :ok, {:ok, %__MODULE__{} = e}) do
     {:ok, put_in(p, [:events, {module, name}], e)}
+  end
+
+  def callback({module, name}, %Process{} = p, :ok, {:error, reason}) do
+    {:ok, update_in(p, [:events, {module, name}], &handle_error(&1, reason))}
+  end
+
+  def callback({module, name}, %Process{} = p, :error, reason) do
+    {:ok, update_in(p, [:events, {module, name}], &handle_error(&1, reason))}
+  end
+
+  @spec handle_error(t(), term()) :: t()
+  defp handle_error(%__MODULE__{} = e, reason) do
+    %{e | state: :error, __context__: %Context{state: :error, result: reason}}
   end
 end

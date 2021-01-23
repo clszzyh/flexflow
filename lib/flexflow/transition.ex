@@ -93,7 +93,6 @@ defmodule Flexflow.Transition do
 
     opts = opts ++ o.__opts__
     {attributes, opts} = Keyword.pop(opts, :attributes, [])
-    attributes = attributes ++ if from == to, do: [color: "blue"], else: []
 
     %__MODULE__{
       module: o,

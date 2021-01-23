@@ -35,7 +35,7 @@ defmodule ProcessTest do
     assert pid in pids
   end
 
-  test "start process" do
+  test "process p1" do
     {:ok, pid} = Flexflow.start({P1, "p1"})
     {:exist, pid2} = Flexflow.start({P1, "p1"})
     assert pid == pid2
@@ -56,5 +56,51 @@ defmodule ProcessTest do
 
     assert process.events[{N2, "n2"}].state == :initial
     assert process.transitions[{T1, "t1_n1"}].state == :initial
+  end
+
+  test "p2" do
+    {:ok, _pid} = Flexflow.start({P2, "p2"}, %{custom: :value})
+    process = Flexflow.state({P2, "p2"})
+    assert process.id == "p2"
+    assert process.__args__ == %{custom: :value}
+    assert process.events[{P2.Slow, "slow"}].__async__ == true
+    assert process.events[{P2.Slow, "slow"}].state == :pending
+  end
+
+  test "p2 slow ok" do
+    {:ok, _pid} = Flexflow.start({P2, "slow_ok"}, %{slow: :ok})
+    Process.sleep(60)
+    process = Flexflow.state({P2, "slow_ok"})
+    assert process.events[{P2.Slow, "slow"}].state == :initial
+    assert process.events[{P2.Slow, "slow"}].__context__.state == :ok
+  end
+
+  test "p2 slow other" do
+    {:ok, _pid} = Flexflow.start({P2, "slow_other"}, %{slow: :other})
+    Process.sleep(60)
+    process = Flexflow.state({P2, "slow_other"})
+    assert process.events[{P2.Slow, "slow"}].state == :initial
+    assert process.events[{P2.Slow, "slow"}].__context__.state == :ok
+    assert process.events[{P2.Slow, "slow"}].__context__.result == :other
+  end
+
+  test "p2 slow error" do
+    {:ok, _pid} = Flexflow.start({P2, "slow_error"}, %{slow: :error})
+    Process.sleep(60)
+    process = Flexflow.state({P2, "slow_error"})
+    assert process.events[{P2.Slow, "slow"}].state == :error
+    assert process.events[{P2.Slow, "slow"}].__context__.state == :error
+    assert process.events[{P2.Slow, "slow"}].__context__.result == :custom_error
+  end
+
+  test "p2 slow raise" do
+    {:ok, _pid} = Flexflow.start({P2, "slow_raise"}, %{slow: :raise})
+    Process.sleep(60)
+    process = Flexflow.state({P2, "slow_raise"})
+    assert process.events[{P2.Slow, "slow"}].state == :error
+    assert process.events[{P2.Slow, "slow"}].__context__.state == :error
+
+    assert {%RuntimeError{message: "fooo"}, [_ | _]} =
+             process.events[{P2.Slow, "slow"}].__context__.result
   end
 end

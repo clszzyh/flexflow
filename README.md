@@ -68,10 +68,10 @@ digraph review {
   canceled [label="canceled",shape=circle,color=red];
   rejected [label="rejected",shape=box];
   reviewing [label="reviewing",shape=box];
-  draft -> draft [label="modify1",color=blue];
+  draft -> draft [label="modify1"];
   draft -> canceled [label="cancel1"];
   draft -> reviewing [label="submit_draft"];
-  rejected -> rejected [label="modify2",color=blue];
+  rejected -> rejected [label="modify2"];
   rejected -> canceled [label="cancel2"];
   rejected -> reviewing [label="submit2"];
   reviewing -> rejected [label="reject"];
