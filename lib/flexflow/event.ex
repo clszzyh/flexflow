@@ -8,13 +8,15 @@ defmodule Flexflow.Event do
   alias Flexflow.Util
 
   @states [:created, :initial, :ready, :completed]
+  @state_changes [created: [:initial], created: [:initial, :ready], initial: [:ready]]
 
   @typedoc """
   Event state
 
   #{inspect(@states)}
   """
-  @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
+  @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
+  @type state_change :: [state()]
   @type kind :: :start | :end | :intermediate
   @typedoc """
   * `async` - invoke using a separated task (except init callback), default `false`
@@ -48,8 +50,9 @@ defmodule Flexflow.Event do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Invoked when process is started"
-  @callback init(t(), Process.t()) :: {:ok, t()}
+  @doc "Invoked before event state changes"
+  @callback before_change({state(), state_change()}, t(), Process.t()) ::
+              {:ok, t()} | {:error, term()}
 
   defmacro __using__(opts \\ []) do
     quote do
@@ -68,7 +71,7 @@ defmodule Flexflow.Event do
       def name, do: @__name__
 
       @impl true
-      def init(o, _), do: {:ok, o}
+      def before_change(_, o, _), do: {:ok, o}
 
       defoverridable unquote(__MODULE__)
 
@@ -136,5 +139,30 @@ defmodule Flexflow.Event do
     Enum.find(events, &end?/1) || raise(ArgumentError, "Need one or more end event")
 
     events
+  end
+
+  @spec init(Process.t()) :: Process.t() | {:error, term()}
+  def init(%Process{events: events} = p) do
+    Enum.reduce_while(events, p, fn {key, event}, p ->
+      state_change = if event.kind == :start, do: [:initial, :ready], else: [:initial]
+
+      case change(state_change, event, p) do
+        {:ok, p} -> {:cont, p}
+        {:error, reason} -> {:halt, {key, reason}}
+      end
+    end)
+  end
+
+  @spec change(state_change(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
+  def change(target_state, %__MODULE__{module: module, name: name, state: before_state} = e, p)
+      when {before_state, target_state} in @state_changes do
+    module.before_change({before_state, target_state}, e, p)
+    |> case do
+      {:ok, e} ->
+        {:ok, put_in(p, [:events, {module, name}], %{e | state: List.last(target_state)})}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 end

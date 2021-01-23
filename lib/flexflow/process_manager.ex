@@ -11,6 +11,14 @@ defmodule Flexflow.ProcessManager do
   alias Flexflow.ProcessServer
   alias Flexflow.Util
 
+  @type t :: %__MODULE__{
+          pid: pid(),
+          id: Flexflow.id(),
+          name: Flexflow.name()
+        }
+  @enforce_keys [:pid, :id, :name]
+  defstruct @enforce_keys
+
   @type server_return :: {:ok | :exist, pid} | {:error, term()}
 
   def start_link(module) do
@@ -71,9 +79,14 @@ defmodule Flexflow.ProcessManager do
     end
   end
 
+  @spec children(module()) :: [t()]
   def children(mod) do
     {:ok, srv} = server_pid(mod)
     childs = DynamicSupervisor.which_children(srv)
-    for {_, pid, kind, [module]} <- childs, do: %{pid: pid, kind: kind, module: module}
+
+    for {_, pid, :worker, [ProcessServer]} <- childs do
+      process = ProcessServer.state(pid)
+      %__MODULE__{pid: pid, id: process.id, name: process.name}
+    end
   end
 end

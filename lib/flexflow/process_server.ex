@@ -16,12 +16,7 @@ defmodule Flexflow.ProcessServer do
 
   @impl true
   def init({module, id, opts}) do
-    module
-    |> Process.new(id, opts)
-    |> case do
-      {:ok, p} -> {:ok, p, {:continue, :loop}}
-      {:error, reason} -> {:stop, reason}
-    end
+    {:ok, Process.new(module, id, opts), {:continue, :init}}
   end
 
   @impl true

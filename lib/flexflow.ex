@@ -23,7 +23,7 @@ defmodule Flexflow do
   @type transitions :: %{key_normalize() => Transition.t()}
 
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
+  defdelegate state(key), to: ProcessManager
   defdelegate call(key, op), to: ProcessManager
   defdelegate cast(key, op), to: ProcessManager
-  defdelegate state(key), to: ProcessManager
 end

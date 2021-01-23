@@ -45,9 +45,6 @@ defmodule Flexflow.Transition do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Invoked when process is started"
-  @callback init(t(), Process.t()) :: {:ok, t()}
-
   defmacro __using__(opts \\ []) do
     quote do
       @behaviour unquote(__MODULE__)
@@ -63,9 +60,6 @@ defmodule Flexflow.Transition do
 
       @impl true
       def name, do: @__name__
-
-      @impl true
-      def init(o, _), do: {:ok, o}
 
       defoverridable unquote(__MODULE__)
 
@@ -139,6 +133,13 @@ defmodule Flexflow.Transition do
     end
 
     transitions
+  end
+
+  @spec init(Process.t()) :: Process.t() | {:error, term()}
+  def init(%Process{transitions: transitions} = p) do
+    Enum.reduce(transitions, p, fn {key, transition}, p ->
+      put_in(p, [:transitions, key], %{transition | state: :initial})
+    end)
   end
 
   @spec dispatch({Event.t(), t(), Event.t()}, Process.result()) :: Process.result()

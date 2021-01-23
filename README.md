@@ -81,8 +81,3 @@ digraph review {
 // custom_mark
 ```
 </details>
-
-## See Also
-
-* [BPMN document](https://www.omg.org/spec/BPMN/2.0/PDF)
-* [Activiti document](http://www.mossle.com/docs/activiti/index.html#bpmn20)

@@ -228,42 +228,20 @@ defmodule Flexflow.Process do
   ###### Api ######
 
   @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: result()
-  def new(module, id, args \\ %{}) do
-    id
-    |> module.new(args)
-    |> telemetry_invoke(:process_init, &init/1)
-  end
+  def new(module, id, args \\ %{}), do: module.new(id, args)
 
   @spec init(t()) :: result()
-  def init(%__MODULE__{module: module, events: events, transitions: transitions} = p) do
-    (Map.to_list(events) ++ Map.to_list(transitions))
-    |> Enum.reduce_while(p, fn {key, %{module: module} = o}, p ->
-      case module.init(o, p) do
-        {:ok, %Event{kind: :start} = event} ->
-          {:cont, put_in(p, [:events, key], %{event | state: :ready})}
+  def init(%__MODULE__{module: module} = p) do
+    with %__MODULE__{} = p <- Event.init(p), %__MODULE__{} = p <- Transition.init(p) do
+      p = %{p | state: :active}
 
-        {:ok, %Event{} = event} ->
-          {:cont, put_in(p, [:events, key], %{event | state: :initial})}
-
-        {:ok, %Transition{} = transition} ->
-          {:cont, put_in(p, [:transitions, key], %{transition | state: :initial})}
-
-        {:error, reason} ->
-          {:halt, {key, reason}}
+      if function_exported?(module, :init, 1) do
+        module.init(p)
+      else
+        {:ok, p}
       end
-    end)
-    |> case do
-      {:error, reason} ->
-        {:error, reason}
-
-      %__MODULE__{} = p ->
-        p = %{p | state: :active}
-
-        if function_exported?(module, :init, 1) do
-          module.init(p)
-        else
-          {:ok, p}
-        end
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -309,9 +287,11 @@ defmodule Flexflow.Process do
   end
 
   @spec handle_continue(t(), term()) :: handle_continue_return()
-  def handle_continue(%__MODULE__{} = p, :loop) do
-    case telemetry_invoke(p, :process_loop, &loop/1) do
-      {:ok, p} -> {:noreply, p}
+  def handle_continue(%__MODULE__{} = p, :init) do
+    with {:ok, p} <- Telemetry.invoke_process(p, :process_init, &init/1),
+         {:ok, p} <- Telemetry.invoke_process(p, :process_loop, &loop/1) do
+      {:noreply, p}
+    else
       {:error, reason} -> {:stop, reason, p}
     end
   end
@@ -368,17 +348,5 @@ defmodule Flexflow.Process do
       [] -> {:ok, %{p | state: :waiting}}
       [_ | _] = a -> Enum.reduce(a, {:ok, p}, &Transition.dispatch/2)
     end
-  end
-
-  @spec telemetry_invoke(t(), atom(), (t() -> result())) :: result()
-  defp telemetry_invoke(p, name, f) do
-    Telemetry.span(
-      name,
-      fn ->
-        {state, result} = f.(p)
-        {{state, result}, %{state: state}}
-      end,
-      %{id: p.id}
-    )
   end
 end

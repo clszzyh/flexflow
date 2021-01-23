@@ -5,6 +5,8 @@ defmodule Flexflow.Telemetry do
 
   require Logger
 
+  alias Flexflow.Process
+
   @prefix :flexflow
   @handler_id "#{@prefix}-telemetry-logger"
 
@@ -27,5 +29,17 @@ defmodule Flexflow.Telemetry do
   @spec handle_event([atom()], map(), map(), Logger.level()) :: :ok
   def handle_event([@prefix, kind, event], _, meta, level) do
     Logger.log(level, "#{kind}-#{event} #{inspect(meta)}")
+  end
+
+  @spec invoke_process(Process.t(), atom(), (Process.t() -> Process.result())) :: Process.result()
+  def invoke_process(%Process{} = p, name, f) when name in @event_types do
+    span(
+      name,
+      fn ->
+        {state, result} = f.(p)
+        {{state, result}, %{state: state}}
+      end,
+      %{id: p.id}
+    )
   end
 end

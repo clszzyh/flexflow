@@ -41,7 +41,7 @@ defmodule ProcessTest do
     assert pid == pid2
 
     assert Flexflow.ProcessManager.children(P1) == [
-             %{kind: :worker, module: Flexflow.ProcessServer, pid: pid}
+             %Flexflow.ProcessManager{pid: pid, id: "p1", name: "p1_new"}
            ]
 
     server_pid = Flexflow.ProcessServer.pid({P1, "p1"})
