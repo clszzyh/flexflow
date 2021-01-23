@@ -17,6 +17,7 @@ defmodule Flexflow.Transition do
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type options :: keyword()
+  @type key :: Flexflow.key() | String.t()
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
@@ -65,7 +66,7 @@ defmodule Flexflow.Transition do
   @spec key(t()) :: Flexflow.key_normalize()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({Flexflow.key(), {Flexflow.key(), Flexflow.key()}, options}, [Event.t()]) :: t()
+  @spec new({key(), {key(), key()}, options}, [Event.t()]) :: t()
   def new({o, {from, to}, opts}, events) when is_binary(from) do
     new({o, {Util.normalize_module(from, events), to}, opts}, events)
   end

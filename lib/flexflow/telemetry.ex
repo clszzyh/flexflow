@@ -16,12 +16,14 @@ defmodule Flexflow.Telemetry do
             [[@prefix, x, :start], [@prefix, x, :stop], [@prefix, x, :exception]]
           end)
 
+  @type event_type :: unquote(Enum.reduce(@event_types, &{:|, [], [&1, &2]}))
+
   @spec attach_default_logger(Logger.level()) :: :ok | {:error, :already_exists}
   def attach_default_logger(level \\ :info) do
     :telemetry.attach_many(@handler_id, @events, &handle_event/4, level)
   end
 
-  @spec span(atom(), fun :: (() -> {term(), map()}), meta :: map()) :: term()
+  @spec span(event_type(), fun :: (() -> {term(), map()}), meta :: map()) :: term()
   def span(name, fun, meta \\ %{}) when name in @event_types and is_function(fun, 0) do
     :telemetry.span([@prefix, name], meta, fun)
   end

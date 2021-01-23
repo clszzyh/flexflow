@@ -69,13 +69,21 @@ defmodule Flexflow.ProcessManager do
     ProcessServer.pid({module, id})
   end
 
-  @spec start_child(Flexflow.process_identity(), Flexflow.process_args()) :: server_return
+  @spec start_child(Flexflow.process_identity(), Flexflow.process_args()) ::
+          {:ok, pid()} | {:error, term}
   defp start_child({module, id}, opts) do
     module
     |> server_pid()
     |> case do
-      {:ok, srv} -> DynamicSupervisor.start_child(srv, {ProcessServer, {id, opts}})
-      {:error, reason} -> {:error, reason}
+      {:ok, srv} ->
+        case DynamicSupervisor.start_child(srv, {ProcessServer, {id, opts}}) do
+          :ignore -> {:error, :ignore}
+          {:ok, pid, _info} -> {:ok, pid}
+          rest -> rest
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

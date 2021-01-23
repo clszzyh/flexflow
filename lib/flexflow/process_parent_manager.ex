@@ -14,7 +14,11 @@ defmodule Flexflow.ProcessParentManager do
 
   @spec register(module()) :: {:ok, pid()} | {:error, term()}
   def register(module) do
-    DynamicSupervisor.start_child(__MODULE__, {Flexflow.ProcessManager, module})
+    case DynamicSupervisor.start_child(__MODULE__, {Flexflow.ProcessManager, module}) do
+      :ignore -> {:error, :ignore}
+      {:ok, pid, _info} -> {:ok, pid}
+      rest -> rest
+    end
   end
 
   def children do

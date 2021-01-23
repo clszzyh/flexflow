@@ -50,11 +50,12 @@ defmodule Flexflow.MixProject do
     ]
   end
 
+  # http://erlang.org/doc/man/dialyzer.html#gui-1
   defp dialyzer_flags do
     [
       :error_handling,
       :race_conditions,
-      # :underspecs,
+      :underspecs,
       :unknown,
       :unmatched_returns
       # :overspecs
