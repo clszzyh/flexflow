@@ -24,8 +24,8 @@ defmodule Flexflow.Process do
           name: Flexflow.name(),
           id: Flexflow.id() | nil,
           state: state(),
-          events: Flexflow.events(),
-          gateways: Flexflow.gateways(),
+          events: %{Flexflow.identity() => Event.t()},
+          gateways: %{Flexflow.identity() => Gateway.t()},
           __args__: Flexflow.process_args(),
           __opts__: Keyword.t(),
           __context__: Context.t(),
@@ -38,7 +38,7 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type definition :: {:event | :gateway, Flexflow.key_normalize()}
+  @type definition :: {:event | :gateway, Flexflow.identity()}
 
   @enforce_keys [:module, :events, :gateways, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}

@@ -19,7 +19,7 @@ defmodule Flexflow.Event do
   @type state_change :: [state()]
   @type kind :: :start | :end | :intermediate
   @type options :: Keyword.t()
-  @type edge :: {Flexflow.key_normalize(), Flexflow.key_normalize()}
+  @type edge :: {Flexflow.identity(), Flexflow.identity()}
   @type before_change_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
   @type t :: %__MODULE__{
           module: module(),
@@ -82,10 +82,10 @@ defmodule Flexflow.Event do
   defp attribute(:start), do: [shape: "doublecircle", color: "\".7 .3 1.0\""]
   defp attribute(:end), do: [shape: "circle", color: "red"]
 
-  @spec key(t()) :: Flexflow.key_normalize()
+  @spec key(t()) :: Flexflow.identity()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({Flexflow.key(), options}) :: t()
+  @spec new({Flexflow.identity_or_module(), options}) :: t()
   def new({o, _opts}) when is_binary(o), do: raise(ArgumentError, "Name `#{o}` should be an atom")
   def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 
@@ -182,7 +182,7 @@ defmodule Flexflow.Event do
     {:ok, put_in(p, [:events, {module, name}], %{e | state: :pending})}
   end
 
-  @spec callback(Flexflow.key_normalize(), Process.t(), :ok | :error, term) :: Process.result()
+  @spec callback(Flexflow.identity(), Process.t(), :ok | :error, term) :: Process.result()
   def callback({module, name}, %Process{} = p, :ok, {:ok, %__MODULE__{} = e}) do
     {:ok, put_in(p, [:events, {module, name}], e)}
   end

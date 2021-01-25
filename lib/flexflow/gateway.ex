@@ -17,13 +17,13 @@ defmodule Flexflow.Gateway do
   """
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
-  @type key :: Flexflow.key() | String.t()
+  @type key :: Flexflow.identity_or_module() | String.t()
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
           state: state(),
-          from: Flexflow.key_normalize(),
-          to: Flexflow.key_normalize(),
+          from: Flexflow.identity(),
+          to: Flexflow.identity(),
           __opts__: options,
           __graphviz__: Keyword.t(),
           __context__: Context.t()
@@ -63,7 +63,7 @@ defmodule Flexflow.Gateway do
     end
   end
 
-  @spec key(t()) :: Flexflow.key_normalize()
+  @spec key(t()) :: Flexflow.identity()
   def key(%{module: module, name: name}), do: {module, name}
 
   @spec new({key(), {key(), key()}, options}, [Event.t()]) :: t()

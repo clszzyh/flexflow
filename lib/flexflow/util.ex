@@ -12,11 +12,12 @@ defmodule Flexflow.Util do
   defp module_atom?(o) when is_atom(o), do: match?("Elixir." <> _, to_string(o))
 
   @spec normalize_module(
-          Flexflow.key()
-          | {Flexflow.key(), Flexflow.key(), Flexflow.key()},
+          Flexflow.identity_or_module()
+          | {Flexflow.identity_or_module(), Flexflow.identity_or_module(),
+             Flexflow.identity_or_module()},
           [Event.t()]
         ) ::
-          Flexflow.key_normalize()
+          Flexflow.identity()
   def normalize_module(o, events \\ [])
 
   def normalize_module({o, name}, _events) when is_atom(o), do: {o, name}
@@ -39,7 +40,7 @@ defmodule Flexflow.Util do
 
   def normalize_module({o, {_, from_name}, _to}, _events) when is_atom(o) do
     if module_atom?(o) do
-      {o, String.to_atom("#{o.name()}_#{from_name}")}
+      {o, :"#{o.name()}_#{from_name}"}
     else
       {Pass, o}
     end

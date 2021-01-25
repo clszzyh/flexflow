@@ -5,8 +5,6 @@ defmodule Flexflow do
   @version Mix.Project.config()[:version]
   def version, do: @version
 
-  alias Flexflow.Event
-  alias Flexflow.Gateway
   alias Flexflow.History
   # alias Flexflow.Process
   alias Flexflow.ProcessManager
@@ -17,11 +15,8 @@ defmodule Flexflow do
   @type name :: atom()
   @type id :: String.t()
 
-  @type key :: key_normalize | module()
-  @type key_normalize :: {module(), name()}
-
-  @type events :: %{key_normalize() => Event.t()}
-  @type gateways :: %{key_normalize() => Gateway.t()}
+  @type identity_or_module :: identity | module()
+  @type identity :: {module(), name()}
 
   defdelegate history(key), to: History, as: :get
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
