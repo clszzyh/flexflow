@@ -13,7 +13,8 @@
 
 ```elixir
 defmodule Review do
-  use Flexflow.Process, version: 1
+  @vsn "1.0.1"
+  use Flexflow.Process
 
   defmodule Reviewing do
     use Flexflow.Event

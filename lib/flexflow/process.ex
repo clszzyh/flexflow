@@ -27,6 +27,7 @@ defmodule Flexflow.Process do
           events: %{Flexflow.identity() => Event.t()},
           gateways: %{Flexflow.identity() => Gateway.t()},
           __args__: Flexflow.process_args(),
+          __vsn__: [{module(), term()}],
           __opts__: Keyword.t(),
           __context__: Context.t(),
           __definitions__: [definition],
@@ -46,6 +47,7 @@ defmodule Flexflow.Process do
               [
                 :name,
                 :id,
+                :__vsn__,
                 state: :created,
                 __counter__: 0,
                 __loop__: 0,
@@ -180,16 +182,30 @@ defmodule Flexflow.Process do
       end
 
       @__process__ %{process | __opts__: @__opts__}
+      @__vsn__ (for {_k, {m, _id}} <- @__process__.__definitions__, uniq: true do
+                  {m, m.module_info(:attributes)[:vsn]}
+                end)
+
+      def __vsn__ do
+        [{__MODULE__, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
+      end
 
       @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()
-      def new(id \\ Flexflow.Util.make_id(), args \\ %{}),
-        do: struct!(@__process__, name: name(), id: id, __args__: args)
+      def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
+        struct!(@__process__,
+          __vsn__: :crypto.hash(:md5, :erlang.term_to_binary(__vsn__())),
+          name: name(),
+          id: id,
+          __args__: args
+        )
+      end
 
       for attribute <- [
             :__events__,
             :__opts__,
             :__gateways__,
             :__definitions__,
+            :__vsn__,
             :__module__,
             :__name__,
             :__process__
