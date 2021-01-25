@@ -8,6 +8,7 @@ defmodule Flexflow do
   alias Flexflow.History
   # alias Flexflow.Process
   alias Flexflow.ProcessManager
+  alias Flexflow.ProcessServer
 
   @type process_identity :: {module(), id()}
   @type process_args :: map()
@@ -19,6 +20,7 @@ defmodule Flexflow do
   @type identity :: {module(), name()}
 
   defdelegate history(key), to: History, as: :get
+  defdelegate pid(key), to: ProcessServer
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
   defdelegate state(key), to: ProcessManager
   defdelegate call(key, op), to: ProcessManager

@@ -45,13 +45,10 @@ defmodule ProcessTest do
     assert {:ok, {P1, "kill"}} = Flexflow.History.ensure_new({P1, "kill"})
     {:ok, pid} = Flexflow.start({P1, "kill"})
 
-    ## credo:disable-for-next-line
-    ## TODO why
-    # assert {:ok, {P1, "kill"}} = Flexflow.History.ensure_new({P1, "kill"})
-    # assert {:error, "Key exist"} = Flexflow.History.ensure_new({P1, "kill"})
+    assert {:error, "Key exist"} = Flexflow.History.ensure_new({P1, "kill"})
     true = Process.exit(pid, :kill)
     assert Process.info(pid) == nil
-    # {:error, "Key exist"} = Flexflow.start({P1, "kill"})
+    {:error, "Key exist"} = Flexflow.start({P1, "kill"})
     {:ok, pid2} = Flexflow.start({P1, "kill2"})
     true = Process.exit(pid2, :normal)
     refute Process.info(pid2) == nil
@@ -64,16 +61,11 @@ defmodule ProcessTest do
 
   test "process p1" do
     {:ok, pid} = Flexflow.start({P1, "p1"})
-    # {:exist, pid2} = Flexflow.start({P1, "p1"})
-    # assert pid == pid2s
-
-    ## credo:disable-for-next-line
-    ## TODO why
-    # assert Flexflow.history({P1, "p1"}) == []
-    # assert Flexflow.history({P1, "p1"}) == [
-    #          %Flexflow.History{event: :process_init, name: :process},
-    #          %Flexflow.History{event: :process_loop, name: :process}
-    #        ]
+    {:exist, pid2} = Flexflow.start({P1, "p1"})
+    pid3 = Flexflow.pid({P1, "p1"})
+    assert pid == pid2
+    assert pid == pid3
+    assert [_ | _] = Flexflow.history({P1, "p1"})
 
     assert Flexflow.ProcessManager.children(P1) == [
              %Flexflow.ProcessManager{pid: pid, id: "p1", name: :p1_new}
