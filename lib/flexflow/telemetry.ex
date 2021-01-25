@@ -21,7 +21,12 @@ defmodule Flexflow.Telemetry do
 
   @spec attach_default_logger(Logger.level()) :: :ok | {:error, :already_exists}
   def attach_default_logger(level \\ :info) do
-    :telemetry.attach_many(@handler_id, @events, &handle_event/4, level)
+    :telemetry.attach_many(@handler_id, @events, &handle_logger/4, level)
+  end
+
+  @spec attach_history_event(term()) :: :ok
+  def attach_history_event(config \\ nil) do
+    :telemetry.attach_many(@handler_id, @events, &handle_history/4, config)
   end
 
   @spec span(event_type(), fun :: (() -> {term(), map()}), meta :: map()) :: term()
@@ -29,21 +34,36 @@ defmodule Flexflow.Telemetry do
     :telemetry.span([@prefix, name], meta, fun)
   end
 
-  @spec handle_event([atom()], map(), map(), Logger.level()) :: :ok
-  def handle_event([@prefix, kind, event], _, meta, level) do
+  @spec handle_history([atom()], map(), map(), term()) :: :ok
+  def handle_history(
+        [@prefix, event, stage],
+        measurements,
+        %{module: module, id: id} = metadata,
+        _config
+      )
+      when event in @event_types do
+    History.put({module, id}, %{
+      event: event,
+      stage: stage,
+      metadata: Map.drop(metadata, [:id, :module]),
+      measurements: measurements
+    })
+  end
+
+  @spec handle_logger([atom()], map(), map(), Logger.level()) :: :ok
+  def handle_logger([@prefix, kind, event], _, meta, level) do
     Logger.log(level, "#{kind}-#{event} #{inspect(meta)}")
   end
 
   @spec invoke_process(Process.t(), atom(), (Process.t() -> Process.result())) :: Process.result()
-  def invoke_process(%Process{module: module, id: id} = p, name, f) when name in @event_types do
+  def invoke_process(%Process{} = p, name, f) when name in @event_types do
     span(
       name,
       fn ->
         {state, result} = f.(p)
-        :ok = History.put({module, id}, name)
-        {{state, result}, %{state: state}}
+        {{state, result}, %{state: state, id: p.id, module: p.module}}
       end,
-      %{id: p.id}
+      %{id: p.id, module: p.module}
     )
   end
 end

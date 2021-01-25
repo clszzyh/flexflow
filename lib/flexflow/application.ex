@@ -15,6 +15,8 @@ defmodule Flexflow.Application do
       Flexflow.ModuleRegistry
     ]
 
+    :ok = Flexflow.Telemetry.attach_history_event()
+
     if Config.get(:telemetry_logger) do
       :ok = Flexflow.Telemetry.attach_default_logger(Config.get(:telemetry_logger_level))
     end
