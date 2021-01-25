@@ -47,7 +47,7 @@ defmodule Flexflow.ModuleRegistry do
     kind = Util.local_behaviour(module)
     name = module.name()
 
-    {:ok, _} =
+    {_, _} =
       if kind == Flexflow.Process do
         Flexflow.ProcessParentManager.register(module)
       else

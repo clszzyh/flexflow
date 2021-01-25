@@ -3,11 +3,17 @@ defmodule Flexflow.History do
   History
   """
 
-  @type event :: :process_init
+  @events [:process_init, :process_loop]
+  @type event :: unquote(Enum.reduce(@events, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{name: Flexflow.name(), event: event()}
+  @type new_input :: t() | event()
 
   @enforce_keys [:name, :event]
   defstruct @enforce_keys
+
+  @spec new(new_input) :: t()
+  def new(event) when event in @events, do: %__MODULE__{name: :process, event: event}
+  def new(%__MODULE__{} = his), do: his
 
   use GenServer
 
@@ -21,9 +27,19 @@ defmodule Flexflow.History do
     {:ok, nil}
   end
 
-  @spec put(Flexflow.process_identity(), t()) :: true
+  @spec put(Flexflow.process_identity(), new_input()) :: :ok
   def put(id, history) do
-    :ets.insert(__MODULE__, {id, history})
+    true = :ets.insert(__MODULE__, {id, new(history)})
+    :ok
+  end
+
+  @spec ensure_new(Flexflow.process_identity()) :: {:ok, nil} | {:error, term()}
+  def ensure_new(id) do
+    if :ets.member(__MODULE__, id) do
+      {:error, "Key exist"}
+    else
+      {:ok, id}
+    end
   end
 
   @spec get(Flexflow.process_identity()) :: [t()]

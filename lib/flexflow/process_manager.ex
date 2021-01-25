@@ -6,6 +6,7 @@ defmodule Flexflow.ProcessManager do
   use DynamicSupervisor
   use Flexflow.ProcessRegistry
 
+  alias Flexflow.History
   alias Flexflow.Process
   alias Flexflow.ProcessParentManager
   alias Flexflow.ProcessServer
@@ -72,18 +73,15 @@ defmodule Flexflow.ProcessManager do
   @spec start_child(Flexflow.process_identity(), Flexflow.process_args()) ::
           {:ok, pid()} | {:error, term}
   defp start_child({module, id}, opts) do
-    module
-    |> server_pid()
-    |> case do
-      {:ok, srv} ->
-        case DynamicSupervisor.start_child(srv, {ProcessServer, {id, opts}}) do
-          :ignore -> {:error, :ignore}
-          {:ok, pid, _info} -> {:ok, pid}
-          rest -> rest
-        end
-
-      {:error, reason} ->
-        {:error, reason}
+    with {:ok, _} <- History.ensure_new({module, id}),
+         {:ok, srv} <- server_pid(module) do
+      case DynamicSupervisor.start_child(srv, {ProcessServer, {id, opts}}) do
+        :ignore -> {:error, :ignore}
+        {:ok, pid, _info} -> {:ok, pid}
+        rest -> rest
+      end
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
 

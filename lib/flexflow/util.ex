@@ -107,9 +107,7 @@ defmodule Flexflow.Util do
 
   @spec defined?(module()) :: boolean()
   def defined?(module) when is_atom(module) do
-    module
-    |> Code.ensure_compiled()
-    |> case do
+    case Code.ensure_compiled(module) do
       {:module, _} -> true
       _ -> false
     end
@@ -117,18 +115,12 @@ defmodule Flexflow.Util do
 
   @spec local_behaviour(module()) :: module() | nil
   def local_behaviour(module) do
-    module
-    |> defined?()
-    |> case do
-      false ->
-        nil
-
-      true ->
-        module.module_info(:attributes)
-        |> List.wrap()
-        |> Keyword.get(:behaviour)
-        |> List.wrap()
-        |> Enum.find(&(&1 in @local_behaviours))
+    if defined?(module) do
+      module.module_info(:attributes)
+      |> List.wrap()
+      |> Keyword.get(:behaviour)
+      |> List.wrap()
+      |> Enum.find(&(&1 in @local_behaviours))
     end
   end
 end

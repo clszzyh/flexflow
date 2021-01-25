@@ -5,6 +5,7 @@ defmodule Flexflow.Telemetry do
 
   require Logger
 
+  alias Flexflow.History
   alias Flexflow.Process
 
   @prefix :flexflow
@@ -34,11 +35,12 @@ defmodule Flexflow.Telemetry do
   end
 
   @spec invoke_process(Process.t(), atom(), (Process.t() -> Process.result())) :: Process.result()
-  def invoke_process(%Process{} = p, name, f) when name in @event_types do
+  def invoke_process(%Process{module: module, id: id} = p, name, f) when name in @event_types do
     span(
       name,
       fn ->
         {state, result} = f.(p)
+        :ok = History.put({module, id}, name)
         {{state, result}, %{state: state}}
       end,
       %{id: p.id}
