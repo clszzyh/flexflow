@@ -49,7 +49,7 @@ defmodule ProcessTest do
 
     ## credo:disable-for-next-line
     ## TODO why
-    assert {:ok, {P1, "kill"}} = Flexflow.History.ensure_new({P1, "kill"})
+    # assert {:ok, {P1, "kill"}} = Flexflow.History.ensure_new({P1, "kill"})
     # assert {:error, "Key exist"} = Flexflow.History.ensure_new({P1, "kill"})
     true = Process.exit(pid, :kill)
     assert Process.info(pid) == nil
