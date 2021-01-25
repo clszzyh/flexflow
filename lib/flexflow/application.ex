@@ -8,6 +8,7 @@ defmodule Flexflow.Application do
   def start(_type, _args) do
     children = [
       {Task.Supervisor, name: Flexflow.TaskSupervisor},
+      Flexflow.History,
       Flexflow.ProcessRegistry,
       Flexflow.ProcessParentManager,
       Flexflow.ModuleRegistry

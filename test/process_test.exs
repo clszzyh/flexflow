@@ -11,6 +11,13 @@ defmodule ProcessTest do
     []
   end
 
+  test "history" do
+    history = %Flexflow.History{name: :a, event: :process_init}
+    assert Flexflow.History.put({P1, "a"}, history) == true
+    assert Flexflow.History.get({P1, "a"}) == [history]
+    assert Flexflow.history({P1, "a"}) == [history]
+  end
+
   test "Flexflow.TaskSupervisor" do
     pid = Flexflow.TaskSupervisor |> Process.whereis()
     assert is_pid(pid)

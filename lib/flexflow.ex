@@ -7,6 +7,7 @@ defmodule Flexflow do
 
   alias Flexflow.Event
   alias Flexflow.Gateway
+  alias Flexflow.History
   # alias Flexflow.Process
   alias Flexflow.ProcessManager
 
@@ -22,6 +23,7 @@ defmodule Flexflow do
   @type events :: %{key_normalize() => Event.t()}
   @type gateways :: %{key_normalize() => Gateway.t()}
 
+  defdelegate history(key), to: History, as: :get
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
   defdelegate state(key), to: ProcessManager
   defdelegate call(key, op), to: ProcessManager
