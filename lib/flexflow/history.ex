@@ -5,14 +5,16 @@ defmodule Flexflow.History do
 
   @events [:process_init, :process_loop]
   @type event :: unquote(Enum.reduce(@events, &{:|, [], [&1, &2]}))
-  @type t :: %__MODULE__{name: Flexflow.name(), event: event()}
+  @type t :: %__MODULE__{name: Flexflow.name(), event: event(), time: integer}
   @type new_input :: t() | event()
 
-  @enforce_keys [:name, :event]
+  @enforce_keys [:name, :event, :time]
   defstruct @enforce_keys
 
   @spec new(new_input) :: t()
-  def new(event) when event in @events, do: %__MODULE__{name: :process, event: event}
+  def new(event) when event in @events,
+    do: %__MODULE__{name: :process, event: event, time: System.monotonic_time()}
+
   def new(%__MODULE__{} = his), do: his
 
   use GenServer

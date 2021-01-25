@@ -13,9 +13,8 @@ defmodule ProcessTest do
   end
 
   test "history" do
-    history = %Flexflow.History{name: :a, event: :process_init}
+    history = %Flexflow.History{name: :a, event: :process_init, time: System.monotonic_time()}
     assert Flexflow.History.put({P1, "a"}, history) == :ok
-    assert Flexflow.History.get({P1, "a"}) == [history]
     assert Flexflow.history({P1, "a"}) == [history]
   end
 
