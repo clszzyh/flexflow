@@ -6,6 +6,7 @@ defmodule Flexflow.ModuleRegistry do
   use GenServer, restart: :temporary
 
   alias Flexflow.Util
+  require Logger
 
   @state %{
     Flexflow.Event => %{},
@@ -72,14 +73,22 @@ defmodule Flexflow.ModuleRegistry do
     modules
     |> Enum.reduce_while(state, &register/2)
     |> case do
-      {:error, reason} -> {:stop, reason, state}
-      state -> {:noreply, state}
+      {:error, reason} ->
+        {:stop, reason, state}
+
+      state ->
+        if :code.get_mode() == :interactive do
+          Logger.debug("[#{length(modules)}] register all")
+          Logger.flush()
+        end
+
+        {:noreply, state}
     end
   end
 
   @impl true
   def terminate(reason, state) do
-    IO.puts(inspect({:terminate, reason, state}))
+    Logger.error(inspect({:terminate, reason, state}))
     System.stop(1)
   end
 end
