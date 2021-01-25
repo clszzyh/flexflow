@@ -1,5 +1,7 @@
 defmodule Flexflow.ProcessParentManager do
-  @moduledoc false
+  @moduledoc """
+  ProcessParentManager
+  """
 
   use DynamicSupervisor
 

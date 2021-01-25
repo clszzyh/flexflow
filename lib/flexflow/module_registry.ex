@@ -1,5 +1,7 @@
 defmodule Flexflow.ModuleRegistry do
-  @moduledoc false
+  @moduledoc """
+  ModuleRegistry
+  """
 
   use GenServer, restart: :temporary
 

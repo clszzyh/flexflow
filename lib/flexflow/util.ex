@@ -62,7 +62,6 @@ defmodule Flexflow.Util do
       iex> #{__MODULE__}.module_name(Foo.Bar.FooBar)
       :foo_bar
   """
-
   @spec module_name(atom()) :: Flexflow.name()
   def module_name(module) do
     module

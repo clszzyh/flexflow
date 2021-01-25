@@ -24,7 +24,6 @@ defmodule Flexflow.ProcessRegistry do
   end
 
   @doc """
-
   ## Examples
 
       iex> #{__MODULE__}.child_spec([:a, :b, :c])
@@ -33,7 +32,6 @@ defmodule Flexflow.ProcessRegistry do
         start: {Registry, :start_link, [[keys: :unique, name: #{__MODULE__}]]},
         type: :supervisor
       }
-
   """
   def child_spec(_args) do
     Registry.child_spec(keys: :unique, name: __MODULE__)
