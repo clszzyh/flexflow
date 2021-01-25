@@ -43,6 +43,21 @@ defmodule ProcessTest do
     assert pid in pids
   end
 
+  test "kill" do
+    {:ok, pid} = Flexflow.start({P1, "kill"})
+    true = Process.exit(pid, :kill)
+    assert Process.info(pid) == nil
+    {:ok, pid2} = Flexflow.start({P1, "kill"})
+    refute pid == pid2
+    true = Process.exit(pid2, :normal)
+    refute Process.info(pid2) == nil
+
+    {:ok, srv} = Flexflow.ProcessManager.server_pid(P1)
+    assert is_pid(srv)
+    :ok = DynamicSupervisor.terminate_child(srv, pid2)
+    assert Process.info(pid2) == nil
+  end
+
   test "process p1" do
     {:ok, pid} = Flexflow.start({P1, "p1"})
     {:exist, pid2} = Flexflow.start({P1, "p1"})
@@ -93,15 +108,6 @@ defmodule ProcessTest do
     assert process.events[{P2.Slow, :slow}].__context__.state == :error
     assert process.events[{P2.Slow, :slow}].__context__.result == :custom_error
   end
-
-  # test "p2 timeout" do
-  #   {:ok, _pid} = Flexflow.start({P2, "p2 timeout"}, %{slow: :error, sleep: 10_000})
-  #   Process.sleep(12_000)
-  #   process = Flexflow.state({P2, "p2 timeout"})
-  #   assert process.events[{P2.Slow, "slow"}].state == :error
-  #   assert process.events[{P2.Slow, "slow"}].__context__.state == :error
-  #   assert process.events[{P2.Slow, "slow"}].__context__.result == :custom_error
-  # end
 
   test "p2 slow raise" do
     {:ok, _pid} = Flexflow.start({P2, "slow_raise"}, %{slow: :raise, sleep: 50})
