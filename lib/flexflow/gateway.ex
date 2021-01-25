@@ -67,25 +67,29 @@ defmodule Flexflow.Gateway do
   def key(%{module: module, name: name}), do: {module, name}
 
   @spec new({key(), {key(), key()}, options}, [Event.t()]) :: t()
-  def new({o, {from, to}, opts}, events) when is_binary(from) do
-    new({o, {Util.normalize_module(from, events), to}, opts}, events)
+  def new({_o, {from, _to}, _opts}, _events) when is_binary(from),
+    do: raise(ArgumentError, "Name `#{from}` should be an atom")
+
+  def new({_o, {_from, to}, _opts}, _events) when is_binary(to),
+    do: raise(ArgumentError, "Name `#{to}` should be an atom")
+
+  def new({o, {_from, _to}, _opts}, _events) when is_binary(o),
+    do: raise(ArgumentError, "Name `#{o}` should be an atom")
+
+  def new({o, {from, to}, opts}, events) do
+    from = Util.normalize_module(from, events)
+    to = Util.normalize_module(to, events)
+    new_1({o, {from, to}, opts}, events)
   end
 
-  def new({o, {from, to}, opts}, events) when is_binary(to) do
-    new({o, {from, Util.normalize_module(to, events)}, opts}, events)
+  defp new_1({o, {from, to}, opts}, events) when is_atom(o) do
+    new_1({Util.normalize_module({o, from, to}, events), {from, to}, opts}, events)
   end
 
-  def new({o, {from, to}, opts}, events) when is_atom(o) or is_binary(o) do
-    new({Util.normalize_module({o, from, to}), {from, to}, opts}, events)
-  end
-
-  def new({{o, name}, {from, to}, opts}, events) do
+  defp new_1({{o, name}, {from, to}, opts}, events) do
     unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "`#{inspect(o)}` should implement #{__MODULE__}"
     end
-
-    from = Util.normalize_module(from)
-    to = Util.normalize_module(to)
 
     events = Map.new(events, &{{&1.module, &1.name}, &1})
 

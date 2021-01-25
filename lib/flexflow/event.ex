@@ -86,7 +86,8 @@ defmodule Flexflow.Event do
   def key(%{module: module, name: name}), do: {module, name}
 
   @spec new({Flexflow.key(), options}) :: t()
-  def new({o, opts}) when is_atom(o) or is_binary(o), do: new({Util.normalize_module(o), opts})
+  def new({o, _opts}) when is_binary(o), do: raise(ArgumentError, "Name `#{o}` should be an atom")
+  def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 
   def new({{o, name}, opts}) do
     unless Util.local_behaviour(o) == __MODULE__ do

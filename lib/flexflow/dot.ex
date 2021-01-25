@@ -37,8 +37,8 @@ defmodule Flexflow.Dot do
     DotProtocol.prefix(p) <> DotProtocol.name(p) <> attributes <> DotProtocol.suffix(p)
   end
 
-  def escape(name) when is_binary(name) do
-    String.replace(name, " ", "_")
+  def escape(name) do
+    String.replace(to_string(name), " ", "_")
   end
 end
 
@@ -80,7 +80,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Event do
   def name(%{name: name}), do: Flexflow.Dot.escape(name)
 
   def attributes(%{name: name, __graphviz__: attributes}),
-    do: [label: inspect(name)] ++ attributes
+    do: [label: inspect(to_string(name))] ++ attributes
 end
 
 defimpl Flexflow.DotProtocol, for: Flexflow.Gateway do
@@ -91,5 +91,5 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Gateway do
     do: "#{Flexflow.Dot.escape(from_name)} -> #{Flexflow.Dot.escape(to_name)}"
 
   def attributes(%{name: name, __graphviz__: attributes}),
-    do: [label: inspect(name)] ++ attributes
+    do: [label: inspect(to_string(name))] ++ attributes
 end

@@ -24,31 +24,31 @@ defmodule Review do
   end
 
   ## Start event
-  event {Start, "draft"}
+  event {Start, :draft}
   ## End event, `async` mode means this gateway run's in a separated elixir process.
-  event {End, "reviewed"}, async: true
-  event {End, "canceled"}
+  event {End, :reviewed}, async: true
+  event {End, :canceled}
   ## Intermediate event
-  event "rejected"
+  event :rejected
   ## Custom event
   event Reviewing
 
   ## Define a gateway
   ## `a ~> b` is a shortcut of `{a, b}`
-  gateway "modify1", "draft" ~> "draft"
-  gateway "cancel1", "draft" ~> "canceled"
+  gateway :modify1, :draft ~> :draft
+  gateway :cancel1, :draft ~> :canceled
 
   ## Custom gateway
-  gateway Submit, "draft" ~> Reviewing
+  gateway Submit, :draft ~> Reviewing
 
-  gateway "modify2", "rejected" ~> "rejected"
-  gateway "cancel2", "rejected" ~> "canceled"
+  gateway :modify2, :rejected ~> :rejected
+  gateway :cancel2, :rejected ~> :canceled
 
   ## With custom name
-  gateway {Submit, "submit2"}, "rejected" ~> Reviewing
+  gateway {Submit, :submit2}, :rejected ~> Reviewing
 
-  gateway "reject", Reviewing ~> "rejected"
-  gateway "agree", Reviewing ~> "reviewed"
+  gateway :reject, Reviewing ~> :rejected
+  gateway :agree, Reviewing ~> :reviewed
 end
 ```
 

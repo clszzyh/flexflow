@@ -21,38 +21,32 @@ defmodule FlexflowTest do
     assert P1.module_info()
     assert P1.new("p1", %{foo: :bar}).__args__ == %{foo: :bar}
     assert P1.new("p1", %{foo: :bar}).id == "p1"
-    assert P1.new().name == "p1_new"
+    assert P1.new().name == :p1_new
     assert P1.new().__opts__ == [hello: %{foo: :zzzz}]
     assert P1.new().module == P1
 
-    n1_s = {N1, "n1"}
-    n2_s = {N2, "n2"}
-    n3_s = {N3, "n3"}
-    n4_s = {N4, "n4"}
+    n1_s = {N1, :n1}
+    n2_s = {N2, :n2}
+    n3_s = {N3, :n3}
+    n4_s = {N4, :n4}
 
-    t1 = %Gateway{module: T1, name: "t1_n1", __opts__: [foo: :baz], from: n1_s, to: n2_s}
-    t2 = %Gateway{module: T2, name: "t2_n2", from: n2_s, to: n3_s}
-    t3 = %Gateway{module: T2, name: "1", from: n2_s, to: n4_s}
+    t1_s = {T1, :t1_n1}
+    t2_s = {T2, :t2_n2}
+    t3_s = {T2, :t2_name}
+
+    t1 = %Gateway{module: T1, name: :t1_n1, __opts__: [foo: :baz], from: n1_s, to: n2_s}
+    t2 = %Gateway{module: T2, name: :t2_n2, from: n2_s, to: n3_s}
+    t3 = %Gateway{module: T2, name: :t2_name, from: n2_s, to: n4_s}
 
     n1 = Event.new({n1_s, foo: %{aaa: :bbb}, kind: :start})
     n2 = Event.new({n2_s, []})
     n3 = Event.new({n3_s, async: true})
     n4 = Event.new({n4_s, kind: :end})
 
-    n1 = %{n1 | __out_edges__: [{{T1, "t1_n1"}, {N2, "n2"}}]}
-
-    n2 = %{
-      n2
-      | __in_edges__: [{{T1, "t1_n1"}, {N1, "n1"}}],
-        __out_edges__: [{{T2, "t2_n2"}, {N3, "n3"}}, {{T2, "1"}, {N4, "n4"}}]
-    }
-
-    n3 = %{n3 | __in_edges__: [{{T2, "t2_n2"}, {N2, "n2"}}]}
-    n4 = %{n4 | __in_edges__: [{{T2, "1"}, {N2, "n2"}}]}
-
-    t1_s = {T1, "t1_n1"}
-    t2_s = {T2, "t2_n2"}
-    t3_s = {T2, "1"}
+    n1 = %{n1 | __out_edges__: [{t1_s, n2_s}]}
+    n2 = %{n2 | __in_edges__: [{t1_s, n1_s}], __out_edges__: [{t2_s, n3_s}, {t3_s, n4_s}]}
+    n3 = %{n3 | __in_edges__: [{t2_s, n2_s}]}
+    n4 = %{n4 | __in_edges__: [{t3_s, n2_s}]}
 
     assert P1.new().__definitions__ == [
              event: n1_s,
@@ -75,18 +69,18 @@ defmodule FlexflowTest do
 
   @data %{
     """
-      event {N1, "n"}, kind: :start
-      event "n2"
+      event {N1, :n}, kind: :start
+      event :n2
       event N3, kind: :end
-      gateway "T1", "n" ~> N3
-      gateway T2, "n" ~> "n2"
+      gateway T1, :n ~> N3
+      gateway T2, :n ~> :n2
     """ => :ok,
     """
       event Start
-      event "foo"
+      event :foo
       event N3, kind: :end
-      gateway T1, "start" ~> N3
-      gateway T2, "start" ~> "foo"
+      gateway T1, :start ~> N3
+      gateway T2, :start ~> :foo
     """ => :ok,
     "" => "Event is empty",
     """
@@ -103,23 +97,28 @@ defmodule FlexflowTest do
       gateway T1, N1 ~> N2
     """ => "Event `n1` is defined twice",
     """
-      event N1, kind: :start
-      event N2, kind: :end
-      gateway T1, "n1" ~> N4
-    """ => "`{N4, \"n4\"}` is not defined",
+      event Start
+      event {N3, "n3"}, kind: :end
+      gateway T1, :start ~> "n3"
+    """ => "Name `n3` should be an atom",
     """
       event N1, kind: :start
       event N2, kind: :end
-      gateway T1, "n1" ~> "n2"
-      gateway T2, "n1" ~> "n2"
-    """ => "Gateway `{{N1, \"n1\"}, {N2, \"n2\"}}` is defined twice",
+      gateway T1, :n1 ~> N4
+    """ => "`{N4, :n4}` is not defined",
+    """
+      event N1, kind: :start
+      event N2, kind: :end
+      gateway T1, :n1 ~> :n2
+      gateway T2, :n1 ~> :n2
+    """ => "Gateway `{{N1, :n1}, {N2, :n2}}` is defined twice",
     """
       event Start
       event End
       event N1
-      gateway {T1, "t"}, Start ~> End
-      gateway {T1, "t"}, N1 ~> End
-    """ => "Gateway `{T1, \"t\"}` is defined twice",
+      gateway {T1, :t}, Start ~> End
+      gateway {T1, :t}, N1 ~> End
+    """ => "Gateway `{T1, :t}` is defined twice",
     """
       event N1
       event N2
@@ -140,29 +139,29 @@ defmodule FlexflowTest do
       event N2
       event N3, kind: :end
       gateway T1, N1 ~> N2
-    """ => "In edges of `{N3, \"n3\"}` is empty",
+    """ => "In edges of `{N3, :n3}` is empty",
     """
       event N1, kind: :start
       event N2
       event N3, kind: :end
       gateway T1, N2 ~> N3
-    """ => "Out edges of `{N1, \"n1\"}` is empty",
+    """ => "Out edges of `{N1, :n1}` is empty",
     """
       event N1, kind: :start
       event N2
       event N3, kind: :end
       gateway T1, N1 ~> N3
-    """ => "`{N2, \"n2\"}` is isolated",
+    """ => "`{N2, :n2}` is isolated",
     """
       event N1, kind: :start
       event N3, kind: :end
-      gateway T1, "n" ~> N3
-    """ => "Could not find module `n`",
+      gateway T1, :n ~> N3
+    """ => "`{Flexflow.Events.Bypass, :n}` is not defined",
     """
-      event {N1, "n"}, kind: :start
-      event {N2, "n"}
+      event {N1, :n}, kind: :start
+      event {N2, :n}
       event N3, kind: :end
-      gateway T1, "n" ~> N3
+      gateway T1, :n ~> N3
     """ => "Event `n` is defined twice"
   }
 

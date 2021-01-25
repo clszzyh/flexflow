@@ -15,7 +15,7 @@ defmodule P1 do
   use Flexflow.Process, hello: %{foo: :zzzz}
 
   @impl true
-  def name, do: "p1_new"
+  def name, do: :p1_new
 
   event N1, kind: :start, foo: %{aaa: :bbb}
   event N2
@@ -26,7 +26,7 @@ defmodule P1 do
   event N4, kind: :end
 
   gateway T2, N2 ~> N3
-  gateway {T2, "1"}, N2 ~> N4
+  gateway {T2, :t2_name}, N2 ~> N4
 end
 
 defmodule P2 do
@@ -57,6 +57,6 @@ defmodule P2 do
   event End
   event Slow, async: [timeout: 5000]
 
-  gateway "first", Start ~> Slow
-  gateway "last", Slow ~> End
+  gateway :first, Start ~> Slow
+  gateway :last, Slow ~> End
 end

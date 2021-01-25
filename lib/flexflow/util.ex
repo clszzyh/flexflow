@@ -9,45 +9,45 @@ defmodule Flexflow.Util do
 
   @local_behaviours [Process, Gateway, Event]
 
+  defp module_atom?(o) when is_atom(o), do: match?("Elixir." <> _, to_string(o))
+
   @spec normalize_module(
           Flexflow.key()
-          | String.t()
           | {Flexflow.key(), Flexflow.key(), Flexflow.key()},
           [Event.t()]
         ) ::
           Flexflow.key_normalize()
   def normalize_module(o, events \\ [])
 
-  def normalize_module({o, _from, _to}, _events) when is_binary(o), do: {Pass, o}
+  def normalize_module({o, name}, _events) when is_atom(o), do: {o, name}
+  def normalize_module({{o, name}, _from, _to}, _events) when is_atom(o), do: {o, name}
 
-  def normalize_module({o, from, _to}, events) when is_atom(o) do
-    {_, from_name} = normalize_module(from, events)
-    {o, o.name() <> "_" <> from_name}
-  end
-
-  def normalize_module(o, [_ | _] = events) when is_binary(o) do
-    events
-    |> Enum.find(fn %Event{name: name} -> name == o end)
-    |> case do
-      %Event{module: module, name: name} -> {module, name}
-      _ -> raise ArgumentError, "Could not find module `#{o}`"
-    end
-  end
-
-  def normalize_module(o, []) when is_binary(o), do: {Bypass, o}
-
-  def normalize_module(o, _) when is_atom(o) do
-    if function_exported?(o, :name, 0) do
-      {o, o.name()}
+  def normalize_module(o, events) when is_atom(o) do
+    if module_atom?(o) do
+      if function_exported?(o, :name, 0) do
+        {o, o.name()}
+      else
+        raise ArgumentError, "`#{o}` should have a `name/0` function"
+      end
     else
-      raise ArgumentError, "`#{o}` should have a `name/0` function"
+      case Enum.find(events, fn e -> e.name == o end) do
+        nil -> {Bypass, o}
+        e -> {e.module, o}
+      end
     end
   end
 
-  def normalize_module({{o, name}, _from, _to}, _) when is_atom(o) and is_binary(name),
-    do: {o, name}
+  def normalize_module({o, {_, from_name}, _to}, _events) when is_atom(o) do
+    if module_atom?(o) do
+      {o, String.to_atom("#{o.name()}_#{from_name}")}
+    else
+      {Pass, o}
+    end
+  end
 
-  def normalize_module({o, name}, _) when is_atom(o) and is_binary(name), do: {o, name}
+  def normalize_module({o, from, to}, events) when is_atom(o) and is_atom(from) do
+    normalize_module({o, normalize_module(from, events), to}, events)
+  end
 
   @spec make_id :: Flexflow.id()
   def make_id do
@@ -60,10 +60,10 @@ defmodule Flexflow.Util do
   ## Examples
 
       iex> #{__MODULE__}.module_name(Foo.Bar.FooBar)
-      "foo_bar"
+      :foo_bar
   """
 
-  @spec module_name(atom()) :: String.t()
+  @spec module_name(atom()) :: Flexflow.name()
   def module_name(module) do
     module
     |> to_string
@@ -71,6 +71,7 @@ defmodule Flexflow.Util do
     |> String.split(".")
     |> List.last()
     |> Macro.underscore()
+    |> String.to_atom()
   end
 
   @spec modules :: [module()]

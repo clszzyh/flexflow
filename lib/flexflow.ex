@@ -14,7 +14,7 @@ defmodule Flexflow do
   @type process_identity :: {module(), id()}
   @type process_args :: map()
 
-  @type name :: String.t()
+  @type name :: atom()
   @type id :: String.t()
 
   @type key :: key_normalize | module()

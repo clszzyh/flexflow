@@ -26,7 +26,7 @@ defmodule ProcessTest do
   test "Flexflow.ModuleRegistry" do
     pid = Flexflow.ModuleRegistry |> Process.whereis()
     assert is_pid(pid)
-    assert Flexflow.ModuleRegistry.find(Flexflow.Process, "p1_new")
+    assert Flexflow.ModuleRegistry.find(Flexflow.Process, :p1_new)
   end
 
   test "Flexflow.ProcessParentManager" do
@@ -48,7 +48,7 @@ defmodule ProcessTest do
     assert pid == pid2
 
     assert Flexflow.ProcessManager.children(P1) == [
-             %Flexflow.ProcessManager{pid: pid, id: "p1", name: "p1_new"}
+             %Flexflow.ProcessManager{pid: pid, id: "p1", name: :p1_new}
            ]
 
     server_pid = Flexflow.ProcessServer.pid({P1, "p1"})
@@ -58,48 +58,39 @@ defmodule ProcessTest do
     process = Flexflow.state({P1, "p1"})
     assert process.id == "p1"
     assert process.state == :waiting
-    assert process.events[{N1, "n1"}].state == :completed
-    assert process.events[{N2, "n2"}].state == :initial
-    assert process.gateways[{T1, "t1_n1"}].state == :initial
+    assert process.events[{N1, :n1}].state == :completed
+    assert process.events[{N2, :n2}].state == :initial
+    assert process.gateways[{T1, :t1_n1}].state == :initial
 
     Process.sleep(60)
     process = Flexflow.state({P1, "p1"})
-    assert process.events[{N3, "n3"}].state == :initial
-  end
-
-  test "p2" do
-    {:ok, _pid} = Flexflow.start({P2, "p2"}, %{custom: :value})
-    process = Flexflow.state({P2, "p2"})
-    assert process.id == "p2"
-    assert process.__args__ == %{custom: :value}
-    assert process.events[{P2.Slow, "slow"}].__async__ == [timeout: 5000]
-    assert process.events[{P2.Slow, "slow"}].state == :pending
+    assert process.events[{N3, :n3}].state == :initial
   end
 
   test "p2 slow ok" do
     {:ok, _pid} = Flexflow.start({P2, "slow_ok"}, %{slow: :ok, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, "slow_ok"})
-    assert process.events[{P2.Slow, "slow"}].state == :initial
-    assert process.events[{P2.Slow, "slow"}].__context__.state == :ok
+    assert process.events[{P2.Slow, :slow}].state == :initial
+    assert process.events[{P2.Slow, :slow}].__context__.state == :ok
   end
 
   test "p2 slow other" do
     {:ok, _pid} = Flexflow.start({P2, "slow_other"}, %{slow: :other, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, "slow_other"})
-    assert process.events[{P2.Slow, "slow"}].state == :initial
-    assert process.events[{P2.Slow, "slow"}].__context__.state == :ok
-    assert process.events[{P2.Slow, "slow"}].__context__.result == :other
+    assert process.events[{P2.Slow, :slow}].state == :initial
+    assert process.events[{P2.Slow, :slow}].__context__.state == :ok
+    assert process.events[{P2.Slow, :slow}].__context__.result == :other
   end
 
   test "p2 slow error" do
     {:ok, _pid} = Flexflow.start({P2, "slow_error"}, %{slow: :error, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, "slow_error"})
-    assert process.events[{P2.Slow, "slow"}].state == :error
-    assert process.events[{P2.Slow, "slow"}].__context__.state == :error
-    assert process.events[{P2.Slow, "slow"}].__context__.result == :custom_error
+    assert process.events[{P2.Slow, :slow}].state == :error
+    assert process.events[{P2.Slow, :slow}].__context__.state == :error
+    assert process.events[{P2.Slow, :slow}].__context__.result == :custom_error
   end
 
   # test "p2 timeout" do
@@ -115,10 +106,10 @@ defmodule ProcessTest do
     {:ok, _pid} = Flexflow.start({P2, "slow_raise"}, %{slow: :raise, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, "slow_raise"})
-    assert process.events[{P2.Slow, "slow"}].state == :error
-    assert process.events[{P2.Slow, "slow"}].__context__.state == :error
+    assert process.events[{P2.Slow, :slow}].state == :error
+    assert process.events[{P2.Slow, :slow}].__context__.state == :error
 
     assert {%RuntimeError{message: "fooo"}, [_ | _]} =
-             process.events[{P2.Slow, "slow"}].__context__.result
+             process.events[{P2.Slow, :slow}].__context__.result
   end
 end

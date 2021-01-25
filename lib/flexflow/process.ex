@@ -21,7 +21,7 @@ defmodule Flexflow.Process do
   @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{
           module: module(),
-          name: Flexflow.name() | nil,
+          name: Flexflow.name(),
           id: Flexflow.id() | nil,
           state: state(),
           events: Flexflow.events(),
