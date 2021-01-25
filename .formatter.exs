@@ -3,8 +3,8 @@ locals_without_parens = [
   event: 1,
   event: 2,
   ~>: 2,
-  transition: 2,
-  transition: 3
+  gateway: 2,
+  gateway: 3
 ]
 
 [

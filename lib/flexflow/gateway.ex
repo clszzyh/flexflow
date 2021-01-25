@@ -1,6 +1,6 @@
-defmodule Flexflow.Transition do
+defmodule Flexflow.Gateway do
   @moduledoc """
-  Transition
+  Gateway
   """
 
   alias Flexflow.Context
@@ -11,7 +11,7 @@ defmodule Flexflow.Transition do
   @states [:created, :initial]
 
   @typedoc """
-  Transition state
+  Gateway state
 
   #{inspect(@states)}
   """
@@ -106,30 +106,30 @@ defmodule Flexflow.Transition do
   end
 
   @spec validate([t()]) :: [t()]
-  def validate(transitions) do
-    if Enum.empty?(transitions), do: raise(ArgumentError, "Transition is empty")
+  def validate(gateways) do
+    if Enum.empty?(gateways), do: raise(ArgumentError, "Gateway is empty")
 
-    for %__MODULE__{module: module, name: name} <- transitions, reduce: [] do
+    for %__MODULE__{module: module, name: name} <- gateways, reduce: [] do
       ary ->
         o = {module, name}
-        if o in ary, do: raise(ArgumentError, "Transition `#{inspect(o)}` is defined twice")
+        if o in ary, do: raise(ArgumentError, "Gateway `#{inspect(o)}` is defined twice")
         ary ++ [o]
     end
 
-    for %__MODULE__{from: from, to: to} <- transitions, reduce: [] do
+    for %__MODULE__{from: from, to: to} <- gateways, reduce: [] do
       ary ->
         o = {from, to}
-        if o in ary, do: raise(ArgumentError, "Transition `#{inspect(o)}` is defined twice")
+        if o in ary, do: raise(ArgumentError, "Gateway `#{inspect(o)}` is defined twice")
         ary ++ [o]
     end
 
-    transitions
+    gateways
   end
 
   @spec init(Process.t()) :: Process.t() | {:error, term()}
-  def init(%Process{transitions: transitions} = p) do
-    Enum.reduce(transitions, p, fn {key, transition}, p ->
-      put_in(p, [:transitions, key], %{transition | state: :initial})
+  def init(%Process{gateways: gateways} = p) do
+    Enum.reduce(gateways, p, fn {key, gateway}, p ->
+      put_in(p, [:gateways, key], %{gateway | state: :initial})
     end)
   end
 

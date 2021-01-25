@@ -6,9 +6,9 @@ defmodule Flexflow do
   def version, do: @version
 
   alias Flexflow.Event
+  alias Flexflow.Gateway
   # alias Flexflow.Process
   alias Flexflow.ProcessManager
-  alias Flexflow.Transition
 
   @type process_identity :: {module(), id()}
   @type process_args :: map()
@@ -20,7 +20,7 @@ defmodule Flexflow do
   @type key_normalize :: {module(), name()}
 
   @type events :: %{key_normalize() => Event.t()}
-  @type transitions :: %{key_normalize() => Transition.t()}
+  @type gateways :: %{key_normalize() => Gateway.t()}
 
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
   defdelegate state(key), to: ProcessManager

@@ -6,9 +6,9 @@ defmodule Flexflow.Process do
   alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.Event
+  alias Flexflow.Gateway
   alias Flexflow.TaskSupervisor
   alias Flexflow.Telemetry
-  alias Flexflow.Transition
   alias Flexflow.Util
 
   @states [:created, :active, :loop, :waiting, :paused]
@@ -25,7 +25,7 @@ defmodule Flexflow.Process do
           id: Flexflow.id() | nil,
           state: state(),
           events: Flexflow.events(),
-          transitions: Flexflow.transitions(),
+          gateways: Flexflow.gateways(),
           __args__: Flexflow.process_args(),
           __opts__: Keyword.t(),
           __context__: Context.t(),
@@ -38,9 +38,9 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type definition :: {:event | :transition, Flexflow.key_normalize()}
+  @type definition :: {:event | :gateway, Flexflow.key_normalize()}
 
-  @enforce_keys [:module, :events, :transitions, :__definitions__]
+  @enforce_keys [:module, :events, :gateways, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
   defstruct @enforce_keys ++
               [
@@ -59,7 +59,7 @@ defmodule Flexflow.Process do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Invoked when process is started, after events and transitions `init`, see `Flexflow.Api.init/1`"
+  @doc "Invoked when process is started, after events and gateways `init`, see `Flexflow.Api.init/1`"
   @callback init(t()) :: result()
 
   @callback handle_call(t(), term(), GenServer.from()) :: result()
@@ -72,15 +72,15 @@ defmodule Flexflow.Process do
   defmacro __using__(opts) do
     quote do
       alias Flexflow.Events.{Bypass, End, Start}
-      alias Flexflow.Transitions.Pass
+      alias Flexflow.Gateways.Pass
 
       @__opts__ unquote(opts)
 
       @behaviour unquote(__MODULE__)
 
-      import unquote(__MODULE__), only: [event: 1, event: 2, ~>: 2, transition: 2, transition: 3]
+      import unquote(__MODULE__), only: [event: 1, event: 2, ~>: 2, gateway: 2, gateway: 3]
 
-      for attribute <- [:__events__, :__transitions__, :__definitions__] do
+      for attribute <- [:__events__, :__gateways__, :__definitions__] do
         Module.register_attribute(__MODULE__, attribute, accumulate: true)
       end
 
@@ -106,10 +106,10 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro transition(key, tuple, opts \\ []) do
+  defmacro gateway(key, tuple, opts \\ []) do
     quote bind_quoted: [key: key, tuple: tuple, opts: opts] do
-      @__transitions__ {key, tuple, opts}
-      @__definitions__ {:transition, Tuple.insert_at(tuple, 0, key)}
+      @__gateways__ {key, tuple, opts}
+      @__definitions__ {:gateway, Tuple.insert_at(tuple, 0, key)}
     end
   end
 
@@ -139,12 +139,12 @@ defmodule Flexflow.Process do
       |> Enum.map(&Event.new/1)
       |> Event.validate()
 
-    transitions =
+    gateways =
       env.module
-      |> Module.get_attribute(:__transitions__)
+      |> Module.get_attribute(:__gateways__)
       |> Enum.reverse()
-      |> Enum.map(&Transition.new(&1, events))
-      |> Transition.validate()
+      |> Enum.map(&Gateway.new(&1, events))
+      |> Gateway.validate()
 
     definitions =
       env.module
@@ -155,8 +155,8 @@ defmodule Flexflow.Process do
     new_events =
       Map.new(events, fn o ->
         k = Event.key(o)
-        in_edges = for(t <- transitions, t.to == k, do: {Transition.key(t), t.from})
-        out_edges = for(t <- transitions, t.from == k, do: {Transition.key(t), t.to})
+        in_edges = for(t <- gateways, t.to == k, do: {Gateway.key(t), t.from})
+        out_edges = for(t <- gateways, t.from == k, do: {Gateway.key(t), t.to})
 
         {k, %{o | __in_edges__: in_edges, __out_edges__: out_edges}}
       end)
@@ -164,7 +164,7 @@ defmodule Flexflow.Process do
     process = %__MODULE__{
       events: new_events,
       module: env.module,
-      transitions: for(t <- transitions, into: %{}, do: {Transition.key(t), t}),
+      gateways: for(t <- gateways, into: %{}, do: {Gateway.key(t), t}),
       __definitions__: definitions
     }
 
@@ -188,7 +188,7 @@ defmodule Flexflow.Process do
       for attribute <- [
             :__events__,
             :__opts__,
-            :__transitions__,
+            :__gateways__,
             :__definitions__,
             :__module__,
             :__name__,
@@ -215,7 +215,7 @@ defmodule Flexflow.Process do
   @spec init(t()) :: result()
   def init(%__MODULE__{module: module} = p) do
     with %__MODULE__{} = p <- Event.init(p),
-         %__MODULE__{} = p <- Transition.init(p),
+         %__MODULE__{} = p <- Gateway.init(p),
          {:ok, %__MODULE__{} = p} <- module.init(p) do
       {:ok, %{p | state: :active}}
     else
@@ -305,13 +305,13 @@ defmodule Flexflow.Process do
   @spec next(t()) :: result()
   def next(%{__loop__: loop}) when loop > @max_loop_limit, do: {:error, :deadlock_found}
 
-  def next(%{events: events, transitions: transitions} = p) do
+  def next(%{events: events, gateways: gateways} = p) do
     for {_, %{state: :ready, __out_edges__: [_ | _] = edges} = e} <- events, {t, n} <- edges do
-      {e, Map.fetch!(transitions, t), Map.fetch!(events, n)}
+      {e, Map.fetch!(gateways, t), Map.fetch!(events, n)}
     end
     |> case do
       [] -> {:ok, %{p | state: :waiting}}
-      [_ | _] = a -> Enum.reduce(a, {:ok, p}, &Transition.dispatch/2)
+      [_ | _] = a -> Enum.reduce(a, {:ok, p}, &Gateway.dispatch/2)
     end
   end
 end

@@ -6,7 +6,7 @@ for i <- 1..10 do
 
   defmodule String.to_atom("Elixir.T#{i}") do
     @moduledoc false
-    use Flexflow.Transition
+    use Flexflow.Gateway
   end
 end
 
@@ -20,13 +20,13 @@ defmodule P1 do
   event N1, kind: :start, foo: %{aaa: :bbb}
   event N2
 
-  transition T1, N1 ~> N2, foo: :baz
+  gateway T1, N1 ~> N2, foo: :baz
 
   event N3, async: true
   event N4, kind: :end
 
-  transition T2, N2 ~> N3
-  transition {T2, "1"}, N2 ~> N4
+  gateway T2, N2 ~> N3
+  gateway {T2, "1"}, N2 ~> N4
 end
 
 defmodule P2 do
@@ -57,6 +57,6 @@ defmodule P2 do
   event End
   event Slow, async: [timeout: 5000]
 
-  transition "first", Start ~> Slow
-  transition "last", Slow ~> End
+  gateway "first", Start ~> Slow
+  gateway "last", Slow ~> End
 end

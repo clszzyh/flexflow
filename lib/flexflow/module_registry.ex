@@ -7,7 +7,7 @@ defmodule Flexflow.ModuleRegistry do
 
   @state %{
     Flexflow.Event => %{},
-    Flexflow.Transition => %{},
+    Flexflow.Gateway => %{},
     Flexflow.Process => %{}
   }
 

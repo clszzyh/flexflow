@@ -3,11 +3,11 @@ defmodule Flexflow.Util do
 
   alias Flexflow.Event
   alias Flexflow.Events.Bypass
+  alias Flexflow.Gateway
+  alias Flexflow.Gateways.Pass
   alias Flexflow.Process
-  alias Flexflow.Transition
-  alias Flexflow.Transitions.Pass
 
-  @local_behaviours [Process, Transition, Event]
+  @local_behaviours [Process, Gateway, Event]
 
   @spec normalize_module(
           Flexflow.key()

@@ -20,12 +20,12 @@ defmodule Review do
   end
 
   defmodule Submit do
-    use Flexflow.Transition
+    use Flexflow.Gateway
   end
 
   ## Start event
   event {Start, "draft"}
-  ## End event, `async` mode means this transition run's in a separated elixir process.
+  ## End event, `async` mode means this gateway run's in a separated elixir process.
   event {End, "reviewed"}, async: true
   event {End, "canceled"}
   ## Intermediate event
@@ -33,22 +33,22 @@ defmodule Review do
   ## Custom event
   event Reviewing
 
-  ## Define a transition
+  ## Define a gateway
   ## `a ~> b` is a shortcut of `{a, b}`
-  transition "modify1", "draft" ~> "draft"
-  transition "cancel1", "draft" ~> "canceled"
+  gateway "modify1", "draft" ~> "draft"
+  gateway "cancel1", "draft" ~> "canceled"
 
-  ## Custom transition
-  transition Submit, "draft" ~> Reviewing
+  ## Custom gateway
+  gateway Submit, "draft" ~> Reviewing
 
-  transition "modify2", "rejected" ~> "rejected"
-  transition "cancel2", "rejected" ~> "canceled"
+  gateway "modify2", "rejected" ~> "rejected"
+  gateway "cancel2", "rejected" ~> "canceled"
 
   ## With custom name
-  transition {Submit, "submit2"}, "rejected" ~> Reviewing
+  gateway {Submit, "submit2"}, "rejected" ~> Reviewing
 
-  transition "reject", Reviewing ~> "rejected"
-  transition "agree", Reviewing ~> "reviewed"
+  gateway "reject", Reviewing ~> "rejected"
+  gateway "agree", Reviewing ~> "reviewed"
 end
 ```
 

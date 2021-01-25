@@ -3,12 +3,12 @@ alias Flexflow.Config
 alias Flexflow.Util
 
 alias Flexflow.Event, as: V
-alias Flexflow.Transition, as: T
+alias Flexflow.Gateway, as: G
 
 alias Flexflow.Process, as: P
 
 alias Flexflow.Events
-alias Flexflow.Transitions
+alias Flexflow.Gateways
 
 alias Flexflow.ModuleRegistry
 
