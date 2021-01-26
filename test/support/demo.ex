@@ -37,7 +37,7 @@ defmodule P2 do
     use Flexflow.Event
 
     @impl true
-    def before_change({:created, [:initial]}, event, %{__args__: %{slow: strategy, sleep: sleep}}) do
+    def before_change({:created, :initial}, event, %{__args__: %{slow: strategy, sleep: sleep}}) do
       Process.sleep(sleep)
 
       case strategy do

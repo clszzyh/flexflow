@@ -2,7 +2,6 @@ alias Flexflow.Registry
 alias Flexflow.Config
 alias Flexflow.Util
 
-alias Flexflow.Task, as: T
 alias Flexflow.Event, as: V
 alias Flexflow.Gateway, as: G
 

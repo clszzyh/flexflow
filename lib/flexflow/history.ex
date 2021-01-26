@@ -48,7 +48,7 @@ defmodule Flexflow.History do
     :ok
   end
 
-  @spec ensure_new(Flexflow.process_identity()) :: {:ok, nil} | {:error, term()}
+  @spec ensure_new(Flexflow.process_identity()) :: {:ok, term()} | {:error, term()}
   def ensure_new({module, id}) do
     if :ets.member(__MODULE__, {module, id}) do
       {:error, :already_exists}

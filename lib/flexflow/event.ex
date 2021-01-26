@@ -8,7 +8,7 @@ defmodule Flexflow.Event do
   alias Flexflow.Util
 
   @states [:created, :initial, :ready, :completed, :pending, :error]
-  @state_changes [created: [:initial], created: [:initial, :ready], initial: [:ready]]
+  @state_changes [created: :initial, initial: :ready]
 
   @typedoc """
   Event state
@@ -16,7 +16,6 @@ defmodule Flexflow.Event do
   #{inspect(@states)}
   """
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
-  @type state_change :: [state()]
   @type kind :: :start | :end | :intermediate
   @type options :: Keyword.t()
   @type edge :: {Flexflow.identity(), Flexflow.identity()}
@@ -50,7 +49,7 @@ defmodule Flexflow.Event do
   @callback name :: Flexflow.name()
 
   @doc "Invoked before event state changes"
-  @callback before_change({state(), state_change()}, t(), Process.t()) :: before_change_result()
+  @callback before_change({state(), state()}, t(), Process.t()) :: before_change_result()
 
   defmacro __using__(opts \\ []) do
     quote do
@@ -142,44 +141,55 @@ defmodule Flexflow.Event do
 
   @spec init(Process.t()) :: Process.t() | {:error, term()}
   def init(%Process{events: events} = p) do
-    Enum.reduce_while(events, p, fn {key, event}, p ->
-      state_change = if event.kind == :start, do: [:initial, :ready], else: [:initial]
-
-      case change(state_change, event, p) do
-        {:ok, p} -> {:cont, p}
-        {:error, reason} -> {:halt, {key, reason}}
-      end
-    end)
+    Enum.reduce_while(events, p, &init_1/2)
   end
 
-  @spec do_change(state_change(), t(), Process.t()) :: {:ok, t()} | {:error, term()}
-  defp do_change(target_state, %__MODULE__{module: module, state: before_state} = e, p)
-       when {before_state, target_state} in @state_changes do
-    module.before_change({before_state, target_state}, e, p)
-    |> case do
-      :ok -> {:ok, %__MODULE__{e | __context__: %Context{state: :ok}}}
-      {:ok, %__MODULE__{} = e} -> {:ok, %__MODULE__{e | __context__: %Context{state: :ok}}}
-      {:ok, term} -> {:ok, %__MODULE__{e | __context__: %Context{state: :ok, result: term}}}
-      {:error, reason} -> {:error, reason}
-    end
-    |> case do
-      {:ok, %__MODULE__{} = e} -> {:ok, %{e | state: List.last(target_state)}}
-      {:error, reason} -> {:error, reason}
+  @spec init_1({Flexflow.identity(), t()}, Process.t()) ::
+          {:halt, {:error, term()}} | {:cont, Process.t()}
+  defp init_1({key, %{kind: :start, module: module, name: name} = event}, p) do
+    with {:ok, p} <- change(:initial, event, p),
+         {:ok, p} <- change(:ready, get_in(p, [:events, {module, name}]), p) do
+      {:cont, p}
+    else
+      {:error, reason} -> {:halt, {:error, {key, reason}}}
     end
   end
 
-  @spec change(state_change(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
-  def change(target_state, %__MODULE__{module: module, name: name, __async__: false} = e, p) do
-    case do_change(target_state, e, p) do
+  defp init_1({key, event}, p) do
+    case change(:initial, event, p) do
+      {:ok, p} -> {:cont, p}
+      {:error, reason} -> {:halt, {:error, {key, reason}}}
+    end
+  end
+
+  @spec change(state(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
+  def change(target, %__MODULE__{module: module, name: name, __async__: false} = e, p) do
+    case do_change(target, e, p) do
       {:ok, %__MODULE__{} = e} -> {:ok, put_in(p, [:events, {module, name}], e)}
       {:error, reason} -> {:error, reason}
     end
   end
 
-  def change(target_state, %__MODULE__{module: module, name: name} = e, p) do
-    f = fn -> do_change(target_state, e, p) end
+  def change(target, %__MODULE__{module: module, name: name} = e, p) do
+    f = fn -> do_change(target, e, p) end
     p = Process.async(p, f, &callback/4, {module, name})
     {:ok, put_in(p, [:events, {module, name}], %{e | state: :pending})}
+  end
+
+  @spec do_change(state(), t(), Process.t()) :: {:ok, t()} | {:error, term()}
+  defp do_change(target, %__MODULE__{module: module, state: before} = e, p)
+       when {before, target} in @state_changes do
+    module.before_change({before, target}, e, p)
+    |> case do
+      :ok -> {:ok, %Context{state: :ok}, e}
+      {:ok, %__MODULE__{} = e} -> {:ok, %Context{state: :ok}, e}
+      {:ok, term} -> {:ok, %Context{state: :ok, result: term}, e}
+      {:error, reason} -> {:error, reason}
+    end
+    |> case do
+      {:ok, %Context{} = ctx, %__MODULE__{} = e} -> {:ok, %{e | state: target, __context__: ctx}}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @spec callback(Flexflow.identity(), Process.t(), :ok | :error, term) :: Process.result()
