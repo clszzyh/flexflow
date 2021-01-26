@@ -7,6 +7,10 @@ defmodule ProcessTest do
   @moduletag capture_log: true
   @moduletag :process
 
+  alias FlexflowDemoTest.{N1, N2, N3}
+  alias FlexflowDemoTest.{P1, P2}
+  alias FlexflowDemoTest.T1
+
   setup_all do
     _ = Flexflow.ModuleRegistry.state()
     []

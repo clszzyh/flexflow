@@ -8,6 +8,10 @@ defmodule FlexflowTest do
   alias Flexflow.Event
   alias Flexflow.Gateway
 
+  alias FlexflowDemoTest.{N1, N2, N3, N4}
+  alias FlexflowDemoTest.{P1, P2}
+  alias FlexflowDemoTest.{T1, T2}
+
   setup_all do
     _ = Flexflow.ModuleRegistry.state()
     []
@@ -107,20 +111,20 @@ defmodule FlexflowTest do
       event N1, kind: :start
       event N2, kind: :end
       gateway T1, :n1 ~> N4
-    """ => "`{N4, :n4}` is not defined",
+    """ => "`{FlexflowDemoTest.N4, :n4}` is not defined",
     """
       event N1, kind: :start
       event N2, kind: :end
       gateway T1, :n1 ~> :n2
       gateway T2, :n1 ~> :n2
-    """ => "Gateway `{{N1, :n1}, {N2, :n2}}` is defined twice",
+    """ => "Gateway `{{FlexflowDemoTest.N1, :n1}, {FlexflowDemoTest.N2, :n2}}` is defined twice",
     """
       event Start
       event End
       event N1
       gateway {T1, :t}, Start ~> End
       gateway {T1, :t}, N1 ~> End
-    """ => "Gateway `{T1, :t}` is defined twice",
+    """ => "Gateway `{FlexflowDemoTest.T1, :t}` is defined twice",
     """
       event N1
       event N2
@@ -141,19 +145,19 @@ defmodule FlexflowTest do
       event N2
       event N3, kind: :end
       gateway T1, N1 ~> N2
-    """ => "In edges of `{N3, :n3}` is empty",
+    """ => "In edges of `{FlexflowDemoTest.N3, :n3}` is empty",
     """
       event N1, kind: :start
       event N2
       event N3, kind: :end
       gateway T1, N2 ~> N3
-    """ => "Out edges of `{N1, :n1}` is empty",
+    """ => "Out edges of `{FlexflowDemoTest.N1, :n1}` is empty",
     """
       event N1, kind: :start
       event N2
       event N3, kind: :end
       gateway T1, N1 ~> N3
-    """ => "`{N2, :n2}` is isolated",
+    """ => "`{FlexflowDemoTest.N2, :n2}` is isolated",
     """
       event N1, kind: :start
       event N3, kind: :end
@@ -173,6 +177,8 @@ defmodule FlexflowTest do
     body = """
     defmodule #{module_name} do
       use Flexflow.Process
+      alias FlexflowDemoTest.{N1, N2, N3, N4}, warn: false
+      alias FlexflowDemoTest.{T1, T2}, warn: false
       #{code}
     end
     """
