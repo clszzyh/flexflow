@@ -1,7 +1,7 @@
 defmodule ProcessTest do
   use ExUnit.Case, async: true
 
-  doctest Flexflow.HookDispatcher
+  doctest Flexflow.EventDispatcher
   doctest Flexflow.ProcessRegistry
 
   @moduletag capture_log: true

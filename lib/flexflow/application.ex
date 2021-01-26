@@ -9,7 +9,7 @@ defmodule Flexflow.Application do
     children = [
       {Task.Supervisor, name: Flexflow.TaskSupervisor},
       Flexflow.History,
-      Flexflow.HookDispatcher,
+      Flexflow.EventDispatcher,
       Flexflow.ProcessRegistry,
       Flexflow.ProcessParentManager,
       Flexflow.ModuleRegistry

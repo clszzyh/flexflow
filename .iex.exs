@@ -19,5 +19,5 @@ alias Flexflow.ProcessManager
 alias Flexflow.ProcessServer
 
 alias Flexflow.TaskSupervisor
-alias Flexflow.HookDispatcher
+alias Flexflow.EventDispatcher
 alias Flexflow.History

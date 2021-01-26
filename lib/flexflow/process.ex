@@ -6,6 +6,7 @@ defmodule Flexflow.Process do
   alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.Event
+  alias Flexflow.EventDispatcher
   alias Flexflow.Gateway
   alias Flexflow.TaskSupervisor
   alias Flexflow.Telemetry
@@ -28,6 +29,7 @@ defmodule Flexflow.Process do
           __context__: Context.t(),
           __definitions__: [definition],
           __graphviz__: Keyword.t(),
+          __listeners__: [EventDispatcher.listener()],
           __loop__: integer(),
           __counter__: integer(),
           __tasks__: %{reference() => term()}
@@ -52,6 +54,7 @@ defmodule Flexflow.Process do
                 __args__: %{},
                 __tasks__: %{},
                 __opts__: [],
+                __listeners__: [],
                 __context__: Context.new()
               ]
 
@@ -60,6 +63,8 @@ defmodule Flexflow.Process do
 
   @doc "Invoked when process is started, after events and gateways `init`, see `Flexflow.Api.init/1`"
   @callback init(t()) :: result()
+  @doc "Invoked when process child is started"
+  @callback init_child(t()) :: result()
 
   @callback handle_call(t(), term(), GenServer.from()) :: result()
   @callback handle_cast(t(), term()) :: result()
@@ -90,9 +95,10 @@ defmodule Flexflow.Process do
 
       @impl true
       def name, do: @__name__
-
       @impl true
       def init(p), do: {:ok, p}
+      @impl true
+      def init_child(p), do: {:ok, p}
 
       defoverridable unquote(__MODULE__)
     end
@@ -189,14 +195,17 @@ defmodule Flexflow.Process do
 
       @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
-        {__parent__, args} = Map.pop(args, :parent)
+        special_map = Map.take(args, [:__parent__, :__graphviz__])
+        args = Map.drop(args, [:__parent__, :__graphviz__])
 
-        struct!(@__process__,
-          __vsn__: :crypto.hash(:md5, :erlang.term_to_binary(__vsn__())),
-          __parent__: __parent__,
-          name: name(),
-          id: id,
-          __args__: args
+        struct!(
+          @__process__,
+          Map.merge(special_map, %{
+            __vsn__: :crypto.hash(:md5, :erlang.term_to_binary(__vsn__())),
+            name: name(),
+            id: id,
+            __args__: args
+          })
         )
       end
 
@@ -232,7 +241,9 @@ defmodule Flexflow.Process do
   def init(%__MODULE__{module: module} = p) do
     with %__MODULE__{} = p <- Event.init(p),
          %__MODULE__{} = p <- Gateway.init(p),
-         {:ok, %__MODULE__{} = p} <- module.init(p) do
+         :ok <- EventDispatcher.init_register_all(p.__listeners__),
+         {:ok, %__MODULE__{} = p} <- module.init(p),
+         {:ok, %__MODULE__{} = p} <- module.init_child(p) do
       {:ok, %{p | state: :active}}
     else
       {:error, reason} -> {:error, reason}

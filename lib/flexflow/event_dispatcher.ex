@@ -1,7 +1,11 @@
-defmodule Flexflow.HookDispatcher do
+defmodule Flexflow.EventDispatcher do
   @moduledoc """
-  HookDispatcher
+  EventDispatcher
   """
+
+  @type key :: term()
+  @type entry :: term()
+  @type listener :: {key, entry}
 
   require Logger
 
@@ -19,6 +23,17 @@ defmodule Flexflow.HookDispatcher do
     Registry.child_spec(keys: :duplicate, name: __MODULE__)
   end
 
+  @spec init_register_all([listener()]) :: :ok | {:error, term()}
+  def init_register_all([]), do: :ok
+
+  def init_register_all([{key, entry} | rest]) do
+    case register(key, entry) do
+      {:ok, _pid} -> init_register_all(rest)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec register(key(), entry()) :: {:ok, pid()} | {:error, {:already_registered, pid()}}
   def register(key, entry) do
     Registry.register(__MODULE__, key, entry)
   end
@@ -29,6 +44,7 @@ defmodule Flexflow.HookDispatcher do
     end)
   end
 
+  # send(pid, {:broadcast, "world"})
   defp apply_dispatch({pid, {module, function}}) do
     apply(module, function, [pid])
   catch

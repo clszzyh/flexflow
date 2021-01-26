@@ -125,7 +125,7 @@ defmodule Flexflow.Gateway do
     gateways
   end
 
-  @spec init(Process.t()) :: Process.t() | {:error, term()}
+  @spec init(Process.t()) :: Process.t()
   def init(%Process{gateways: gateways} = p) do
     Enum.reduce(gateways, p, fn {key, gateway}, p ->
       put_in(p, [:gateways, key], %{gateway | state: :initial})
