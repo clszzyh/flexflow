@@ -22,6 +22,7 @@ defmodule Flexflow.Process do
           events: %{Flexflow.identity() => Event.t()},
           gateways: %{Flexflow.identity() => Gateway.t()},
           __args__: Flexflow.process_args(),
+          __parent__: Flexflow.process_identity(),
           __vsn__: [{module(), term()}],
           __opts__: Keyword.t(),
           __context__: Context.t(),
@@ -43,6 +44,7 @@ defmodule Flexflow.Process do
                 :name,
                 :id,
                 :__vsn__,
+                :__parent__,
                 state: :created,
                 __counter__: 0,
                 __loop__: 0,
@@ -187,8 +189,11 @@ defmodule Flexflow.Process do
 
       @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
+        {__parent__, args} = Map.pop(args, :parent)
+
         struct!(@__process__,
           __vsn__: :crypto.hash(:md5, :erlang.term_to_binary(__vsn__())),
+          __parent__: __parent__,
           name: name(),
           id: id,
           __args__: args

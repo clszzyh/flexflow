@@ -13,7 +13,16 @@ defmodule Flexflow.ProcessServer do
     GenServer.start_link(__MODULE__, {module, id, opts}, name: via_tuple({module, id}))
   end
 
-  def state(srv), do: GenServer.call(srv, :state)
+  @spec call(Flexflow.process_identity(), term()) :: term()
+  def call(pid, op) when is_pid(pid), do: GenServer.call(pid, op)
+  def call({module, id}, op), do: call(pid({module, id}), op)
+
+  @spec cast(Flexflow.process_identity(), term()) :: :ok
+  def cast(pid, op) when is_pid(pid), do: GenServer.cast(pid, op)
+  def cast({module, id}, op), do: cast(pid({module, id}), op)
+
+  @spec state(Flexflow.process_identity()) :: Process.t()
+  def state(srv), do: call(srv, :state)
 
   @impl true
   def init({module, id, opts}) do

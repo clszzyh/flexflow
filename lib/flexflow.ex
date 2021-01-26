@@ -22,7 +22,7 @@ defmodule Flexflow do
   defdelegate history(key), to: History, as: :get
   defdelegate pid(key), to: ProcessServer
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
-  defdelegate state(key), to: ProcessManager
-  defdelegate call(key, op), to: ProcessManager
-  defdelegate cast(key, op), to: ProcessManager
+  defdelegate state(key), to: ProcessServer
+  defdelegate call(key, op), to: ProcessServer
+  defdelegate cast(key, op), to: ProcessServer
 end
