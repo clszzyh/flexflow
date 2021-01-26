@@ -15,10 +15,8 @@ defmodule Flexflow.Application do
       Flexflow.ModuleRegistry
     ]
 
-    :ok = Flexflow.Telemetry.attach_history_event()
-
-    if Config.get(:telemetry_logger) do
-      :ok = Flexflow.Telemetry.attach_default_logger(Config.get(:telemetry_logger_level))
+    if Config.get(:telemetry_default_handler) do
+      :ok = Flexflow.Telemetry.attach_default_handler()
     end
 
     Supervisor.start_link(children, strategy: :one_for_one, name: Flexflow.Supervisor)

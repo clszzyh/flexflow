@@ -19,14 +19,21 @@ defmodule Flexflow.Telemetry do
 
   @type event_type :: unquote(Enum.reduce(@event_types, &{:|, [], [&1, &2]}))
 
-  @spec attach_default_logger(Logger.level()) :: :ok | {:error, :already_exists}
-  def attach_default_logger(level \\ :info) do
-    :telemetry.attach_many(@handler_id, @events, &handle_logger/4, level)
-  end
+  @type t :: %__MODULE__{
+          enable_process_history: boolean(),
+          telemetry_logger: boolean(),
+          telemetry_logger_level: Logger.level()
+        }
 
-  @spec attach_history_event(term()) :: :ok
-  def attach_history_event(config \\ nil) do
-    :telemetry.attach_many(@handler_id, @events, &handle_history/4, config)
+  defstruct enable_process_history:
+              Application.compile_env(:flexflow, :enable_process_history, true),
+            telemetry_logger: Application.compile_env(:flexflow, :telemetry_logger, true),
+            telemetry_logger_level:
+              Application.compile_env(:flexflow, :telemetry_logger_level, :debug)
+
+  @spec attach_default_handler() :: :ok | {:error, :already_exists}
+  def attach_default_handler do
+    :telemetry.attach_many(@handler_id, @events, &handle_event/4, %__MODULE__{})
   end
 
   @spec span(event_type(), fun :: (() -> {term(), map()}), meta :: map()) :: term()
@@ -48,6 +55,16 @@ defmodule Flexflow.Telemetry do
       metadata: Map.drop(metadata, [:id, :module]),
       measurements: measurements
     })
+  end
+
+  @spec handle_event([atom()], map(), map(), t()) :: :ok
+  def handle_event(event, measurements, meta, config) do
+    if config.enable_process_history, do: :ok = handle_history(event, measurements, meta, config)
+
+    if config.telemetry_logger,
+      do: :ok = handle_logger(event, measurements, meta, config.telemetry_logger_level)
+
+    :ok
   end
 
   @spec handle_logger([atom()], map(), map(), Logger.level()) :: :ok

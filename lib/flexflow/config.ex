@@ -1,8 +1,7 @@
 defmodule Flexflow.Config do
   @default_map %{
     max_loop_limit: 1000,
-    telemetry_logger: false,
-    telemetry_logger_level: :debug
+    telemetry_default_handler: true
   }
 
   str = Enum.map_join(@default_map, "\n", fn {k, v} -> "* #{k}: #{v}" end)
