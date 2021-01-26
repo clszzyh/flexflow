@@ -66,8 +66,7 @@ defmodule Flexflow.Util do
   @spec module_name(atom()) :: Flexflow.name()
   def module_name(module) do
     module
-    |> to_string
-    |> String.trim_leading("Elixir.")
+    |> Macro.to_string()
     |> String.split(".")
     |> List.last()
     |> Macro.underscore()

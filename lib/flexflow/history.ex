@@ -51,7 +51,7 @@ defmodule Flexflow.History do
   @spec ensure_new(Flexflow.process_identity()) :: {:ok, nil} | {:error, term()}
   def ensure_new(id) do
     if :ets.member(__MODULE__, id) do
-      {:error, "Key exist"}
+      {:error, :already_exists}
     else
       {:ok, id}
     end

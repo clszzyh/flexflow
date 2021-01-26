@@ -6,6 +6,7 @@ defmodule ReviewTest do
   @moduletag :review
 
   test "module" do
-    assert Review.new("verify").id == "verify"
+    name = to_string(elem(__ENV__.function, 0))
+    assert Review.new(name).id == name
   end
 end

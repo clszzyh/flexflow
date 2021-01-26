@@ -18,9 +18,10 @@ defmodule FlexflowTest do
   end
 
   test "p1" do
+    name = to_string(elem(__ENV__.function, 0))
     assert P1.module_info()
-    assert P1.new("p1", %{foo: :bar}).__args__ == %{foo: :bar}
-    assert P1.new("p1", %{foo: :bar}).id == "p1"
+    assert P1.new(name, %{foo: :bar}).__args__ == %{foo: :bar}
+    assert P1.new(name, %{foo: :bar}).id == name
     assert P1.new().name == :p1_new
     assert P1.new().__opts__ == [hello: %{foo: :zzzz}]
     assert P1.new().module == P1
@@ -63,7 +64,8 @@ defmodule FlexflowTest do
   end
 
   test "p2" do
-    p = Flexflow.Process.new(P2, "p2")
+    name = to_string(elem(__ENV__.function, 0))
+    p = Flexflow.Process.new(P2, name)
     assert p.state == :created
   end
 
