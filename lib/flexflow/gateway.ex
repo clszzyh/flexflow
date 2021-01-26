@@ -10,12 +10,7 @@ defmodule Flexflow.Gateway do
 
   @states [:created, :initial]
 
-  @typedoc """
-  Gateway state
-
-  #{inspect(@states)}
-  """
-  @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
+  @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
   @type key :: Flexflow.identity_or_module() | String.t()
   @type t :: %__MODULE__{

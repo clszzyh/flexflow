@@ -13,12 +13,7 @@ defmodule Flexflow.Process do
 
   @states [:created, :active, :loop, :waiting, :paused]
 
-  @typedoc """
-  Process state
-
-  #{inspect(@states)}
-  """
-  @opaque state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
+  @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
@@ -184,7 +179,7 @@ defmodule Flexflow.Process do
       @__process__ %{process | __opts__: @__opts__}
       @__vsn__ (for {_k, {m, _id}} <- @__process__.__definitions__, uniq: true do
                   {m, m.module_info(:attributes)[:vsn]}
-                end)
+                end) ++ [{:flexflow, Mix.Project.config()[:version]}]
 
       def __vsn__ do
         [{__MODULE__, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]

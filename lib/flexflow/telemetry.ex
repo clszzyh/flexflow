@@ -19,6 +19,13 @@ defmodule Flexflow.Telemetry do
 
   @type event_type :: unquote(Enum.reduce(@event_types, &{:|, [], [&1, &2]}))
 
+  @typedoc """
+  ## Options
+
+    * `enable_process_history` Enable Process history in `:ets`
+    * `telemetry_logger` Enable default logger handler, default `false`
+    * `telemetry_logger_level` Logger level, default `debug`
+  """
   @type t :: %__MODULE__{
           enable_process_history: boolean(),
           telemetry_logger: boolean(),
@@ -27,7 +34,7 @@ defmodule Flexflow.Telemetry do
 
   defstruct enable_process_history:
               Application.compile_env(:flexflow, :enable_process_history, true),
-            telemetry_logger: Application.compile_env(:flexflow, :telemetry_logger, true),
+            telemetry_logger: Application.compile_env(:flexflow, :telemetry_logger, false),
             telemetry_logger_level:
               Application.compile_env(:flexflow, :telemetry_logger_level, :debug)
 
