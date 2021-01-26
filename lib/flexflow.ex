@@ -10,7 +10,7 @@ defmodule Flexflow do
   alias Flexflow.ProcessManager
   alias Flexflow.ProcessServer
 
-  @type process_identity :: {module(), id()}
+  @type process_identity :: {module(), id()} | pid()
   @type process_args :: map()
 
   @type name :: atom()

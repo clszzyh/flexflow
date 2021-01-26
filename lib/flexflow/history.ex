@@ -43,22 +43,22 @@ defmodule Flexflow.History do
   end
 
   @spec put(Flexflow.process_identity(), new_input()) :: :ok
-  def put(id, history) do
-    true = :ets.insert(__MODULE__, {id, new(history)})
+  def put({module, id}, history) do
+    true = :ets.insert(__MODULE__, {{module, id}, new(history)})
     :ok
   end
 
   @spec ensure_new(Flexflow.process_identity()) :: {:ok, nil} | {:error, term()}
-  def ensure_new(id) do
-    if :ets.member(__MODULE__, id) do
+  def ensure_new({module, id}) do
+    if :ets.member(__MODULE__, {module, id}) do
       {:error, :already_exists}
     else
-      {:ok, id}
+      {:ok, {module, id}}
     end
   end
 
   @spec get(Flexflow.process_identity()) :: [t()]
-  def get(id) do
-    :ets.lookup(__MODULE__, id) |> Keyword.values()
+  def get({module, id}) do
+    :ets.lookup(__MODULE__, {module, id}) |> Keyword.values()
   end
 end

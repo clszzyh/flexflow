@@ -44,17 +44,21 @@ defmodule Flexflow.ProcessManager do
   end
 
   @spec call(Flexflow.process_identity(), term()) :: term()
+  def call(pid, op) when is_pid(pid), do: GenServer.call(pid, op)
+
   def call({module, id}, op) do
     GenServer.call(child_pid({module, id}), op)
   end
 
   @spec cast(Flexflow.process_identity(), term()) :: :ok
+  def cast(pid, op) when is_pid(pid), do: GenServer.cast(pid, op)
+
   def cast({module, id}, op) do
     GenServer.cast(child_pid({module, id}), op)
   end
 
   @spec state(Flexflow.process_identity()) :: Process.t()
-  def state({module, id}), do: call({module, id}, :state)
+  def state(key), do: call(key, :state)
 
   @spec server_pid(module) :: {:ok, pid} | {:error, term()}
   def server_pid(module) do
