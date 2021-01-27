@@ -3,7 +3,10 @@ defmodule Flexflow.Activities.End do
   End
   """
 
-  use Flexflow.Activity, type: :end
+  use Flexflow.Activity
+
+  @impl true
+  def type, do: :end
 
   @impl true
   def graphviz_attribute, do: [shape: "circle", color: "red"]

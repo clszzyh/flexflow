@@ -6,6 +6,9 @@ defmodule Flexflow.Activities.Bypass do
   use Flexflow.Activity
 
   @impl true
+  def type, do: :bypass
+
+  @impl true
   def graphviz_attribute, do: [shape: "box"]
 
   @impl true

@@ -55,6 +55,9 @@ defmodule Flexflow.Activity do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
+  @doc "Activity type"
+  @callback type :: type()
+
   @doc "Invoked before activity state changes"
   @callback action({state(), state()}, t(), Process.t()) :: action_result()
 
@@ -106,7 +109,7 @@ defmodule Flexflow.Activity do
     end
 
     opts = opts ++ o.__opts__
-    {type, opts} = Keyword.pop(opts, :type, :bypass)
+    {type, opts} = Keyword.pop(opts, :type, o.type)
     {attributes, opts} = Keyword.pop(opts, :attributes, @type_map[type].graphviz_attribute())
 
     async = Keyword.get(opts, :async, false)

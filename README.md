@@ -18,6 +18,9 @@ defmodule Review do
 
   defmodule Reviewing do
     use Flexflow.Activity
+
+    @impl true
+    def type, do: :bypass
   end
 
   defmodule Submit do

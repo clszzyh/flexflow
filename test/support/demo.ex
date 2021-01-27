@@ -5,6 +5,9 @@ defmodule FlexflowDemoTest do
     defmodule String.to_atom("#{__MODULE__}.N#{i}") do
       @moduledoc false
       use Flexflow.Activity
+
+      @impl true
+      def type, do: :bypass
     end
 
     defmodule String.to_atom("#{__MODULE__}.T#{i}") do
@@ -45,6 +48,9 @@ defmodule FlexflowDemoTest do
     defmodule Slow do
       @moduledoc false
       use Flexflow.Activity
+
+      @impl true
+      def type, do: :bypass
 
       @impl true
       def action({:created, :initial}, activity, %{__args__: %{slow: strategy, sleep: sleep}}) do
