@@ -3,7 +3,7 @@ defmodule Flexflow.Activities.Start do
   Start
   """
 
-  use Flexflow.Activity, kind: :start
+  use Flexflow.Activity, type: :start
 
   @impl true
   def graphviz_attribute, do: [shape: "doublecircle", color: "\".7 .3 1.0\""]

@@ -27,13 +27,13 @@ defmodule FlexflowDemoTest do
       IO.puts(inspect({:terminate, p.id, reason}))
     end
 
-    activity N1, kind: :start, foo: %{aaa: :bbb}
+    activity N1, type: :start, foo: %{aaa: :bbb}
     activity N2
 
     gateway T1, N1 ~> N2, foo: :baz
 
     activity N3, async: true
-    activity N4, kind: :end
+    activity N4, type: :end
 
     gateway T2, N2 ~> N3
     gateway {T2, :t2_name}, N2 ~> N4

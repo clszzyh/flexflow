@@ -45,10 +45,10 @@ defmodule FlexflowTest do
     t2 = %Gateway{module: T2, name: :t2_n2, from: n2_s, to: n3_s}
     t3 = %Gateway{module: T2, name: :t2_name, from: n2_s, to: n4_s}
 
-    n1 = Activity.new({n1_s, foo: %{aaa: :bbb}, kind: :start})
+    n1 = Activity.new({n1_s, foo: %{aaa: :bbb}, type: :start})
     n2 = Activity.new({n2_s, []})
     n3 = Activity.new({n3_s, async: true})
-    n4 = Activity.new({n4_s, kind: :end})
+    n4 = Activity.new({n4_s, type: :end})
 
     n1 = %{n1 | __out_edges__: [{t1_s, n2_s}]}
     n2 = %{n2 | __in_edges__: [{t1_s, n1_s}], __out_edges__: [{t2_s, n3_s}, {t3_s, n4_s}]}
@@ -77,23 +77,23 @@ defmodule FlexflowTest do
 
   @data %{
     """
-      activity {N1, :n}, kind: :start
+      activity {N1, :n}, type: :start
       activity :n2
-      activity N3, kind: :end
+      activity N3, type: :end
       gateway T1, :n ~> N3
       gateway T2, :n ~> :n2
     """ => :ok,
     """
       activity Start
       activity :foo
-      activity N3, kind: :end
+      activity N3, type: :end
       gateway T1, :start ~> N3
       gateway T2, :start ~> :foo
     """ => :ok,
     "" => "Activity is empty",
     """
-      activity N1, kind: :start
-      activity N2, kind: :end
+      activity N1, type: :start
+      activity N2, type: :end
     """ => "Gateway is empty",
     """
       activity N0
@@ -106,17 +106,17 @@ defmodule FlexflowTest do
     """ => "Activity `n1` is defined twice",
     """
       activity Start
-      activity {N3, "n3"}, kind: :end
+      activity {N3, "n3"}, type: :end
       gateway T1, :start ~> "n3"
     """ => "Name `n3` should be an atom",
     """
-      activity N1, kind: :start
-      activity N2, kind: :end
+      activity N1, type: :start
+      activity N2, type: :end
       gateway T1, :n1 ~> N4
     """ => "`{FlexflowDemoTest.N4, :n4}` is not defined",
     """
-      activity N1, kind: :start
-      activity N2, kind: :end
+      activity N1, type: :start
+      activity N2, type: :end
       gateway T1, :n1 ~> :n2
       gateway T2, :n1 ~> :n2
     """ => "Gateway `{{FlexflowDemoTest.N1, :n1}, {FlexflowDemoTest.N2, :n2}}` is defined twice",
@@ -133,42 +133,42 @@ defmodule FlexflowTest do
       gateway T1, N1 ~> N2
     """ => "Need a start activity",
     """
-      activity N1, kind: :start
-      activity N2, kind: :start
+      activity N1, type: :start
+      activity N2, type: :start
       gateway T1, N1 ~> N2
     """ => "Multiple start activity found",
     """
-      activity N1, kind: :start
+      activity N1, type: :start
       activity N2
       gateway T1, N1 ~> N2
     """ => "Need one or more end activity",
     """
-      activity N1, kind: :start
+      activity N1, type: :start
       activity N2
-      activity N3, kind: :end
+      activity N3, type: :end
       gateway T1, N1 ~> N2
     """ => "In edges of `{FlexflowDemoTest.N3, :n3}` is empty",
     """
-      activity N1, kind: :start
+      activity N1, type: :start
       activity N2
-      activity N3, kind: :end
+      activity N3, type: :end
       gateway T1, N2 ~> N3
     """ => "Out edges of `{FlexflowDemoTest.N1, :n1}` is empty",
     """
-      activity N1, kind: :start
+      activity N1, type: :start
       activity N2
-      activity N3, kind: :end
+      activity N3, type: :end
       gateway T1, N1 ~> N3
     """ => "`{FlexflowDemoTest.N2, :n2}` is isolated",
     """
-      activity N1, kind: :start
-      activity N3, kind: :end
+      activity N1, type: :start
+      activity N3, type: :end
       gateway T1, :n ~> N3
     """ => "`{Flexflow.Activities.Bypass, :n}` is not defined",
     """
-      activity {N1, :n}, kind: :start
+      activity {N1, :n}, type: :start
       activity {N2, :n}
-      activity N3, kind: :end
+      activity N3, type: :end
       gateway T1, :n ~> N3
     """ => "Activity `n` is defined twice"
   }

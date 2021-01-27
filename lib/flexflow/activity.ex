@@ -10,8 +10,8 @@ defmodule Flexflow.Activity do
 
   @states [:created, :initial, :ready, :completed, :pending, :error]
   @state_changes [created: :initial, initial: :ready]
-  @kinds [:start, :end, :bypass]
-  @kind_map %{
+  @types [:start, :end, :bypass]
+  @type_map %{
     start: Start,
     end: End,
     bypass: Bypass
@@ -23,7 +23,7 @@ defmodule Flexflow.Activity do
   #{inspect(@states)}
   """
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
-  @type kind :: unquote(Enum.reduce(@kinds, &{:|, [], [&1, &2]}))
+  @type type :: unquote(Enum.reduce(@types, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
   @type edge :: {Flexflow.identity(), Flexflow.identity()}
   @type action_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
@@ -31,7 +31,7 @@ defmodule Flexflow.Activity do
           module: module(),
           state: state(),
           name: Flexflow.name(),
-          kind: kind(),
+          type: type(),
           __async__: Keyword.t() | false,
           __graphviz__: Keyword.t(),
           __in_edges__: [edge()],
@@ -40,7 +40,7 @@ defmodule Flexflow.Activity do
           __opts__: options
         }
 
-  @enforce_keys [:name, :module, :kind]
+  @enforce_keys [:name, :module, :type]
   defstruct @enforce_keys ++
               [
                 state: :created,
@@ -106,8 +106,8 @@ defmodule Flexflow.Activity do
     end
 
     opts = opts ++ o.__opts__
-    {kind, opts} = Keyword.pop(opts, :kind, :bypass)
-    {attributes, opts} = Keyword.pop(opts, :attributes, @kind_map[kind].graphviz_attribute())
+    {type, opts} = Keyword.pop(opts, :type, :bypass)
+    {attributes, opts} = Keyword.pop(opts, :attributes, @type_map[type].graphviz_attribute())
 
     async = Keyword.get(opts, :async, false)
 
@@ -116,7 +116,7 @@ defmodule Flexflow.Activity do
     %__MODULE__{
       module: o,
       name: name,
-      kind: kind,
+      type: type,
       __async__: async,
       __opts__: opts,
       __graphviz__: attributes
@@ -124,11 +124,11 @@ defmodule Flexflow.Activity do
   end
 
   @spec start?(t()) :: boolean()
-  def start?(%__MODULE__{kind: :start}), do: true
+  def start?(%__MODULE__{type: :start}), do: true
   def start?(%__MODULE__{}), do: false
 
   @spec end?(t()) :: boolean()
-  def end?(%__MODULE__{kind: :end}), do: true
+  def end?(%__MODULE__{type: :end}), do: true
   def end?(%__MODULE__{}), do: false
 
   @spec validate([t()]) :: [t()]
@@ -153,9 +153,9 @@ defmodule Flexflow.Activity do
   end
 
   @spec validate_process(t(), Process.t()) :: :ok
-  def validate_process(%__MODULE__{module: mod, kind: kind} = a, %Process{} = p)
-      when kind in @kinds do
-    module = if function_exported?(mod, :validate, 2), do: mod, else: @kind_map[kind]
+  def validate_process(%__MODULE__{module: mod, type: type} = a, %Process{} = p)
+      when type in @types do
+    module = if function_exported?(mod, :validate, 2), do: mod, else: @type_map[type]
     :ok = module.validate(a, p)
   end
 
@@ -166,7 +166,7 @@ defmodule Flexflow.Activity do
 
   @spec init_1({Flexflow.identity(), t()}, Process.t()) ::
           {:halt, {:error, term()}} | {:cont, Process.t()}
-  defp init_1({key, %{kind: :start, module: module, name: name} = activity}, p) do
+  defp init_1({key, %{type: :start, module: module, name: name} = activity}, p) do
     with {:ok, p} <- change(:initial, activity, p),
          {:ok, p} <- change(:ready, get_in(p, [:activities, {module, name}]), p) do
       {:cont, p}
