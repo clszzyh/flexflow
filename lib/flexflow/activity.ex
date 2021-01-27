@@ -10,7 +10,8 @@ defmodule Flexflow.Activity do
 
   @states [:created, :initial, :ready, :completed, :pending, :error]
   @state_changes [created: :initial, initial: :ready]
-  @base_module_map %{
+  @kinds [:start, :end, :intermediate]
+  @kind_map %{
     start: Start,
     end: End,
     intermediate: Bypass
@@ -22,7 +23,7 @@ defmodule Flexflow.Activity do
   #{inspect(@states)}
   """
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
-  @type kind :: :start | :end | :intermediate
+  @type kind :: unquote(Enum.reduce(@kinds, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
   @type edge :: {Flexflow.identity(), Flexflow.identity()}
   @type action_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
@@ -106,7 +107,8 @@ defmodule Flexflow.Activity do
 
     opts = opts ++ o.__opts__
     {kind, opts} = Keyword.pop(opts, :kind, :intermediate)
-    {attributes, opts} = Keyword.pop(opts, :attributes, graphviz_attribute(kind))
+    {attributes, opts} = Keyword.pop(opts, :attributes, @kind_map[kind].graphviz_attribute())
+
     async = Keyword.get(opts, :async, false)
 
     attributes = if async, do: Keyword.merge([style: "bold"], attributes), else: attributes
@@ -128,9 +130,6 @@ defmodule Flexflow.Activity do
   @spec end?(t()) :: boolean()
   def end?(%__MODULE__{kind: :end}), do: true
   def end?(%__MODULE__{}), do: false
-
-  def graphviz_attribute(kind) when is_map_key(@base_module_map, kind),
-    do: @base_module_map[kind].graphviz_attribute()
 
   @spec validate([t()]) :: [t()]
   def validate(activities) do
@@ -155,8 +154,8 @@ defmodule Flexflow.Activity do
 
   @spec validate_process(t(), Process.t()) :: :ok
   def validate_process(%__MODULE__{module: mod, kind: kind} = a, %Process{} = p)
-      when is_map_key(@base_module_map, kind) do
-    module = if function_exported?(mod, :validate, 2), do: mod, else: @base_module_map[kind]
+      when kind in @kinds do
+    module = if function_exported?(mod, :validate, 2), do: mod, else: @kind_map[kind]
     :ok = module.validate(a, p)
   end
 
