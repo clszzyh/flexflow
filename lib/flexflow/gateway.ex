@@ -130,6 +130,15 @@ defmodule Flexflow.Gateway do
     gateways
   end
 
+  @spec validate_process(t(), Process.t()) :: :ok
+  def validate_process(%__MODULE__{module: module} = g, %Process{} = p) do
+    if function_exported?(module, :validate, 2) do
+      :ok = module.validate(g, p)
+    else
+      :ok
+    end
+  end
+
   @spec init(Process.t()) :: Process.t()
   def init(%Process{gateways: gateways} = p) do
     Enum.reduce(gateways, p, fn {key, gateway}, p ->

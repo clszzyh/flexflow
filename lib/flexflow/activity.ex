@@ -10,6 +10,16 @@ defmodule Flexflow.Activity do
 
   @states [:created, :initial, :ready, :completed, :pending, :error]
   @state_changes [created: :initial, initial: :ready]
+  @base_module_map %{
+    start: Start,
+    end: End,
+    intermediate: Bypass
+  }
+  @graphviz_attribute_map %{
+    intermediate: [shape: "box"],
+    start: [shape: "doublecircle", color: "\".7 .3 1.0\""],
+    end: [shape: "circle", color: "red"]
+  }
 
   @typedoc """
   Activity state
@@ -83,15 +93,6 @@ defmodule Flexflow.Activity do
     end
   end
 
-  @spec attribute(kind()) :: Keyword.t()
-  defp attribute(:intermediate), do: [shape: "box"]
-  defp attribute(:start), do: [shape: "doublecircle", color: "\".7 .3 1.0\""]
-  defp attribute(:end), do: [shape: "circle", color: "red"]
-
-  def base_module(:start), do: Start
-  def base_module(:end), do: End
-  def base_module(:intermediate), do: Bypass
-
   @spec key(t()) :: Flexflow.identity()
   def key(%{module: module, name: name}), do: {module, name}
 
@@ -106,7 +107,7 @@ defmodule Flexflow.Activity do
 
     opts = opts ++ o.__opts__
     {kind, opts} = Keyword.pop(opts, :kind, :intermediate)
-    {attributes, opts} = Keyword.pop(opts, :attributes, attribute(kind))
+    {attributes, opts} = Keyword.pop(opts, :attributes, @graphviz_attribute_map[kind])
     async = Keyword.get(opts, :async, false)
 
     attributes = if async, do: Keyword.merge([style: "bold"], attributes), else: attributes
@@ -148,6 +149,13 @@ defmodule Flexflow.Activity do
     Enum.find(activities, &end?/1) || raise(ArgumentError, "Need one or more end activity")
 
     activities
+  end
+
+  @spec validate_process(t(), Process.t()) :: :ok
+  def validate_process(%__MODULE__{module: mod, kind: kind} = a, %Process{} = p)
+      when is_map_key(@base_module_map, kind) do
+    module = if function_exported?(mod, :validate, 2), do: mod, else: @base_module_map[kind]
+    :ok = module.validate(a, p)
   end
 
   @spec init(Process.t()) :: Process.t() | {:error, term()}

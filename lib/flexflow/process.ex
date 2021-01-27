@@ -129,18 +129,8 @@ defmodule Flexflow.Process do
   def __after_compile__(env, _bytecode) do
     process = env.module.new()
 
-    for {_, %{module: module, kind: kind} = activity} <- process.activities do
-      validate_module =
-        if function_exported?(module, :validate, 2), do: module, else: Activity.base_module(kind)
-
-      :ok = validate_module.validate(activity, process)
-    end
-
-    for {_, %{module: module} = gateway} <- process.gateways do
-      if function_exported?(module, :validate, 2) do
-        :ok = module.validate(gateway, process)
-      end
-    end
+    for {_, activity} <- process.activities, do: Activity.validate_process(activity, process)
+    for {_, gateway} <- process.gateways, do: Gateway.validate_process(gateway, process)
 
     :ok
   end
