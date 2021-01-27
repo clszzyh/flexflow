@@ -20,7 +20,7 @@ defmodule Flexflow.Event do
   @type kind :: :start | :end | :intermediate
   @type options :: Keyword.t()
   @type edge :: {Flexflow.identity(), Flexflow.identity()}
-  @type before_change_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
+  @type action_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
   @type t :: %__MODULE__{
           module: module(),
           state: state(),
@@ -50,7 +50,7 @@ defmodule Flexflow.Event do
   @callback name :: Flexflow.name()
 
   @doc "Invoked before event state changes"
-  @callback before_change({state(), state()}, t(), Process.t()) :: before_change_result()
+  @callback action({state(), state()}, t(), Process.t()) :: action_result()
 
   @doc "Invoked after compile, return :ok if valid"
   @callback validate(t(), Process.t()) :: :ok
@@ -75,7 +75,7 @@ defmodule Flexflow.Event do
       def name, do: @__name__
 
       @impl true
-      def before_change(_, _, _), do: :ok
+      def action(_, _, _), do: :ok
 
       defoverridable unquote(__MODULE__)
 
@@ -190,7 +190,7 @@ defmodule Flexflow.Event do
   @spec do_change(state(), t(), Process.t()) :: {:ok, t()} | {:error, term()}
   defp do_change(target, %__MODULE__{module: module, state: before} = e, p)
        when {before, target} in @state_changes do
-    module.before_change({before, target}, e, p)
+    module.action({before, target}, e, p)
     |> case do
       :ok -> {:ok, %Context{state: :ok}, e}
       {:ok, %__MODULE__{} = e} -> {:ok, %Context{state: :ok}, e}

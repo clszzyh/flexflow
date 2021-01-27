@@ -20,3 +20,5 @@ alias Flexflow.ProcessServer
 alias Flexflow.TaskSupervisor
 alias Flexflow.EventDispatcher
 alias Flexflow.History
+
+alias FlexflowDemoTest.{P1, P2}

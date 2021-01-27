@@ -22,6 +22,10 @@ defmodule FlexflowDemoTest do
 
     @impl true
     def name, do: :p1_new
+    @impl true
+    def terminate(p, reason) do
+      IO.puts(inspect({:terminate, p.id, reason}))
+    end
 
     event N1, kind: :start, foo: %{aaa: :bbb}
     event N2
@@ -43,7 +47,7 @@ defmodule FlexflowDemoTest do
       use Flexflow.Event
 
       @impl true
-      def before_change({:created, :initial}, event, %{__args__: %{slow: strategy, sleep: sleep}}) do
+      def action({:created, :initial}, event, %{__args__: %{slow: strategy, sleep: sleep}}) do
         Process.sleep(sleep)
 
         case strategy do
@@ -54,7 +58,7 @@ defmodule FlexflowDemoTest do
         end
       end
 
-      def before_change(o, _, %{__args__: args}), do: raise(inspect({:not_supported, o, args}))
+      def action(o, _, %{__args__: args}), do: raise(inspect({:not_supported, o, args}))
     end
 
     use Flexflow.Process
