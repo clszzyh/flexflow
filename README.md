@@ -29,7 +29,7 @@ defmodule Review do
   ## End activity, `async` mode means this gateway run's in a separated elixir process.
   activity {End, :reviewed}, async: true
   activity {End, :canceled}
-  ## Intermediate activity
+  ## Bypass activity
   activity :rejected
   ## Custom activity
   activity Reviewing

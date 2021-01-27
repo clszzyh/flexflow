@@ -10,11 +10,11 @@ defmodule Flexflow.Activity do
 
   @states [:created, :initial, :ready, :completed, :pending, :error]
   @state_changes [created: :initial, initial: :ready]
-  @kinds [:start, :end, :intermediate]
+  @kinds [:start, :end, :bypass]
   @kind_map %{
     start: Start,
     end: End,
-    intermediate: Bypass
+    bypass: Bypass
   }
 
   @typedoc """
@@ -106,7 +106,7 @@ defmodule Flexflow.Activity do
     end
 
     opts = opts ++ o.__opts__
-    {kind, opts} = Keyword.pop(opts, :kind, :intermediate)
+    {kind, opts} = Keyword.pop(opts, :kind, :bypass)
     {attributes, opts} = Keyword.pop(opts, :attributes, @kind_map[kind].graphviz_attribute())
 
     async = Keyword.get(opts, :async, false)
