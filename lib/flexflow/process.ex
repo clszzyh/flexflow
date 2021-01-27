@@ -22,15 +22,15 @@ defmodule Flexflow.Process do
           state: state(),
           events: %{Flexflow.identity() => Event.t()},
           gateways: %{Flexflow.identity() => Gateway.t()},
+          parent: Flexflow.process_key(),
+          childs: [Flexflow.process_key()],
+          request_id: String.t(),
           __args__: Flexflow.process_args(),
-          __parent__: Flexflow.process_key(),
-          __childs__: [Flexflow.process_key()],
           __vsn__: [{module(), term()}],
           __opts__: Keyword.t(),
           __context__: Context.t(),
           __definitions__: [definition],
           __graphviz__: Keyword.t(),
-          __request_id__: String.t(),
           __listeners__: %{EventDispatcher.listener() => EventDispatcher.listen_result()},
           __loop__: integer(),
           __counter__: integer(),
@@ -48,16 +48,16 @@ defmodule Flexflow.Process do
                 :name,
                 :id,
                 :__vsn__,
-                :__parent__,
-                :__request_id__,
+                :parent,
+                :request_id,
                 state: :created,
+                childs: [],
                 __counter__: 0,
                 __loop__: 0,
                 __graphviz__: [size: "\"4,4\""],
                 __args__: %{},
                 __tasks__: %{},
                 __opts__: [],
-                __childs__: [],
                 __listeners__: %{},
                 __context__: Context.new()
               ]
@@ -204,8 +204,8 @@ defmodule Flexflow.Process do
 
       @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
-        special_map = Map.take(args, [:__parent__, :__graphviz__, :__request_id__])
-        args = Map.drop(args, [:__parent__, :__graphviz__, :__request_id__])
+        special_map = Map.take(args, [:parent, :__graphviz__, :request_id])
+        args = Map.drop(args, [:parent, :__graphviz__, :request_id])
 
         struct!(
           @__process__,
@@ -213,7 +213,7 @@ defmodule Flexflow.Process do
             %{
               name: name(),
               id: id,
-              __request_id__: Util.random(),
+              request_id: Util.random(),
               __vsn__: :crypto.hash(:md5, :erlang.term_to_binary(__vsn__())),
               __args__: args
             },

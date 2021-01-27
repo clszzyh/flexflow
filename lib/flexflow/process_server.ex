@@ -44,13 +44,13 @@ defmodule Flexflow.ProcessServer do
   def handle_call(
         {:start_child, {child_module, child_id}, %{} = args},
         _from,
-        %{module: module, id: id, __childs__: childs, __request_id__: request_id} = p
+        %{module: module, id: id, childs: childs, request_id: request_id} = p
       ) do
     case ProcessManager.server(
            {child_module, child_id},
-           Map.merge(args, %{__parent__: {module, id}, __request_id__: request_id})
+           Map.merge(args, %{parent: {module, id}, request_id: request_id})
          ) do
-      {:ok, pid} -> {:reply, {:ok, pid}, %{p | __childs__: [{child_module, child_id} | childs]}}
+      {:ok, pid} -> {:reply, {:ok, pid}, %{p | childs: [{child_module, child_id} | childs]}}
       {:exist, pid} -> {:reply, {:error, {:exist, pid}}, p}
       {:error, reason} -> {:reply, {:error, reason}, p}
     end

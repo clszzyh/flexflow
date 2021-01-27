@@ -24,8 +24,8 @@ defmodule FlexflowTest do
   test "p1" do
     name = to_string(elem(__ENV__.function, 0))
     assert P1.module_info()
-    assert P1.new(name, %{__parent__: {P1, "foo"}}).__parent__ == {P1, "foo"}
-    assert P1.new(name, %{__parent__: {P1, "foo"}}).__args__ == %{}
+    assert P1.new(name, %{parent: {P1, "foo"}}).parent == {P1, "foo"}
+    assert P1.new(name, %{parent: {P1, "foo"}}).__args__ == %{}
     assert P1.new(name, %{foo: :bar}).__args__ == %{foo: :bar}
     assert P1.new(name, %{foo: :bar}).id == name
     assert P1.new().name == :p1_new
