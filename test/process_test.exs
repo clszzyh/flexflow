@@ -23,24 +23,21 @@ defmodule ProcessTest do
   end
 
   test "start_child" do
-    {:ok, srv} = Flexflow.ProcessManager.server_pid(P1)
-    assert is_pid(srv)
-
     name = to_string(elem(__ENV__.function, 0))
-    {:ok, pid} = Flexflow.start({P1, name})
+    {:ok, _pid} = Flexflow.start({P1, name})
     {:ok, child_pid} = Flexflow.start_child({P1, name}, {P1, "child"})
     {:error, {:exist, child_pid2}} = Flexflow.start_child({P1, name}, {P1, "child"})
     assert child_pid == child_pid2
-    :ok = DynamicSupervisor.terminate_child(srv, child_pid)
-    {:ok, child_pid} = Flexflow.start_child({P1, name}, {P1, "child2"})
+    :ok = Flexflow.stop({P1, "child"})
+    {:ok, _child_pid} = Flexflow.start_child({P1, name}, {P1, "child2"})
     process = Flexflow.state({P1, name})
     child_process = Flexflow.state({P1, "child2"})
     assert process.childs == [{P1, "child2"}, {P1, "child"}]
     assert child_process.parent == {P1, name}
     assert process.request_id == child_process.request_id
 
-    :ok = DynamicSupervisor.terminate_child(srv, child_pid)
-    :ok = DynamicSupervisor.terminate_child(srv, pid)
+    :ok = Flexflow.stop({P1, "child2"})
+    :ok = Flexflow.stop({P1, name})
   end
 
   test "Flexflow.TaskSupervisor" do
@@ -81,7 +78,7 @@ defmodule ProcessTest do
 
     {:ok, srv} = Flexflow.ProcessManager.server_pid(P1)
     assert is_pid(srv)
-    :ok = DynamicSupervisor.terminate_child(srv, pid2)
+    :ok = Flexflow.stop({P1, "kill2"})
     assert Process.info(pid2) == nil
   end
 

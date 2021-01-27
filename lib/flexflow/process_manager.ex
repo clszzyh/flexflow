@@ -55,6 +55,28 @@ defmodule Flexflow.ProcessManager do
     ProcessServer.pid({module, id})
   end
 
+  @spec stop_child(pid | module | nil, Flexflow.process_identity()) :: :ok | {:error, term()}
+  def stop_child(srv \\ nil, key)
+  def stop_child(nil, {module, id}), do: stop_child(module, {module, id})
+
+  def stop_child(module, child) when is_atom(module) do
+    case server_pid(module) do
+      {:ok, srv} -> stop_child(srv, child)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def stop_child(srv, {module, id}) do
+    case ProcessServer.pid({module, id}) do
+      nil -> {:error, :child_not_found}
+      pid -> stop_child(srv, pid)
+    end
+  end
+
+  def stop_child(srv, child_pid) when is_pid(srv) and is_pid(child_pid) do
+    DynamicSupervisor.terminate_child(srv, child_pid)
+  end
+
   @spec start_child(Flexflow.process_key(), Flexflow.process_args()) ::
           {:ok, pid()} | {:error, term}
   defp start_child({module, id}, opts) do

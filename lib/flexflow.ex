@@ -20,9 +20,10 @@ defmodule Flexflow do
   @type identity_or_module :: identity | module()
   @type identity :: {module(), name()}
 
+  defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
+  defdelegate stop(srv \\ nil, key), to: ProcessManager, as: :stop_child
   defdelegate history(key), to: History, as: :get
   defdelegate pid(key), to: ProcessServer
-  defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
   defdelegate state(key), to: ProcessServer
   defdelegate start_child(key, child_key, args \\ %{}), to: ProcessServer
   defdelegate call(key, op), to: ProcessServer
