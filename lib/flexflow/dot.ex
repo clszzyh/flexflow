@@ -56,7 +56,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
 
   def name(%{
         __definitions__: definitions,
-        events: events,
+        activities: activities,
         gateways: gateways,
         __graphviz__: attributes
       }) do
@@ -65,7 +65,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
     str =
       definitions
       |> Enum.map(fn
-        {:event, key} -> Map.fetch!(events, key)
+        {:activity, key} -> Map.fetch!(activities, key)
         {:gateway, key} -> Map.fetch!(gateways, key)
       end)
       |> Enum.map_join(&Flexflow.Dot.serialize/1)
@@ -74,7 +74,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
   end
 end
 
-defimpl Flexflow.DotProtocol, for: Flexflow.Event do
+defimpl Flexflow.DotProtocol, for: Flexflow.Activity do
   def prefix(_), do: "  "
   def suffix(_), do: ";\n"
   def name(%{name: name}), do: Flexflow.Dot.escape(name)

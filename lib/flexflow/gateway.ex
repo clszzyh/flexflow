@@ -3,8 +3,8 @@ defmodule Flexflow.Gateway do
   Gateway
   """
 
+  alias Flexflow.Activity
   alias Flexflow.Context
-  alias Flexflow.Event
   alias Flexflow.Process
   alias Flexflow.Util
 
@@ -66,35 +66,35 @@ defmodule Flexflow.Gateway do
   @spec key(t()) :: Flexflow.identity()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({key(), {key(), key()}, options}, [Event.t()]) :: t()
-  def new({_o, {from, _to}, _opts}, _events) when is_binary(from),
+  @spec new({key(), {key(), key()}, options}, [Activity.t()]) :: t()
+  def new({_o, {from, _to}, _opts}, _activities) when is_binary(from),
     do: raise(ArgumentError, "Name `#{from}` should be an atom")
 
-  def new({_o, {_from, to}, _opts}, _events) when is_binary(to),
+  def new({_o, {_from, to}, _opts}, _activities) when is_binary(to),
     do: raise(ArgumentError, "Name `#{to}` should be an atom")
 
-  def new({o, {_from, _to}, _opts}, _events) when is_binary(o),
+  def new({o, {_from, _to}, _opts}, _activities) when is_binary(o),
     do: raise(ArgumentError, "Name `#{o}` should be an atom")
 
-  def new({o, {from, to}, opts}, events) do
-    from = Util.normalize_module(from, events)
-    to = Util.normalize_module(to, events)
-    new_1({o, {from, to}, opts}, events)
+  def new({o, {from, to}, opts}, activities) do
+    from = Util.normalize_module(from, activities)
+    to = Util.normalize_module(to, activities)
+    new_1({o, {from, to}, opts}, activities)
   end
 
-  defp new_1({o, {from, to}, opts}, events) when is_atom(o) do
-    new_1({Util.normalize_module({o, from, to}, events), {from, to}, opts}, events)
+  defp new_1({o, {from, to}, opts}, activities) when is_atom(o) do
+    new_1({Util.normalize_module({o, from, to}, activities), {from, to}, opts}, activities)
   end
 
-  defp new_1({{o, name}, {from, to}, opts}, events) do
+  defp new_1({{o, name}, {from, to}, opts}, activities) do
     unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "`#{inspect(o)}` should implement #{__MODULE__}"
     end
 
-    events = Map.new(events, &{{&1.module, &1.name}, &1})
+    activities = Map.new(activities, &{{&1.module, &1.name}, &1})
 
-    events[from] || raise(ArgumentError, "`#{inspect(from)}` is not defined")
-    events[to] || raise(ArgumentError, "`#{inspect(to)}` is not defined")
+    activities[from] || raise(ArgumentError, "`#{inspect(from)}` is not defined")
+    activities[to] || raise(ArgumentError, "`#{inspect(to)}` is not defined")
 
     opts = opts ++ o.__opts__
     {attributes, opts} = Keyword.pop(opts, :attributes, [])
@@ -137,13 +137,13 @@ defmodule Flexflow.Gateway do
     end)
   end
 
-  @spec dispatch({Event.t(), t(), Event.t()}, Process.result()) :: Process.result()
+  @spec dispatch({Activity.t(), t(), Activity.t()}, Process.result()) :: Process.result()
   def dispatch(_, {:error, reason}), do: {:error, reason}
 
   def dispatch(
-        {%Event{module: from_module, name: from_name}, %__MODULE__{}, %Event{}},
+        {%Activity{module: from_module, name: from_name}, %__MODULE__{}, %Activity{}},
         {:ok, p}
       ) do
-    {:ok, put_in(p.events[{from_module, from_name}].state, :completed)}
+    {:ok, put_in(p.activities[{from_module, from_name}].state, :completed)}
   end
 end

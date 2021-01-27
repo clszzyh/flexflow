@@ -3,9 +3,9 @@ defmodule Flexflow.Process do
   Process
   """
 
+  alias Flexflow.Activity
   alias Flexflow.Config
   alias Flexflow.Context
-  alias Flexflow.Event
   alias Flexflow.EventDispatcher
   alias Flexflow.Gateway
   alias Flexflow.TaskSupervisor
@@ -20,7 +20,7 @@ defmodule Flexflow.Process do
           name: Flexflow.name(),
           id: Flexflow.id() | nil,
           state: state(),
-          events: %{Flexflow.identity() => Event.t()},
+          activities: %{Flexflow.identity() => Activity.t()},
           gateways: %{Flexflow.identity() => Gateway.t()},
           parent: Flexflow.process_key(),
           childs: [Flexflow.process_key()],
@@ -39,9 +39,9 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type definition :: {:event | :gateway, Flexflow.identity()}
+  @type definition :: {:activity | :gateway, Flexflow.identity()}
 
-  @enforce_keys [:module, :events, :gateways, :__definitions__]
+  @enforce_keys [:module, :activities, :gateways, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
   defstruct @enforce_keys ++
               [
@@ -65,7 +65,7 @@ defmodule Flexflow.Process do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Invoked when process is started, after events and gateways `init`, see `Flexflow.Api.init/1`"
+  @doc "Invoked when process is started, after activities and gateways `init`, see `Flexflow.Api.init/1`"
   @callback init(t()) :: result()
   @doc "Invoked when process child is started"
   @callback init_child(t()) :: result()
@@ -79,16 +79,16 @@ defmodule Flexflow.Process do
 
   defmacro __using__(opts) do
     quote do
-      alias Flexflow.Events.{Bypass, End, Start}
+      alias Flexflow.Activities.{Bypass, End, Start}
       alias Flexflow.Gateways.Pass
 
       @__opts__ unquote(opts)
 
       @behaviour unquote(__MODULE__)
 
-      import unquote(__MODULE__), only: [event: 1, event: 2, ~>: 2, gateway: 2, gateway: 3]
+      import unquote(__MODULE__), only: [activity: 1, activity: 2, ~>: 2, gateway: 2, gateway: 3]
 
-      for attribute <- [:__events__, :__gateways__, :__definitions__] do
+      for attribute <- [:__activities__, :__gateways__, :__definitions__] do
         Module.register_attribute(__MODULE__, attribute, accumulate: true)
       end
 
@@ -110,10 +110,10 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro event(key, opts \\ []) do
+  defmacro activity(key, opts \\ []) do
     quote bind_quoted: [key: key, opts: opts] do
-      @__events__ {key, opts}
-      @__definitions__ {:event, key}
+      @__activities__ {key, opts}
+      @__definitions__ {:activity, key}
     end
   end
 
@@ -129,11 +129,11 @@ defmodule Flexflow.Process do
   def __after_compile__(env, _bytecode) do
     process = env.module.new()
 
-    for {_, %{module: module, kind: kind} = event} <- process.events do
+    for {_, %{module: module, kind: kind} = activity} <- process.activities do
       validate_module =
-        if function_exported?(module, :validate, 2), do: module, else: Event.base_module(kind)
+        if function_exported?(module, :validate, 2), do: module, else: Activity.base_module(kind)
 
-      :ok = validate_module.validate(event, process)
+      :ok = validate_module.validate(activity, process)
     end
 
     for {_, %{module: module} = gateway} <- process.gateways do
@@ -146,29 +146,29 @@ defmodule Flexflow.Process do
   end
 
   defmacro __before_compile__(env) do
-    events =
+    activities =
       env.module
-      |> Module.get_attribute(:__events__)
+      |> Module.get_attribute(:__activities__)
       |> Enum.reverse()
-      |> Enum.map(&Event.new/1)
-      |> Event.validate()
+      |> Enum.map(&Activity.new/1)
+      |> Activity.validate()
 
     gateways =
       env.module
       |> Module.get_attribute(:__gateways__)
       |> Enum.reverse()
-      |> Enum.map(&Gateway.new(&1, events))
+      |> Enum.map(&Gateway.new(&1, activities))
       |> Gateway.validate()
 
     definitions =
       env.module
       |> Module.get_attribute(:__definitions__)
       |> Enum.reverse()
-      |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v, events)} end)
+      |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v, activities)} end)
 
-    new_events =
-      Map.new(events, fn o ->
-        k = Event.key(o)
+    new_activities =
+      Map.new(activities, fn o ->
+        k = Activity.key(o)
         in_edges = for(t <- gateways, t.to == k, do: {Gateway.key(t), t.from})
         out_edges = for(t <- gateways, t.from == k, do: {Gateway.key(t), t.to})
 
@@ -176,7 +176,7 @@ defmodule Flexflow.Process do
       end)
 
     process = %__MODULE__{
-      events: new_events,
+      activities: new_activities,
       module: env.module,
       gateways: for(t <- gateways, into: %{}, do: {Gateway.key(t), t}),
       __definitions__: definitions
@@ -223,7 +223,7 @@ defmodule Flexflow.Process do
       end
 
       for attribute <- [
-            :__events__,
+            :__activities__,
             :__opts__,
             :__gateways__,
             :__definitions__,
@@ -252,7 +252,7 @@ defmodule Flexflow.Process do
 
   @spec init(t()) :: result()
   def init(%__MODULE__{module: module} = p) do
-    with %__MODULE__{} = p <- Event.init(p),
+    with %__MODULE__{} = p <- Activity.init(p),
          %__MODULE__{} = p <- Gateway.init(p),
          {:ok, %__MODULE__{} = p} <- module.init(p),
          {:ok, %__MODULE__{} = p} <- module.init_child(p),
@@ -345,9 +345,10 @@ defmodule Flexflow.Process do
   @spec next(t()) :: result()
   def next(%{__loop__: loop}) when loop > @max_loop_limit, do: {:error, :deadlock_found}
 
-  def next(%{events: events, gateways: gateways} = p) do
-    for {_, %{state: :ready, __out_edges__: [_ | _] = edges} = e} <- events, {t, n} <- edges do
-      {e, Map.fetch!(gateways, t), Map.fetch!(events, n)}
+  def next(%{activities: activities, gateways: gateways} = p) do
+    for {_, %{state: :ready, __out_edges__: [_ | _] = edges} = e} <- activities,
+        {t, n} <- edges do
+      {e, Map.fetch!(gateways, t), Map.fetch!(activities, n)}
     end
     |> case do
       [] -> {:ok, %{p | state: :waiting}}

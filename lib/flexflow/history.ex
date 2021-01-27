@@ -3,26 +3,31 @@ defmodule Flexflow.History do
   History
   """
 
-  @events [:process_init, :process_loop]
+  @activities [:process_init, :process_loop]
   @stages [:start, :end]
-  @type event :: unquote(Enum.reduce(@events, &{:|, [], [&1, &2]}))
+  @type activity :: unquote(Enum.reduce(@activities, &{:|, [], [&1, &2]}))
   @type stage :: unquote(Enum.reduce(@stages, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{
           name: Flexflow.name(),
           stage: stage,
           metadata: map,
           measurements: map,
-          event: event(),
+          activity: activity(),
           time: integer
         }
-  @type new_input :: t() | map() | event()
+  @type new_input :: t() | map() | activity()
 
-  @enforce_keys [:name, :event, :time, :stage]
+  @enforce_keys [:name, :activity, :time, :stage]
   defstruct @enforce_keys ++ [measurements: %{}, metadata: %{}]
 
   @spec new(new_input) :: t()
-  def new(event) when event in @events,
-    do: %__MODULE__{name: :process, stage: :start, event: event, time: System.monotonic_time()}
+  def new(activity) when activity in @activities,
+    do: %__MODULE__{
+      name: :process,
+      stage: :start,
+      activity: activity,
+      time: System.monotonic_time()
+    }
 
   def new(%{} = map) do
     struct!(__MODULE__, Map.merge(map, %{name: :process, time: System.monotonic_time()}))

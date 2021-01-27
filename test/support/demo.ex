@@ -4,7 +4,7 @@ defmodule FlexflowDemoTest do
   for i <- 1..9 do
     defmodule String.to_atom("#{__MODULE__}.N#{i}") do
       @moduledoc false
-      use Flexflow.Event
+      use Flexflow.Activity
     end
 
     defmodule String.to_atom("#{__MODULE__}.T#{i}") do
@@ -27,13 +27,13 @@ defmodule FlexflowDemoTest do
       IO.puts(inspect({:terminate, p.id, reason}))
     end
 
-    event N1, kind: :start, foo: %{aaa: :bbb}
-    event N2
+    activity N1, kind: :start, foo: %{aaa: :bbb}
+    activity N2
 
     gateway T1, N1 ~> N2, foo: :baz
 
-    event N3, async: true
-    event N4, kind: :end
+    activity N3, async: true
+    activity N4, kind: :end
 
     gateway T2, N2 ~> N3
     gateway {T2, :t2_name}, N2 ~> N4
@@ -44,14 +44,14 @@ defmodule FlexflowDemoTest do
 
     defmodule Slow do
       @moduledoc false
-      use Flexflow.Event
+      use Flexflow.Activity
 
       @impl true
-      def action({:created, :initial}, event, %{__args__: %{slow: strategy, sleep: sleep}}) do
+      def action({:created, :initial}, activity, %{__args__: %{slow: strategy, sleep: sleep}}) do
         Process.sleep(sleep)
 
         case strategy do
-          :ok -> {:ok, event}
+          :ok -> {:ok, activity}
           :error -> {:error, :custom_error}
           :other -> {:ok, :other}
           :raise -> raise("fooo")
@@ -63,9 +63,9 @@ defmodule FlexflowDemoTest do
 
     use Flexflow.Process
 
-    event Start
-    event End
-    event Slow, async: [timeout: 5000]
+    activity Start
+    activity End
+    activity Slow, async: [timeout: 5000]
 
     gateway :first, Start ~> Slow
     gateway :last, Slow ~> End

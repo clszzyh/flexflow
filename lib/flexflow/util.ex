@@ -1,13 +1,13 @@
 defmodule Flexflow.Util do
   @moduledoc false
 
-  alias Flexflow.Event
-  alias Flexflow.Events.Bypass
+  alias Flexflow.Activities.Bypass
+  alias Flexflow.Activity
   alias Flexflow.Gateway
   alias Flexflow.Gateways.Pass
   alias Flexflow.Process
 
-  @local_behaviours [Process, Gateway, Event]
+  @local_behaviours [Process, Gateway, Activity]
 
   defp module_atom?(o) when is_atom(o), do: match?("Elixir." <> _, to_string(o))
 
@@ -15,15 +15,15 @@ defmodule Flexflow.Util do
           Flexflow.identity_or_module()
           | {Flexflow.identity_or_module(), Flexflow.identity_or_module(),
              Flexflow.identity_or_module()},
-          [Event.t()]
+          [Activity.t()]
         ) ::
           Flexflow.identity()
-  def normalize_module(o, events \\ [])
+  def normalize_module(o, activities \\ [])
 
-  def normalize_module({o, name}, _events) when is_atom(o), do: {o, name}
-  def normalize_module({{o, name}, _from, _to}, _events) when is_atom(o), do: {o, name}
+  def normalize_module({o, name}, _activities) when is_atom(o), do: {o, name}
+  def normalize_module({{o, name}, _from, _to}, _activities) when is_atom(o), do: {o, name}
 
-  def normalize_module(o, events) when is_atom(o) do
+  def normalize_module(o, activities) when is_atom(o) do
     if module_atom?(o) do
       if function_exported?(o, :name, 0) do
         {o, o.name()}
@@ -31,14 +31,14 @@ defmodule Flexflow.Util do
         raise ArgumentError, "`#{o}` should have a `name/0` function"
       end
     else
-      case Enum.find(events, fn e -> e.name == o end) do
+      case Enum.find(activities, fn e -> e.name == o end) do
         nil -> {Bypass, o}
         e -> {e.module, o}
       end
     end
   end
 
-  def normalize_module({o, {_, from_name}, _to}, _events) when is_atom(o) do
+  def normalize_module({o, {_, from_name}, _to}, _activities) when is_atom(o) do
     if module_atom?(o) do
       {o, :"#{o.name()}_#{from_name}"}
     else
@@ -46,8 +46,8 @@ defmodule Flexflow.Util do
     end
   end
 
-  def normalize_module({o, from, to}, events) when is_atom(o) and is_atom(from) do
-    normalize_module({o, normalize_module(from, events), to}, events)
+  def normalize_module({o, from, to}, activities) when is_atom(o) and is_atom(from) do
+    normalize_module({o, normalize_module(from, activities), to}, activities)
   end
 
   @spec random(non_neg_integer()) :: String.t()

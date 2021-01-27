@@ -9,7 +9,7 @@ defmodule Flexflow.ModuleRegistry do
   require Logger
 
   @state %{
-    Flexflow.Event => %{},
+    Flexflow.Activity => %{},
     Flexflow.Gateway => %{},
     Flexflow.Process => %{}
   }

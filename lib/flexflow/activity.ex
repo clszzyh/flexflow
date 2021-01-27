@@ -1,10 +1,10 @@
-defmodule Flexflow.Event do
+defmodule Flexflow.Activity do
   @moduledoc """
-  Event
+  Activity
   """
 
   alias Flexflow.Context
-  alias Flexflow.Events.{Bypass, End, Start}
+  alias Flexflow.Activities.{Bypass, End, Start}
   alias Flexflow.Process
   alias Flexflow.Util
 
@@ -12,7 +12,7 @@ defmodule Flexflow.Event do
   @state_changes [created: :initial, initial: :ready]
 
   @typedoc """
-  Event state
+  Activity state
 
   #{inspect(@states)}
   """
@@ -49,7 +49,7 @@ defmodule Flexflow.Event do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Invoked before event state changes"
+  @doc "Invoked before activity state changes"
   @callback action({state(), state()}, t(), Process.t()) :: action_result()
 
   @doc "Invoked after compile, return :ok if valid"
@@ -130,44 +130,44 @@ defmodule Flexflow.Event do
   def end?(%__MODULE__{}), do: false
 
   @spec validate([t()]) :: [t()]
-  def validate(events) do
-    if Enum.empty?(events), do: raise(ArgumentError, "Event is empty")
+  def validate(activities) do
+    if Enum.empty?(activities), do: raise(ArgumentError, "Activity is empty")
 
-    for %__MODULE__{module: module, name: name} <- events, reduce: [] do
+    for %__MODULE__{module: module, name: name} <- activities, reduce: [] do
       ary ->
-        if name in ary, do: raise(ArgumentError, "Event `#{name}` is defined twice")
+        if name in ary, do: raise(ArgumentError, "Activity `#{name}` is defined twice")
         ary ++ [{module, name}, name]
     end
 
-    case Enum.filter(events, &start?/1) do
+    case Enum.filter(activities, &start?/1) do
       [_] -> :ok
-      [] -> raise(ArgumentError, "Need a start event")
-      [_, _ | _] -> raise(ArgumentError, "Multiple start event found")
+      [] -> raise(ArgumentError, "Need a start activity")
+      [_, _ | _] -> raise(ArgumentError, "Multiple start activity found")
     end
 
-    Enum.find(events, &end?/1) || raise(ArgumentError, "Need one or more end event")
+    Enum.find(activities, &end?/1) || raise(ArgumentError, "Need one or more end activity")
 
-    events
+    activities
   end
 
   @spec init(Process.t()) :: Process.t() | {:error, term()}
-  def init(%Process{events: events} = p) do
-    Enum.reduce_while(events, p, &init_1/2)
+  def init(%Process{activities: activities} = p) do
+    Enum.reduce_while(activities, p, &init_1/2)
   end
 
   @spec init_1({Flexflow.identity(), t()}, Process.t()) ::
           {:halt, {:error, term()}} | {:cont, Process.t()}
-  defp init_1({key, %{kind: :start, module: module, name: name} = event}, p) do
-    with {:ok, p} <- change(:initial, event, p),
-         {:ok, p} <- change(:ready, get_in(p, [:events, {module, name}]), p) do
+  defp init_1({key, %{kind: :start, module: module, name: name} = activity}, p) do
+    with {:ok, p} <- change(:initial, activity, p),
+         {:ok, p} <- change(:ready, get_in(p, [:activities, {module, name}]), p) do
       {:cont, p}
     else
       {:error, reason} -> {:halt, {:error, {key, reason}}}
     end
   end
 
-  defp init_1({key, event}, p) do
-    case change(:initial, event, p) do
+  defp init_1({key, activity}, p) do
+    case change(:initial, activity, p) do
       {:ok, p} -> {:cont, p}
       {:error, reason} -> {:halt, {:error, {key, reason}}}
     end
@@ -176,7 +176,7 @@ defmodule Flexflow.Event do
   @spec change(state(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
   def change(target, %__MODULE__{module: module, name: name, __async__: false} = e, p) do
     case do_change(target, e, p) do
-      {:ok, %__MODULE__{} = e} -> {:ok, put_in(p, [:events, {module, name}], e)}
+      {:ok, %__MODULE__{} = e} -> {:ok, put_in(p, [:activities, {module, name}], e)}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -184,7 +184,7 @@ defmodule Flexflow.Event do
   def change(target, %__MODULE__{module: module, name: name} = e, p) do
     f = fn -> do_change(target, e, p) end
     p = Process.async(p, f, &callback/4, {module, name})
-    {:ok, put_in(p, [:events, {module, name}], %{e | state: :pending})}
+    {:ok, put_in(p, [:activities, {module, name}], %{e | state: :pending})}
   end
 
   @spec do_change(state(), t(), Process.t()) :: {:ok, t()} | {:error, term()}
@@ -205,15 +205,15 @@ defmodule Flexflow.Event do
 
   @spec callback(Flexflow.identity(), Process.t(), :ok | :error, term) :: Process.result()
   def callback({module, name}, %Process{} = p, :ok, {:ok, %__MODULE__{} = e}) do
-    {:ok, put_in(p, [:events, {module, name}], e)}
+    {:ok, put_in(p, [:activities, {module, name}], e)}
   end
 
   def callback({module, name}, %Process{} = p, :ok, {:error, reason}) do
-    {:ok, update_in(p, [:events, {module, name}], &handle_error(&1, reason))}
+    {:ok, update_in(p, [:activities, {module, name}], &handle_error(&1, reason))}
   end
 
   def callback({module, name}, %Process{} = p, :error, reason) do
-    {:ok, update_in(p, [:events, {module, name}], &handle_error(&1, reason))}
+    {:ok, update_in(p, [:activities, {module, name}], &handle_error(&1, reason))}
   end
 
   @spec handle_error(t(), term()) :: t()

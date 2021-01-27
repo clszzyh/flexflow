@@ -102,13 +102,13 @@ defmodule ProcessTest do
     process = Flexflow.state({P1, name})
     assert process.id == name
     assert process.state == :waiting
-    assert process.events[{N1, :n1}].state == :completed
-    assert process.events[{N2, :n2}].state == :initial
+    assert process.activities[{N1, :n1}].state == :completed
+    assert process.activities[{N2, :n2}].state == :initial
     assert process.gateways[{T1, :t1_n1}].state == :initial
 
     Process.sleep(60)
     process = Flexflow.state({P1, name})
-    assert process.events[{N3, :n3}].state == :initial
+    assert process.activities[{N3, :n3}].state == :initial
   end
 
   test "p2 slow ok" do
@@ -116,8 +116,8 @@ defmodule ProcessTest do
     {:ok, _pid} = Flexflow.start({P2, name}, %{slow: :ok, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, name})
-    assert process.events[{P2.Slow, :slow}].state == :initial
-    assert process.events[{P2.Slow, :slow}].__context__.state == :ok
+    assert process.activities[{P2.Slow, :slow}].state == :initial
+    assert process.activities[{P2.Slow, :slow}].__context__.state == :ok
   end
 
   test "p2 slow other" do
@@ -125,9 +125,9 @@ defmodule ProcessTest do
     {:ok, _pid} = Flexflow.start({P2, name}, %{slow: :other, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, name})
-    assert process.events[{P2.Slow, :slow}].state == :initial
-    assert process.events[{P2.Slow, :slow}].__context__.state == :ok
-    assert process.events[{P2.Slow, :slow}].__context__.result == :other
+    assert process.activities[{P2.Slow, :slow}].state == :initial
+    assert process.activities[{P2.Slow, :slow}].__context__.state == :ok
+    assert process.activities[{P2.Slow, :slow}].__context__.result == :other
   end
 
   test "p2 slow error" do
@@ -135,9 +135,9 @@ defmodule ProcessTest do
     {:ok, _pid} = Flexflow.start({P2, name}, %{slow: :error, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, name})
-    assert process.events[{P2.Slow, :slow}].state == :error
-    assert process.events[{P2.Slow, :slow}].__context__.state == :error
-    assert process.events[{P2.Slow, :slow}].__context__.result == :custom_error
+    assert process.activities[{P2.Slow, :slow}].state == :error
+    assert process.activities[{P2.Slow, :slow}].__context__.state == :error
+    assert process.activities[{P2.Slow, :slow}].__context__.result == :custom_error
   end
 
   test "p2 slow raise" do
@@ -145,10 +145,10 @@ defmodule ProcessTest do
     {:ok, _pid} = Flexflow.start({P2, name}, %{slow: :raise, sleep: 50})
     Process.sleep(60)
     process = Flexflow.state({P2, name})
-    assert process.events[{P2.Slow, :slow}].state == :error
-    assert process.events[{P2.Slow, :slow}].__context__.state == :error
+    assert process.activities[{P2.Slow, :slow}].state == :error
+    assert process.activities[{P2.Slow, :slow}].__context__.state == :error
 
     assert {%RuntimeError{message: "fooo"}, [_ | _]} =
-             process.events[{P2.Slow, :slow}].__context__.result
+             process.activities[{P2.Slow, :slow}].__context__.result
   end
 end

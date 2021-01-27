@@ -1,7 +1,7 @@
 alias Flexflow.Config
 alias Flexflow.Util
 
-alias Flexflow.Event, as: V
+alias Flexflow.Activity, as: A
 alias Flexflow.Gateway, as: G
 
 alias Flexflow.Process, as: P
