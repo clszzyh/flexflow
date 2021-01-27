@@ -15,11 +15,6 @@ defmodule Flexflow.Activity do
     end: End,
     intermediate: Bypass
   }
-  @graphviz_attribute_map %{
-    intermediate: [shape: "box"],
-    start: [shape: "doublecircle", color: "\".7 .3 1.0\""],
-    end: [shape: "circle", color: "red"]
-  }
 
   @typedoc """
   Activity state
@@ -65,6 +60,8 @@ defmodule Flexflow.Activity do
   @doc "Invoked after compile, return :ok if valid"
   @callback validate(t(), Process.t()) :: :ok
 
+  @callback graphviz_attribute :: keyword()
+
   @optional_callbacks [validate: 2]
 
   defmacro __using__(opts \\ []) do
@@ -83,6 +80,8 @@ defmodule Flexflow.Activity do
 
       @impl true
       def name, do: @__name__
+      @impl true
+      def graphviz_attribute, do: []
 
       @impl true
       def action(_, _, _), do: :ok
@@ -107,7 +106,7 @@ defmodule Flexflow.Activity do
 
     opts = opts ++ o.__opts__
     {kind, opts} = Keyword.pop(opts, :kind, :intermediate)
-    {attributes, opts} = Keyword.pop(opts, :attributes, @graphviz_attribute_map[kind])
+    {attributes, opts} = Keyword.pop(opts, :attributes, graphviz_attribute(kind))
     async = Keyword.get(opts, :async, false)
 
     attributes = if async, do: Keyword.merge([style: "bold"], attributes), else: attributes
@@ -129,6 +128,9 @@ defmodule Flexflow.Activity do
   @spec end?(t()) :: boolean()
   def end?(%__MODULE__{kind: :end}), do: true
   def end?(%__MODULE__{}), do: false
+
+  def graphviz_attribute(kind) when is_map_key(@base_module_map, kind),
+    do: @base_module_map[kind].graphviz_attribute()
 
   @spec validate([t()]) :: [t()]
   def validate(activities) do
