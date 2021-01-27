@@ -12,7 +12,7 @@ defmodule Flexflow.Dot do
     [__DIR__, "../../README.md"]
     |> Path.join()
     |> File.read!()
-    |> String.split("custom_mark")
+    |> String.split("review_mark")
     |> Enum.fetch!(2)
     |> String.trim()
     |> inspect

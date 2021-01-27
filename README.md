@@ -61,10 +61,10 @@ end
 ## Graphviz Dot
 
 <details>
-<summary><img src="https://g.gravizo.com/source/custom_mark?https%3A%2F%2Fraw.githubusercontent.com%2Fclszzyh%2Fflexflow%2Fmaster%2FREADME.md"></summary>
+<summary><img src="https://g.gravizo.com/source/review_mark?https%3A%2F%2Fraw.githubusercontent.com%2Fclszzyh%2Fflexflow%2Fmaster%2FREADME.md"></summary>
 
 ```dot
-// custom_mark
+// review_mark
 digraph review {
   size ="4,4";
   draft [label="draft",shape=doublecircle,color=".7 .3 1.0"];
@@ -81,6 +81,6 @@ digraph review {
   reviewing -> rejected [label="reject"];
   reviewing -> reviewed [label="agree"];
 }
-// custom_mark
+// review_mark
 ```
 </details>

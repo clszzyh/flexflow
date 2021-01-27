@@ -110,6 +110,7 @@ defmodule Flexflow.Activity do
 
     opts = opts ++ o.__opts__
     {type, opts} = Keyword.pop(opts, :type, o.type)
+    unless type in @types, do: raise(ArgumentError, "Unknown activity type #{type}")
     {attributes, opts} = Keyword.pop(opts, :attributes, @type_map[type].graphviz_attribute())
 
     async = Keyword.get(opts, :async, false)
