@@ -6,7 +6,9 @@ defmodule Flexflow.EventDispatcher do
   @type key :: term()
   @type entry :: term()
   @type listener :: {key, entry}
+  @type listen_result :: :wait | :ok
 
+  alias Flexflow.Process
   require Logger
 
   @doc """
@@ -23,13 +25,34 @@ defmodule Flexflow.EventDispatcher do
     Registry.child_spec(keys: :duplicate, name: __MODULE__)
   end
 
-  @spec init_register_all([listener()]) :: :ok | {:error, term()}
-  def init_register_all([]), do: :ok
+  @spec init_register_all(Process.t()) :: Process.result()
+  def init_register_all(%{__listeners__: listeners} = p) do
+    listeners
+    |> Enum.reduce_while(%{}, fn
+      {{key, entry}, :ok}, map ->
+        {:cont, Map.put(map, {key, entry}, :ok)}
 
-  def init_register_all([{key, entry} | rest]) do
-    case register(key, entry) do
-      {:ok, _pid} -> init_register_all(rest)
+      {{key, entry}, :wait}, map ->
+        case register(key, entry) do
+          {:ok, _pid} -> {:cont, Map.put(map, {key, entry}, :ok)}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+    end)
+    |> case do
       {:error, reason} -> {:error, reason}
+      map -> {:ok, %{p | __listeners__: map}}
+    end
+  end
+
+  @spec process_register(Process.t(), listener) :: Process.result()
+  def process_register(%Process{__listeners__: listeners} = p, {key, entry}) do
+    if Map.has_key?(listeners, {key, entry}) do
+      {:error, :duplicate_listener}
+    else
+      case register(key, entry) do
+        {:ok, _pid} -> %{p | __listeners__: Map.put(listeners, {key, entry}, :ok)}
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 
@@ -37,6 +60,9 @@ defmodule Flexflow.EventDispatcher do
   def register(key, entry) do
     Registry.register(__MODULE__, key, entry)
   end
+
+  def keys, do: Registry.keys(__MODULE__, self())
+  def lookup(key), do: Registry.lookup(__MODULE__, key)
 
   def dispatch(key) do
     Registry.dispatch(__MODULE__, key, fn entries ->

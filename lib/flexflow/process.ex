@@ -29,7 +29,7 @@ defmodule Flexflow.Process do
           __context__: Context.t(),
           __definitions__: [definition],
           __graphviz__: Keyword.t(),
-          __listeners__: [EventDispatcher.listener()],
+          __listeners__: %{EventDispatcher.listener() => EventDispatcher.listen_result()},
           __loop__: integer(),
           __counter__: integer(),
           __tasks__: %{reference() => term()}
@@ -54,7 +54,7 @@ defmodule Flexflow.Process do
                 __args__: %{},
                 __tasks__: %{},
                 __opts__: [],
-                __listeners__: [],
+                __listeners__: %{},
                 __context__: Context.new()
               ]
 
@@ -246,9 +246,9 @@ defmodule Flexflow.Process do
   def init(%__MODULE__{module: module} = p) do
     with %__MODULE__{} = p <- Event.init(p),
          %__MODULE__{} = p <- Gateway.init(p),
-         :ok <- EventDispatcher.init_register_all(p.__listeners__),
          {:ok, %__MODULE__{} = p} <- module.init(p),
-         {:ok, %__MODULE__{} = p} <- module.init_child(p) do
+         {:ok, %__MODULE__{} = p} <- module.init_child(p),
+         {:ok, %__MODULE__{} = p} <- EventDispatcher.init_register_all(p) do
       {:ok, %{p | state: :active}}
     else
       {:error, reason} -> {:error, reason}

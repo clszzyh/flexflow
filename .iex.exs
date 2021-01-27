@@ -1,4 +1,3 @@
-alias Flexflow.Registry
 alias Flexflow.Config
 alias Flexflow.Util
 
