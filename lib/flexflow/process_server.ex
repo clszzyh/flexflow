@@ -5,6 +5,7 @@ defmodule Flexflow.ProcessServer do
 
   alias Flexflow.History
   alias Flexflow.Process
+  alias Flexflow.ProcessManager
 
   use Flexflow.ProcessRegistry
   use GenServer, restart: :temporary
@@ -24,6 +25,11 @@ defmodule Flexflow.ProcessServer do
   @spec state(Flexflow.process_identity()) :: Process.t()
   def state(srv), do: call(srv, :state)
 
+  @spec start_child(Flexflow.process_identity(), Flexflow.process_key(), Flexflow.process_args()) ::
+          {:ok, pid()} | {:error, term}
+  def start_child(srv, {module, id}, args \\ %{}),
+    do: call(srv, {:start_child, {module, id}, args})
+
   @impl true
   def init({module, id, opts}) do
     case History.ensure_new({module, id}) do
@@ -34,6 +40,22 @@ defmodule Flexflow.ProcessServer do
 
   @impl true
   def handle_call(:state, _from, p), do: {:reply, p, p}
+
+  def handle_call(
+        {:start_child, {child_module, child_id}, %{} = args},
+        _from,
+        %{module: module, id: id, __childs__: childs, __request_id__: request_id} = p
+      ) do
+    case ProcessManager.server(
+           {child_module, child_id},
+           Map.merge(args, %{__parent__: {module, id}, __request_id__: request_id})
+         ) do
+      {:ok, pid} -> {:reply, {:ok, pid}, %{p | __childs__: [{child_module, child_id} | childs]}}
+      {:exist, pid} -> {:reply, {:error, {:exist, pid}}, p}
+      {:error, reason} -> {:reply, {:error, reason}, p}
+    end
+  end
+
   def handle_call(input, from, p), do: p |> Process.handle_call(input, from) |> reply_return(p)
 
   @impl true

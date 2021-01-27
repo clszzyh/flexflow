@@ -50,6 +50,14 @@ defmodule Flexflow.Util do
     normalize_module({o, normalize_module(from, events), to}, events)
   end
 
+  @spec random(non_neg_integer()) :: String.t()
+  def random(length \\ 20) do
+    length
+    |> :crypto.strong_rand_bytes()
+    |> Base.url_encode64()
+    |> binary_part(0, length)
+  end
+
   @spec make_id :: Flexflow.id()
   def make_id do
     to_string(System.unique_integer([:positive]))

@@ -33,7 +33,7 @@ defmodule Flexflow.ProcessManager do
     DynamicSupervisor.init(strategy: :one_for_one, extra_arguments: [module])
   end
 
-  @spec server(Flexflow.process_identity(), Flexflow.process_args()) :: server_return
+  @spec server(Flexflow.process_key(), Flexflow.process_args()) :: server_return
   def server({module, id}, opts \\ %{}) do
     case start_child({module, id}, opts) do
       {:ok, pid} -> {:ok, pid}
@@ -50,12 +50,12 @@ defmodule Flexflow.ProcessManager do
     end
   end
 
-  @spec child_pid(Flexflow.process_identity()) :: nil | pid()
+  @spec child_pid(Flexflow.process_key()) :: nil | pid()
   def child_pid({module, id}) do
     ProcessServer.pid({module, id})
   end
 
-  @spec start_child(Flexflow.process_identity(), Flexflow.process_args()) ::
+  @spec start_child(Flexflow.process_key(), Flexflow.process_args()) ::
           {:ok, pid()} | {:error, term}
   defp start_child({module, id}, opts) do
     case server_pid(module) do

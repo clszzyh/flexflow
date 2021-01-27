@@ -10,7 +10,8 @@ defmodule Flexflow do
   alias Flexflow.ProcessManager
   alias Flexflow.ProcessServer
 
-  @type process_identity :: {module(), id()} | pid()
+  @type process_key :: {module(), id()}
+  @type process_identity :: process_key | pid()
   @type process_args :: map()
 
   @type name :: atom()
@@ -23,6 +24,7 @@ defmodule Flexflow do
   defdelegate pid(key), to: ProcessServer
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :server
   defdelegate state(key), to: ProcessServer
+  defdelegate start_child(key, child_key, args \\ %{}), to: ProcessServer
   defdelegate call(key, op), to: ProcessServer
   defdelegate cast(key, op), to: ProcessServer
 end

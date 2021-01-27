@@ -23,12 +23,14 @@ defmodule Flexflow.Process do
           events: %{Flexflow.identity() => Event.t()},
           gateways: %{Flexflow.identity() => Gateway.t()},
           __args__: Flexflow.process_args(),
-          __parent__: Flexflow.process_identity(),
+          __parent__: Flexflow.process_key(),
+          __childs__: [Flexflow.process_key()],
           __vsn__: [{module(), term()}],
           __opts__: Keyword.t(),
           __context__: Context.t(),
           __definitions__: [definition],
           __graphviz__: Keyword.t(),
+          __request_id__: String.t(),
           __listeners__: %{EventDispatcher.listener() => EventDispatcher.listen_result()},
           __loop__: integer(),
           __counter__: integer(),
@@ -47,6 +49,7 @@ defmodule Flexflow.Process do
                 :id,
                 :__vsn__,
                 :__parent__,
+                :__request_id__,
                 state: :created,
                 __counter__: 0,
                 __loop__: 0,
@@ -54,6 +57,7 @@ defmodule Flexflow.Process do
                 __args__: %{},
                 __tasks__: %{},
                 __opts__: [],
+                __childs__: [],
                 __listeners__: %{},
                 __context__: Context.new()
               ]
@@ -200,17 +204,21 @@ defmodule Flexflow.Process do
 
       @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
-        special_map = Map.take(args, [:__parent__, :__graphviz__])
-        args = Map.drop(args, [:__parent__, :__graphviz__])
+        special_map = Map.take(args, [:__parent__, :__graphviz__, :__request_id__])
+        args = Map.drop(args, [:__parent__, :__graphviz__, :__request_id__])
 
         struct!(
           @__process__,
-          Map.merge(special_map, %{
-            __vsn__: :crypto.hash(:md5, :erlang.term_to_binary(__vsn__())),
-            name: name(),
-            id: id,
-            __args__: args
-          })
+          Map.merge(
+            %{
+              name: name(),
+              id: id,
+              __request_id__: Util.random(),
+              __vsn__: :crypto.hash(:md5, :erlang.term_to_binary(__vsn__())),
+              __args__: args
+            },
+            special_map
+          )
         )
       end
 
