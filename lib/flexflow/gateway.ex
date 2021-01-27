@@ -36,6 +36,11 @@ defmodule Flexflow.Gateway do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
+  @doc "Invoked after compile, return :ok if valid"
+  @callback validate(t(), Process.t()) :: :ok
+
+  @optional_callbacks [validate: 2]
+
   defmacro __using__(opts \\ []) do
     quote do
       @behaviour unquote(__MODULE__)

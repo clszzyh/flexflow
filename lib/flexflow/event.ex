@@ -4,6 +4,7 @@ defmodule Flexflow.Event do
   """
 
   alias Flexflow.Context
+  alias Flexflow.Events.{Bypass, End, Start}
   alias Flexflow.Process
   alias Flexflow.Util
 
@@ -51,9 +52,15 @@ defmodule Flexflow.Event do
   @doc "Invoked before event state changes"
   @callback before_change({state(), state()}, t(), Process.t()) :: before_change_result()
 
+  @doc "Invoked after compile, return :ok if valid"
+  @callback validate(t(), Process.t()) :: :ok
+
+  @optional_callbacks [validate: 2]
+
   defmacro __using__(opts \\ []) do
     quote do
       @behaviour unquote(__MODULE__)
+      alias unquote(__MODULE__)
 
       unless Module.get_attribute(__MODULE__, :moduledoc) do
         @moduledoc """
@@ -80,6 +87,10 @@ defmodule Flexflow.Event do
   defp attribute(:intermediate), do: [shape: "box"]
   defp attribute(:start), do: [shape: "doublecircle", color: "\".7 .3 1.0\""]
   defp attribute(:end), do: [shape: "circle", color: "red"]
+
+  def base_module(:start), do: Start
+  def base_module(:end), do: End
+  def base_module(:intermediate), do: Bypass
 
   @spec key(t()) :: Flexflow.identity()
   def key(%{module: module, name: name}), do: {module, name}

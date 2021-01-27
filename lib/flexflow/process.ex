@@ -95,8 +95,10 @@ defmodule Flexflow.Process do
 
       @impl true
       def name, do: @__name__
+
       @impl true
       def init(p), do: {:ok, p}
+
       @impl true
       def init_child(p), do: {:ok, p}
 
@@ -123,17 +125,20 @@ defmodule Flexflow.Process do
   def __after_compile__(env, _bytecode) do
     process = env.module.new()
 
-    for {_, %{kind: :start, __out_edges__: []} = event} <- process.events do
-      raise(ArgumentError, "Out edges of `#{inspect(Event.key(event))}` is empty")
+    for {_, %{module: module, kind: kind} = event} <- process.events do
+      validate_module =
+        if function_exported?(module, :validate, 2), do: module, else: Event.base_module(kind)
+
+      :ok = validate_module.validate(event, process)
     end
 
-    for {_, %{kind: :end, __in_edges__: []} = event} <- process.events do
-      raise(ArgumentError, "In edges of `#{inspect(Event.key(event))}` is empty")
+    for {_, %{module: module} = gateway} <- process.gateways do
+      if function_exported?(module, :validate, 2) do
+        :ok = module.validate(gateway, process)
+      end
     end
 
-    for {_, %{__out_edges__: [], __in_edges__: []} = event} <- process.events do
-      raise ArgumentError, "`#{inspect(Event.key(event))}` is isolated"
-    end
+    :ok
   end
 
   defmacro __before_compile__(env) do
