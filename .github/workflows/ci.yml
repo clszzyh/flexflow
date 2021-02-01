@@ -373,7 +373,7 @@ jobs:
         run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
       - name: Changelog
         id: Changelog
-        uses: charmixer/auto-changelog-action@v1.1
+        uses: charmixer/auto-changelog-action@v1.2
         # uses: heinrichreimer/github-changelog-generator-action@v2.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
