@@ -1,5 +1,5 @@
 ---
-name: hello
+name: demo
 version: 1
 :actions:
   - :name: :hello

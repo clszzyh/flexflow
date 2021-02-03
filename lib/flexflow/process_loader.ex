@@ -8,7 +8,10 @@ defmodule Flexflow.ProcessLoader do
 
   @processes Path.wildcard(@process_path)
 
+  alias Flexflow.Activities.{Bypass, End, Start}, warn: false
   alias Flexflow.Util
+
+  require Logger
 
   for path <- @processes do
     @external_resource path
@@ -18,16 +21,10 @@ defmodule Flexflow.ProcessLoader do
     :erlang.md5(Path.wildcard(@process_path)) != unquote(:erlang.md5(@processes))
   end
 
-  def parse(path) do
-    [body] = :yamerl_constr.file(path, [:str_node_as_binary])
-    compile(Map.new(body), path)
-  end
-
   @blank_ast {:__block__, [], []}
 
   defp compile(%{"name" => name} = raw, path) do
     module_name = Module.concat(Flexflow.Processes, Macro.camelize(name))
-    IO.puts("define #{module_name}")
 
     if Util.defined?(module_name) do
       :code.purge(module_name)
@@ -47,13 +44,16 @@ defmodule Flexflow.ProcessLoader do
 
         use Flexflow.Process
 
-        activity Flexflow.Activities.Start
-        activity Flexflow.Activities.End
+        activity Start
+        activity End
 
-        gateway :first, Flexflow.Activities.Start ~> Flexflow.Activities.End
+        gateway :first, Start ~> End
       end
 
     {:module, final_module, _byte_code, _} = Module.create(module_name, ast, file: path, line: 0)
+
+    Logger.debug("Create #{final_module} -> #{name}")
+
     final_module
   end
 
@@ -61,6 +61,9 @@ defmodule Flexflow.ProcessLoader do
 
   @after_compile __MODULE__
   def __after_compile__(_env, _bytecode) do
-    Enum.each(@processes, &parse/1)
+    Enum.each(@processes, fn path ->
+      [body] = :yamerl_constr.file(path, [:str_node_as_binary])
+      compile(Map.new(body), path)
+    end)
   end
 end
