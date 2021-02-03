@@ -3,8 +3,8 @@ defmodule Flexflow.ProcessLoader do
   YamlLoader
   """
 
-  @process_app Application.compile_env(:flexflow, :current_app, :flexflow)
-  @process_path Application.app_dir(@process_app, "priv/processes/*.yml")
+  @current_app Mix.Project.config()[:app]
+  @process_path Application.app_dir(@current_app, "priv/processes/*.yml")
   @processes Path.wildcard(@process_path)
 
   alias Flexflow.Activities.{Bypass, End, Start}, warn: false
