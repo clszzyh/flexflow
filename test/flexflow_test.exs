@@ -13,7 +13,6 @@ defmodule FlexflowTest do
   alias FlexflowDemoTest.{T1, T2}
 
   setup_all do
-    _ = Flexflow.ModuleRegistry.state()
     []
   end
 

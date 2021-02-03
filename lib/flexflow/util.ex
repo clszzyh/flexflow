@@ -25,6 +25,8 @@ defmodule Flexflow.Util do
 
   def normalize_module(o, activities) when is_atom(o) do
     if module_atom?(o) do
+      _ = Code.ensure_loaded(o)
+
       if function_exported?(o, :name, 0) do
         {o, o.name()}
       else

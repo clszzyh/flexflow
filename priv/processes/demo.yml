@@ -1,5 +1,6 @@
 ---
 name: hello
+version: 1
 :actions:
   - :name: :hello
     :ctx: {:name: :world}
