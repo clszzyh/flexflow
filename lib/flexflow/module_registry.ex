@@ -56,12 +56,12 @@ defmodule Flexflow.ModuleRegistry do
 
     case Map.get(state, kind) do
       nil ->
-        {:halt, "Undefined kind #{module.kind()}"}
+        {:halt, {:error, "Undefined kind #{module.kind()}"}}
 
       %{} = map ->
         case Map.get(map, name) do
           nil -> {:cont, %{state | kind => Map.merge(map, %{name => module})}}
-          exists -> {:halt, "Already exists #{name}, #{exists}"}
+          exists -> {:halt, {:error, "Already exists #{name}, #{exists}"}}
         end
     end
   end
@@ -76,7 +76,7 @@ defmodule Flexflow.ModuleRegistry do
       {:error, reason} ->
         {:stop, reason, state}
 
-      state ->
+      %{} = state ->
         if :code.get_mode() == :interactive do
           Logger.debug("[#{length(modules)}] register all")
           Logger.flush()

@@ -23,7 +23,9 @@ defmodule Flexflow.ProcessLoader do
     compile(Map.new(body), path)
   end
 
-  defp compile(%{"name" => name, "version" => version} = raw, path) do
+  @blank_ast {:__block__, [], []}
+
+  defp compile(%{"name" => name} = raw, path) do
     module_name = Module.concat(Flexflow.Processes, Macro.camelize(name))
     IO.puts("define #{module_name}")
 
@@ -32,9 +34,15 @@ defmodule Flexflow.ProcessLoader do
       :code.delete(module_name)
     end
 
+    vsn_ast =
+      case raw do
+        %{"version" => version} -> quote(do: @vsn(unquote(version)))
+        _ -> @blank_ast
+      end
+
     ast =
       quote do
-        @vsn unquote(version)
+        unquote(vsn_ast)
         def __raw__, do: unquote(Macro.escape(raw))
 
         use Flexflow.Process
@@ -46,7 +54,6 @@ defmodule Flexflow.ProcessLoader do
       end
 
     {:module, final_module, _byte_code, _} = Module.create(module_name, ast, file: path, line: 0)
-
     final_module
   end
 
