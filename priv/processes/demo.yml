@@ -1,0 +1,29 @@
+---
+name: hello
+:actions:
+  - :name: :hello
+    :ctx: {:name: :world}
+    :body: IO.puts(name); name
+    :tests:
+      - :name: blank
+        :kind: :rq
+        :input: []
+        :pattern: :world
+      - :name: world_v2
+        :kind: :rq
+        :input: [{:name: :world_v2}]
+        :pattern: :world_v2
+:groups:
+  - :name: :basic_auth
+    :pipes:
+      :options: {:hackney: {:basic_auth: [<%= ctx.client_id %>, <%= ctx.secret %>]}}
+:apis:
+  - :name: :any
+  - :name: :download
+    :tags: {head: ~, retry_strategy: inner, max_attempts: 5, save_file: [resp, body]}
+    :pipes:
+      :options: {:recv_timeout: 30000, :timeout: 30000}
+      :status_code: {:eq: 200}
+  - :name: :baidu
+    :url: "www.baidu.com"
+    :pipes: [:floki_parse]
