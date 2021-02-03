@@ -78,8 +78,10 @@ defmodule Flexflow.Process do
   @optional_callbacks [handle_call: 3, handle_cast: 2, handle_info: 2, terminate: 2]
 
   def impls do
-    {:consolidated, modules} = Flexflow.ProcessTracker.__protocol__(:impls)
-    modules
+    case Flexflow.ProcessTracker.__protocol__(:impls) do
+      {:consolidated, modules} -> modules
+      _ -> []
+    end
   end
 
   defmacro __using__(opts) do
