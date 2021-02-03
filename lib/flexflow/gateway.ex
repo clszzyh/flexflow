@@ -41,6 +41,11 @@ defmodule Flexflow.Gateway do
 
   @optional_callbacks [validate: 2]
 
+  def impls do
+    {:consolidated, modules} = Flexflow.GatewayTracker.__protocol__(:impls)
+    modules
+  end
+
   defmacro __using__(opts \\ []) do
     quote do
       @behaviour unquote(__MODULE__)
@@ -49,6 +54,10 @@ defmodule Flexflow.Gateway do
         @moduledoc """
         See `#{unquote(__MODULE__)}`
         """
+      end
+
+      defimpl Flexflow.GatewayTracker do
+        def ping(_), do: :pong
       end
 
       @__name__ Flexflow.Util.module_name(__MODULE__)

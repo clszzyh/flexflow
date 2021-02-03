@@ -14,6 +14,7 @@ defmodule Flexflow.MixProject do
       start_permanent: Mix.env() == :prod,
       preferred_cli_env: [ci: :test],
       elixirc_paths: elixirc_paths(Mix.env()),
+      consolidate_protocols: Mix.env() != :test,
       package: [
         licenses: ["MIT"],
         files: ["lib", ".formatter.exs", "mix.exs", "README*", "CHANGELOG*", "VERSION"],
@@ -23,7 +24,7 @@ defmodule Flexflow.MixProject do
       dialyzer: [
         plt_core_path: "priv/plts",
         plt_add_deps: :app_tree,
-        plt_add_apps: [:ex_unit],
+        plt_add_apps: [:ex_unit, :mix],
         list_unused_filters: true,
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
         flags: dialyzer_flags()

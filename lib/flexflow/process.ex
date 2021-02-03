@@ -77,6 +77,11 @@ defmodule Flexflow.Process do
 
   @optional_callbacks [handle_call: 3, handle_cast: 2, handle_info: 2, terminate: 2]
 
+  def impls do
+    {:consolidated, modules} = Flexflow.ProcessTracker.__protocol__(:impls)
+    modules
+  end
+
   defmacro __using__(opts) do
     quote do
       alias Flexflow.Activities.{Bypass, End, Start}
@@ -85,6 +90,10 @@ defmodule Flexflow.Process do
       @__opts__ unquote(opts)
 
       @behaviour unquote(__MODULE__)
+
+      defimpl Flexflow.ProcessTracker do
+        def ping(_), do: :pong
+      end
 
       import unquote(__MODULE__), only: [activity: 1, activity: 2, ~>: 2, gateway: 2, gateway: 3]
 

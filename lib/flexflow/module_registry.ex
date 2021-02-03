@@ -5,13 +5,17 @@ defmodule Flexflow.ModuleRegistry do
 
   use GenServer, restart: :temporary
 
+  alias Flexflow.Activity
+  alias Flexflow.Gateway
+  alias Flexflow.Process
   alias Flexflow.Util
+
   require Logger
 
   @state %{
-    Flexflow.Activity => %{},
-    Flexflow.Gateway => %{},
-    Flexflow.Process => %{}
+    Activity => %{},
+    Gateway => %{},
+    Process => %{}
   }
 
   def start_link(args) do
@@ -48,7 +52,7 @@ defmodule Flexflow.ModuleRegistry do
     name = module.name()
 
     {_, _} =
-      if kind == Flexflow.Process do
+      if kind == Process do
         Flexflow.ProcessParentManager.register(module)
       else
         {:ok, :ignore}
@@ -68,21 +72,19 @@ defmodule Flexflow.ModuleRegistry do
 
   @impl true
   def handle_continue(:register_all, state) do
-    [_ | _] = modules = Util.implement_modules()
+    [_ | _] =
+      modules =
+      if Mix.env() == :test do
+        Util.implement_modules()
+      else
+        Process.impls() ++ Activity.impls() ++ Gateway.impls()
+      end
 
     modules
     |> Enum.reduce_while(state, &register/2)
     |> case do
-      {:error, reason} ->
-        {:stop, reason, state}
-
-      %{} = state ->
-        if :code.get_mode() == :interactive do
-          Logger.debug("[#{length(modules)}] register all")
-          Logger.flush()
-        end
-
-        {:noreply, state}
+      {:error, reason} -> {:stop, reason, state}
+      %{} = state -> {:noreply, state}
     end
   end
 

@@ -33,7 +33,7 @@ defmodule Flexflow.ProcessLoader do
 
     vsn_ast =
       case raw do
-        %{"version" => version} -> quote(do: @vsn(unquote(version)))
+        %{"version" => version} -> quote(do: @vsn(unquote(to_string(version))))
         _ -> @blank_ast
       end
 
