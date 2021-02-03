@@ -116,8 +116,12 @@ jobs:
       - name: Create PLTs
         if: steps.plt-cache.outputs.cache-hit != 'true'
         run: mix dialyzer --plt
+        env:
+          MIX_ENV: dev
       - name: Run dialyzer
         run: mix dialyzer --no-check
+        env:
+          MIX_ENV: dev
       - name: Check Doc
         run: mix docs -f html && ! mix docs -f html 2>&1 | grep -q "warning:"
         env:
