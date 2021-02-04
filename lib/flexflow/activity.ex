@@ -69,10 +69,8 @@ defmodule Flexflow.Activity do
   @optional_callbacks [validate: 2]
 
   def impls do
-    case Flexflow.ActivityTracker.__protocol__(:impls) do
-      {:consolidated, modules} -> modules
-      _ -> []
-    end
+    {:consolidated, modules} = Flexflow.ActivityTracker.__protocol__(:impls)
+    modules
   end
 
   defmacro __using__(opts \\ []) do
