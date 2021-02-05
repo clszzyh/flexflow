@@ -90,6 +90,11 @@ digraph review {
 
 1. Support `:gen_statem`
 
+```
+State(S) x Event(E) -> Actions(A), State(S')
+```
+
 ## See also
 
+* https://erlang.org/doc/design_principles/statem.html
 * https://en.wikipedia.org/wiki/Business_Process_Model_and_Notation
