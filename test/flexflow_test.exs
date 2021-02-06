@@ -5,7 +5,7 @@ defmodule FlexflowTest do
   @moduletag capture_log: true
   @moduletag :basic
 
-  alias Flexflow.Activity
+  alias Flexflow.State
   alias Flexflow.Event
 
   alias FlexflowDemoTest.{N1, N2, N3, N4}
@@ -44,10 +44,10 @@ defmodule FlexflowTest do
     t2 = %Event{module: T2, name: :t2_n2, from: n2_s, to: n3_s}
     t3 = %Event{module: T2, name: :t2_name, from: n2_s, to: n4_s}
 
-    n1 = Activity.new({n1_s, foo: %{aaa: :bbb}, type: :start})
-    n2 = Activity.new({n2_s, []})
-    n3 = Activity.new({n3_s, async: true})
-    n4 = Activity.new({n4_s, type: :end})
+    n1 = State.new({n1_s, foo: %{aaa: :bbb}, type: :start})
+    n2 = State.new({n2_s, []})
+    n3 = State.new({n3_s, async: true})
+    n4 = State.new({n4_s, type: :end})
 
     n1 = %{n1 | __out_edges__: [{t1_s, n2_s}]}
     n2 = %{n2 | __in_edges__: [{t1_s, n1_s}], __out_edges__: [{t2_s, n3_s}, {t3_s, n4_s}]}
@@ -55,16 +55,16 @@ defmodule FlexflowTest do
     n4 = %{n4 | __in_edges__: [{t3_s, n2_s}]}
 
     assert P1.new().__definitions__ == [
-             activity: n1_s,
-             activity: n2_s,
+             state: n1_s,
+             state: n2_s,
              event: t1_s,
-             activity: n3_s,
-             activity: n4_s,
+             state: n3_s,
+             state: n4_s,
              event: t2_s,
              event: t3_s
            ]
 
-    assert P1.new().activities == %{n1_s => n1, n2_s => n2, n3_s => n3, n4_s => n4}
+    assert P1.new().states == %{n1_s => n1, n2_s => n2, n3_s => n3, n4_s => n4}
     assert P1.new().events == %{t1_s => t1, t2_s => t2, t3_s => t3}
   end
 
@@ -76,100 +76,100 @@ defmodule FlexflowTest do
 
   @data %{
     """
-      activity {N1, :n}, type: :start
-      activity :n2
-      activity N3, type: :end
+      state {N1, :n}, type: :start
+      state :n2
+      state N3, type: :end
       event T1, :n ~> N3
       event T2, :n ~> :n2
     """ => :ok,
     """
-      activity Start
-      activity :foo
-      activity N3, type: :end
+      state Start
+      state :foo
+      state N3, type: :end
       event T1, :start ~> N3
       event T2, :start ~> :foo
     """ => :ok,
-    "" => "Activity is empty",
+    "" => "State is empty",
     """
-      activity N1, type: :start
-      activity N2, type: :end
+      state N1, type: :start
+      state N2, type: :end
     """ => "Event is empty",
     """
-      activity N0
+      state N0
     """ => "`Elixir.N0` should have a `name/0` function",
     """
-      activity N1
-      activity N2
-      activity N1
+      state N1
+      state N2
+      state N1
       event T1, N1 ~> N2
-    """ => "Activity `n1` is defined twice",
+    """ => "State `n1` is defined twice",
     """
-      activity Start
-      activity {N3, "n3"}, type: :end
+      state Start
+      state {N3, "n3"}, type: :end
       event T1, :start ~> "n3"
     """ => "Name `n3` should be an atom",
     """
-      activity N1, type: :start
-      activity N2, type: :end
+      state N1, type: :start
+      state N2, type: :end
       event T1, :n1 ~> N4
     """ => "`{FlexflowDemoTest.N4, :n4}` is not defined",
     """
-      activity N1, type: :start
-      activity N2, type: :end
+      state N1, type: :start
+      state N2, type: :end
       event T1, :n1 ~> :n2
       event T2, :n1 ~> :n2
     """ => "Event `{{FlexflowDemoTest.N1, :n1}, {FlexflowDemoTest.N2, :n2}}` is defined twice",
     """
-      activity Start
-      activity End
-      activity N1
+      state Start
+      state End
+      state N1
       event {T1, :t}, Start ~> End
       event {T1, :t}, N1 ~> End
     """ => "Event `{FlexflowDemoTest.T1, :t}` is defined twice",
     """
-      activity N1
-      activity N2
+      state N1
+      state N2
       event T1, N1 ~> N2
-    """ => "Need a start activity",
+    """ => "Need a start state",
     """
-      activity N1, type: :start
-      activity N2, type: :start
+      state N1, type: :start
+      state N2, type: :start
       event T1, N1 ~> N2
-    """ => "Multiple start activity found",
+    """ => "Multiple start state found",
     """
-      activity N1, type: :start
-      activity N2
+      state N1, type: :start
+      state N2
       event T1, N1 ~> N2
-    """ => "Need one or more end activity",
+    """ => "Need one or more end state",
     """
-      activity N1, type: :start
-      activity N2
-      activity N3, type: :end
+      state N1, type: :start
+      state N2
+      state N3, type: :end
       event T1, N1 ~> N2
     """ => "In edges of `{FlexflowDemoTest.N3, :n3}` is empty",
     """
-      activity N1, type: :start
-      activity N2
-      activity N3, type: :end
+      state N1, type: :start
+      state N2
+      state N3, type: :end
       event T1, N2 ~> N3
     """ => "Out edges of `{FlexflowDemoTest.N1, :n1}` is empty",
     """
-      activity N1, type: :start
-      activity N2
-      activity N3, type: :end
+      state N1, type: :start
+      state N2
+      state N3, type: :end
       event T1, N1 ~> N3
     """ => "`{FlexflowDemoTest.N2, :n2}` is isolated",
     """
-      activity N1, type: :start
-      activity N3, type: :end
+      state N1, type: :start
+      state N3, type: :end
       event T1, :n ~> N3
-    """ => "`{Flexflow.Activities.Bypass, :n}` is not defined",
+    """ => "`{Flexflow.States.Bypass, :n}` is not defined",
     """
-      activity {N1, :n}, type: :start
-      activity {N2, :n}
-      activity N3, type: :end
+      state {N1, :n}, type: :start
+      state {N2, :n}
+      state N3, type: :end
       event T1, :n ~> N3
-    """ => "Activity `n` is defined twice"
+    """ => "State `n` is defined twice"
   }
 
   for {{code, msg}, index} <- Enum.with_index(@data) do

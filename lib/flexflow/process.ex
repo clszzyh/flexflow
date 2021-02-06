@@ -3,7 +3,7 @@ defmodule Flexflow.Process do
   Process
   """
 
-  alias Flexflow.Activity
+  alias Flexflow.State
   alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.Event
@@ -21,8 +21,8 @@ defmodule Flexflow.Process do
           name: Flexflow.name(),
           id: Flexflow.id() | nil,
           state: state(),
-          start_activity: Flexflow.state_type(),
-          activities: %{Flexflow.state_type() => Activity.t()},
+          start_state: Flexflow.state_type(),
+          states: %{Flexflow.state_type() => State.t()},
           events: %{Flexflow.state_type() => Event.t()},
           parent: Flexflow.process_key(),
           childs: [Flexflow.process_key()],
@@ -42,9 +42,9 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type definition :: {:activity | :event, Flexflow.state_type()}
+  @type definition :: {:state | :event, Flexflow.state_type()}
 
-  @enforce_keys [:module, :activities, :events, :start_activity, :__definitions__]
+  @enforce_keys [:module, :states, :events, :start_state, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
   defstruct @enforce_keys ++
               [
@@ -69,7 +69,7 @@ defmodule Flexflow.Process do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Invoked when process is started, after activities and events `init`, see `Flexflow.Api.init/1`"
+  @doc "Invoked when process is started, after states and events `init`, see `Flexflow.Api.init/1`"
   @callback init(t()) :: result()
   @doc "Invoked when process child is started"
   @callback init_child(t()) :: result()
@@ -88,7 +88,7 @@ defmodule Flexflow.Process do
 
   defmacro __using__(opts) do
     quote do
-      alias Flexflow.Activities.{Bypass, End, Start}
+      alias Flexflow.States.{Bypass, End, Start}
       alias Flexflow.Events.Pass
 
       @__opts__ unquote(opts)
@@ -99,9 +99,9 @@ defmodule Flexflow.Process do
         def ping(_), do: :pong
       end
 
-      import unquote(__MODULE__), only: [activity: 1, activity: 2, ~>: 2, event: 2, event: 3]
+      import unquote(__MODULE__), only: [state: 1, state: 2, ~>: 2, event: 2, event: 3]
 
-      for attribute <- [:__activities__, :__events__, :__definitions__] do
+      for attribute <- [:__states__, :__events__, :__definitions__] do
         Module.register_attribute(__MODULE__, attribute, accumulate: true)
       end
 
@@ -123,10 +123,10 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro activity(key, opts \\ []) do
+  defmacro state(key, opts \\ []) do
     quote bind_quoted: [key: key, opts: opts] do
-      @__activities__ {key, opts}
-      @__definitions__ {:activity, key}
+      @__states__ {key, opts}
+      @__definitions__ {:state, key}
     end
   end
 
@@ -142,8 +142,8 @@ defmodule Flexflow.Process do
   def __after_compile__(env, _bytecode) do
     process = env.module.new()
 
-    for {_, %{module: module} = activity} <- process.activities do
-      :ok = module.validate(activity, process)
+    for {_, %{module: module} = state} <- process.states do
+      :ok = module.validate(state, process)
     end
 
     for {_, %{module: module} = event} <- process.events do
@@ -154,29 +154,29 @@ defmodule Flexflow.Process do
   end
 
   defp new_process(env) do
-    activities =
+    states =
       env.module
-      |> Module.get_attribute(:__activities__)
+      |> Module.get_attribute(:__states__)
       |> Enum.reverse()
-      |> Enum.map(&Activity.new/1)
-      |> Activity.validate()
+      |> Enum.map(&State.new/1)
+      |> State.validate()
 
     events =
       env.module
       |> Module.get_attribute(:__events__)
       |> Enum.reverse()
-      |> Enum.map(&Event.new(&1, activities, env.module))
+      |> Enum.map(&Event.new(&1, states, env.module))
       |> Event.validate()
 
     definitions =
       env.module
       |> Module.get_attribute(:__definitions__)
       |> Enum.reverse()
-      |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v, activities)} end)
+      |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v, states)} end)
 
-    new_activities =
-      Map.new(activities, fn o ->
-        k = Activity.key(o)
+    new_states =
+      Map.new(states, fn o ->
+        k = State.key(o)
         in_edges = for(t <- events, t.to == k, do: {Event.key(t), t.from})
         out_edges = for(t <- events, t.from == k, do: {Event.key(t), t.to})
 
@@ -184,10 +184,9 @@ defmodule Flexflow.Process do
       end)
 
     %__MODULE__{
-      activities: new_activities,
+      states: new_states,
       module: env.module,
-      start_activity:
-        Enum.find_value(activities, fn a -> if Activity.start?(a), do: Activity.key(a) end),
+      start_state: Enum.find_value(states, fn a -> if State.start?(a), do: State.key(a) end),
       events: for(t <- events, into: %{}, do: {Event.key(t), t}),
       __definitions__: definitions
     }
@@ -235,7 +234,7 @@ defmodule Flexflow.Process do
       end
 
       for attribute <- [
-            :__activities__,
+            :__states__,
             :__opts__,
             :__events__,
             :__definitions__,
@@ -264,7 +263,7 @@ defmodule Flexflow.Process do
 
   @spec init(t()) :: result()
   def init(%__MODULE__{module: module} = p) do
-    with %__MODULE__{} = p <- Activity.init(p),
+    with %__MODULE__{} = p <- State.init(p),
          %__MODULE__{} = p <- Event.init(p),
          {:ok, %__MODULE__{} = p} <- module.init(p),
          {:ok, %__MODULE__{} = p} <- module.init_child(p),
@@ -357,10 +356,10 @@ defmodule Flexflow.Process do
   @spec next(t()) :: result()
   def next(%{__loop__: loop}) when loop > @max_loop_limit, do: {:error, :deadlock_found}
 
-  def next(%{activities: activities, events: events} = p) do
-    for {_, %{state: :ready, __out_edges__: [_ | _] = edges} = e} <- activities,
+  def next(%{states: states, events: events} = p) do
+    for {_, %{state: :ready, __out_edges__: [_ | _] = edges} = e} <- states,
         {t, n} <- edges do
-      {e, Map.fetch!(events, t), Map.fetch!(activities, n)}
+      {e, Map.fetch!(events, t), Map.fetch!(states, n)}
     end
     |> case do
       [] -> {:ok, %{p | state: :waiting}}

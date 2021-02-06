@@ -1,9 +1,9 @@
-defmodule Flexflow.Activities.Start do
+defmodule Flexflow.States.Start do
   @moduledoc """
   Start
   """
 
-  use Flexflow.Activity
+  use Flexflow.State
 
   @impl true
   def type, do: :start
@@ -12,8 +12,8 @@ defmodule Flexflow.Activities.Start do
   def graphviz_attribute, do: [shape: "doublecircle", color: "\".7 .3 1.0\""]
 
   @impl true
-  def validate(%{__out_edges__: []} = activity, _) do
-    raise(ArgumentError, "Out edges of `#{inspect(Activity.key(activity))}` is empty")
+  def validate(%{__out_edges__: []} = state, _) do
+    raise(ArgumentError, "Out edges of `#{inspect(State.key(state))}` is empty")
   end
 
   def validate(_, _), do: :ok

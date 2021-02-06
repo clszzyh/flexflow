@@ -2,7 +2,7 @@ defprotocol Flexflow.ProcessTracker do
   def ping(o)
 end
 
-defprotocol Flexflow.ActivityTracker do
+defprotocol Flexflow.StateTracker do
   def ping(o)
 end
 

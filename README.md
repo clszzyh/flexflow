@@ -17,7 +17,7 @@ defmodule Review do
   use Flexflow.Process
 
   defmodule Reviewing do
-    use Flexflow.Activity
+    use Flexflow.State
 
     @impl true
     def type, do: :bypass
@@ -27,15 +27,15 @@ defmodule Review do
     use Flexflow.Event
   end
 
-  ## Start activity
-  activity {Start, :draft}
-  ## End activity, `async` mode means this event run's in a separated elixir process.
-  activity {End, :reviewed}, async: true
-  activity {End, :canceled}
-  ## Bypass activity
-  activity :rejected
-  ## Custom activity
-  activity Reviewing
+  ## Start state
+  state {Start, :draft}
+  ## End state, `async` mode means this event run's in a separated elixir process.
+  state {End, :reviewed}, async: true
+  state {End, :canceled}
+  ## Bypass state
+  state :rejected
+  ## Custom state
+  state Reviewing
 
   ## Define a event
   ## `a ~> b` is a shortcut of `{a, b}`

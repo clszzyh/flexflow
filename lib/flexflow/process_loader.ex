@@ -7,7 +7,7 @@ defmodule Flexflow.ProcessLoader do
   @process_path Application.app_dir(@current_app, "priv/processes/*.yml")
   @processes Path.wildcard(@process_path)
 
-  alias Flexflow.Activities.{Bypass, End, Start}, warn: false
+  alias Flexflow.States.{Bypass, End, Start}, warn: false
   alias Flexflow.Util
 
   require Logger
@@ -43,8 +43,8 @@ defmodule Flexflow.ProcessLoader do
 
         use Flexflow.Process
 
-        activity Start
-        activity End
+        state Start
+        state End
 
         event :first, Start ~> End
       end

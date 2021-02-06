@@ -1,10 +1,10 @@
-defmodule Flexflow.Activity do
+defmodule Flexflow.State do
   @moduledoc """
-  Activity
+  State
   """
 
   alias Flexflow.Context
-  alias Flexflow.Activities.{Bypass, End, Start}
+  alias Flexflow.States.{Bypass, End, Start}
   alias Flexflow.Process
   alias Flexflow.Util
 
@@ -18,7 +18,7 @@ defmodule Flexflow.Activity do
   }
 
   @typedoc """
-  Activity state
+  State state
 
   #{inspect(@states)}
   """
@@ -55,10 +55,10 @@ defmodule Flexflow.Activity do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Activity type"
+  @doc "State type"
   @callback type :: type()
 
-  @doc "Invoked before activity state changes"
+  @doc "Invoked before state state changes"
   @callback action({state(), state()}, t(), Process.t()) :: action_result()
 
   @doc "Invoked after compile, return :ok if valid"
@@ -67,7 +67,7 @@ defmodule Flexflow.Activity do
   @callback graphviz_attribute :: keyword()
 
   def impls do
-    {:consolidated, modules} = Flexflow.ActivityTracker.__protocol__(:impls)
+    {:consolidated, modules} = Flexflow.StateTracker.__protocol__(:impls)
     modules
   end
 
@@ -82,7 +82,7 @@ defmodule Flexflow.Activity do
         """
       end
 
-      defimpl Flexflow.ActivityTracker do
+      defimpl Flexflow.StateTracker do
         def ping(_), do: :pong
       end
 
@@ -119,7 +119,7 @@ defmodule Flexflow.Activity do
 
     opts = opts ++ o.__opts__
     {type, opts} = Keyword.pop(opts, :type, o.type)
-    unless type in @types, do: raise(ArgumentError, "Unknown activity type #{type}")
+    unless type in @types, do: raise(ArgumentError, "Unknown state type #{type}")
     {attributes, opts} = Keyword.pop(opts, :attributes, @type_map[type].graphviz_attribute())
 
     async = Keyword.get(opts, :async, false)
@@ -145,44 +145,44 @@ defmodule Flexflow.Activity do
   def end?(%__MODULE__{}), do: false
 
   @spec validate([t()]) :: [t()]
-  def validate(activities) do
-    if Enum.empty?(activities), do: raise(ArgumentError, "Activity is empty")
+  def validate(states) do
+    if Enum.empty?(states), do: raise(ArgumentError, "State is empty")
 
-    for %__MODULE__{module: module, name: name} <- activities, reduce: [] do
+    for %__MODULE__{module: module, name: name} <- states, reduce: [] do
       ary ->
-        if name in ary, do: raise(ArgumentError, "Activity `#{name}` is defined twice")
+        if name in ary, do: raise(ArgumentError, "State `#{name}` is defined twice")
         ary ++ [{module, name}, name]
     end
 
-    case Enum.filter(activities, &start?/1) do
+    case Enum.filter(states, &start?/1) do
       [_] -> :ok
-      [] -> raise(ArgumentError, "Need a start activity")
-      [_, _ | _] -> raise(ArgumentError, "Multiple start activity found")
+      [] -> raise(ArgumentError, "Need a start state")
+      [_, _ | _] -> raise(ArgumentError, "Multiple start state found")
     end
 
-    Enum.find(activities, &end?/1) || raise(ArgumentError, "Need one or more end activity")
+    Enum.find(states, &end?/1) || raise(ArgumentError, "Need one or more end state")
 
-    activities
+    states
   end
 
   @spec init(Process.t()) :: Process.t() | {:error, term()}
-  def init(%Process{activities: activities} = p) do
-    Enum.reduce_while(activities, p, &init_1/2)
+  def init(%Process{states: states} = p) do
+    Enum.reduce_while(states, p, &init_1/2)
   end
 
   @spec init_1({Flexflow.state_type(), t()}, Process.t()) ::
           {:halt, {:error, term()}} | {:cont, Process.t()}
-  defp init_1({key, %{type: :start, module: module, name: name} = activity}, p) do
-    with {:ok, p} <- change(:initial, activity, p),
-         {:ok, p} <- change(:ready, get_in(p, [:activities, {module, name}]), p) do
+  defp init_1({key, %{type: :start, module: module, name: name} = state}, p) do
+    with {:ok, p} <- change(:initial, state, p),
+         {:ok, p} <- change(:ready, get_in(p, [:states, {module, name}]), p) do
       {:cont, p}
     else
       {:error, reason} -> {:halt, {:error, {key, reason}}}
     end
   end
 
-  defp init_1({key, activity}, p) do
-    case change(:initial, activity, p) do
+  defp init_1({key, state}, p) do
+    case change(:initial, state, p) do
       {:ok, p} -> {:cont, p}
       {:error, reason} -> {:halt, {:error, {key, reason}}}
     end
@@ -191,7 +191,7 @@ defmodule Flexflow.Activity do
   @spec change(state(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
   def change(target, %__MODULE__{module: module, name: name, __async__: false} = e, p) do
     case do_change(target, e, p) do
-      {:ok, %__MODULE__{} = e} -> {:ok, put_in(p, [:activities, {module, name}], e)}
+      {:ok, %__MODULE__{} = e} -> {:ok, put_in(p, [:states, {module, name}], e)}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -199,7 +199,7 @@ defmodule Flexflow.Activity do
   def change(target, %__MODULE__{module: module, name: name} = e, p) do
     f = fn -> do_change(target, e, p) end
     p = Process.async(p, f, &callback/4, {module, name})
-    {:ok, put_in(p, [:activities, {module, name}], %{e | state: :pending})}
+    {:ok, put_in(p, [:states, {module, name}], %{e | state: :pending})}
   end
 
   @spec do_change(state(), t(), Process.t()) :: {:ok, t()} | {:error, term()}
@@ -220,15 +220,15 @@ defmodule Flexflow.Activity do
 
   @spec callback(Flexflow.state_type(), Process.t(), :ok | :error, term) :: Process.result()
   def callback({module, name}, %Process{} = p, :ok, {:ok, %__MODULE__{} = e}) do
-    {:ok, put_in(p, [:activities, {module, name}], e)}
+    {:ok, put_in(p, [:states, {module, name}], e)}
   end
 
   def callback({module, name}, %Process{} = p, :ok, {:error, reason}) do
-    {:ok, update_in(p, [:activities, {module, name}], &handle_error(&1, reason))}
+    {:ok, update_in(p, [:states, {module, name}], &handle_error(&1, reason))}
   end
 
   def callback({module, name}, %Process{} = p, :error, reason) do
-    {:ok, update_in(p, [:activities, {module, name}], &handle_error(&1, reason))}
+    {:ok, update_in(p, [:states, {module, name}], &handle_error(&1, reason))}
   end
 
   @spec handle_error(t(), term()) :: t()

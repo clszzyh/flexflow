@@ -4,7 +4,7 @@ defmodule FlexflowDemoTest do
   for i <- 1..9 do
     defmodule String.to_atom("#{__MODULE__}.N#{i}") do
       @moduledoc false
-      use Flexflow.Activity
+      use Flexflow.State
 
       @impl true
       def type, do: :bypass
@@ -30,13 +30,13 @@ defmodule FlexflowDemoTest do
       IO.puts(inspect({:terminate, p.id, reason}))
     end
 
-    activity N1, type: :start, foo: %{aaa: :bbb}
-    activity N2
+    state N1, type: :start, foo: %{aaa: :bbb}
+    state N2
 
     event T1, N1 ~> N2, foo: :baz
 
-    activity N3, async: true
-    activity N4, type: :end
+    state N3, async: true
+    state N4, type: :end
 
     event T2, N2 ~> N3
     event {T2, :t2_name}, N2 ~> N4
@@ -47,17 +47,17 @@ defmodule FlexflowDemoTest do
 
     defmodule Slow do
       @moduledoc false
-      use Flexflow.Activity
+      use Flexflow.State
 
       @impl true
       def type, do: :bypass
 
       @impl true
-      def action({:created, :initial}, activity, %{__args__: %{slow: strategy, sleep: sleep}}) do
+      def action({:created, :initial}, state, %{__args__: %{slow: strategy, sleep: sleep}}) do
         Process.sleep(sleep)
 
         case strategy do
-          :ok -> {:ok, activity}
+          :ok -> {:ok, state}
           :error -> {:error, :custom_error}
           :other -> {:ok, :other}
           :raise -> raise("fooo")
@@ -69,9 +69,9 @@ defmodule FlexflowDemoTest do
 
     use Flexflow.Process
 
-    activity Start
-    activity End
-    activity Slow, async: [timeout: 5000]
+    state Start
+    state End
+    state Slow, async: [timeout: 5000]
 
     event :first, Start ~> Slow do
       @impl true

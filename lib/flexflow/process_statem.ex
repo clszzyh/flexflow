@@ -26,7 +26,7 @@ defmodule Flexflow.ProcessStatem do
           :gen_statem.init_result(Flexflow.state_type())
   def init({module, id, opts}) do
     case Process.new(module, id, opts) do
-      {:ok, p} -> {:ok, p.start_activity, p}
+      {:ok, p} -> {:ok, p.start_state, p}
       {:error, reason} -> {:stop, {:error, reason}}
     end
   end

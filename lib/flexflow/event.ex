@@ -3,7 +3,7 @@ defmodule Flexflow.Event do
   Event
   """
 
-  alias Flexflow.Activity
+  alias Flexflow.State
   alias Flexflow.Context
   alias Flexflow.Process
   alias Flexflow.Util
@@ -85,39 +85,39 @@ defmodule Flexflow.Event do
   @spec key(t()) :: {Flexflow.state_type(), Flexflow.state_type()}
   def key(%{from: from, to: to}), do: {from, to}
 
-  @spec new({key(), {key(), key()}, options}, [Activity.t()], module()) :: t()
-  def new({_o, {from, _to}, _opts}, _activities, _process_module) when is_binary(from),
+  @spec new({key(), {key(), key()}, options}, [State.t()], module()) :: t()
+  def new({_o, {from, _to}, _opts}, _states, _process_module) when is_binary(from),
     do: raise(ArgumentError, "Name `#{from}` should be an atom")
 
-  def new({_o, {_from, to}, _opts}, _activities, _process_module) when is_binary(to),
+  def new({_o, {_from, to}, _opts}, _states, _process_module) when is_binary(to),
     do: raise(ArgumentError, "Name `#{to}` should be an atom")
 
-  def new({o, {_from, _to}, _opts}, _activities, _process_module) when is_binary(o),
+  def new({o, {_from, _to}, _opts}, _states, _process_module) when is_binary(o),
     do: raise(ArgumentError, "Name `#{o}` should be an atom")
 
-  def new({o, {from, to}, opts}, activities, process_module) do
-    from = Util.normalize_module(from, activities)
-    to = Util.normalize_module(to, activities)
-    new_1({o, {from, to}, opts}, activities, process_module)
+  def new({o, {from, to}, opts}, states, process_module) do
+    from = Util.normalize_module(from, states)
+    to = Util.normalize_module(to, states)
+    new_1({o, {from, to}, opts}, states, process_module)
   end
 
-  defp new_1({o, {from, to}, opts}, activities, process_module) when is_atom(o) do
+  defp new_1({o, {from, to}, opts}, states, process_module) when is_atom(o) do
     new_1(
-      {Util.normalize_module({o, from, to}, activities), {from, to}, opts},
-      activities,
+      {Util.normalize_module({o, from, to}, states), {from, to}, opts},
+      states,
       process_module
     )
   end
 
-  defp new_1({{o, name}, {from, to}, opts}, activities, process_module) do
+  defp new_1({{o, name}, {from, to}, opts}, states, process_module) do
     unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "`#{inspect(o)}` should implement #{__MODULE__}"
     end
 
-    activities = Map.new(activities, &{{&1.module, &1.name}, &1})
+    states = Map.new(states, &{{&1.module, &1.name}, &1})
 
-    activities[from] || raise(ArgumentError, "`#{inspect(from)}` is not defined")
-    activities[to] || raise(ArgumentError, "`#{inspect(to)}` is not defined")
+    states[from] || raise(ArgumentError, "`#{inspect(from)}` is not defined")
+    states[to] || raise(ArgumentError, "`#{inspect(to)}` is not defined")
 
     opts = opts ++ o.__opts__
     {graphviz_attributes, opts} = Keyword.pop(opts, :graphviz_attributes, [])
@@ -191,13 +191,13 @@ defmodule Flexflow.Event do
   @spec handle_event(event_type(), term, Flexflow.state_type(), Process.t()) ::
           event_handler_result()
   def handle_event(:enter, {from_module, _} = from, {to_module, _} = to, process) do
-    from_activity = process.activities[from]
-    to_activity = process.activities[to]
+    from_state = process.states[from]
+    to_state = process.states[to]
     t = process.events[{from, to}]
 
-    with {:ok, process} = from_module.handle_leave(from_activity, process),
-         {:ok, process} = t.module.handle_enter(t, process),
-         {:ok, process} = to_module.handle_enter(to_activity, process) do
+    with {:ok, process} <- from_module.handle_leave(from_state, process),
+         {:ok, process} <- t.module.handle_enter(t, process),
+         {:ok, process} <- to_module.handle_enter(to_state, process) do
       {:keep_state, process, process.__actions__}
     else
       {:error, reason} -> {:stop, reason, process}
@@ -208,13 +208,13 @@ defmodule Flexflow.Event do
     {:next_state, :ok, nil}
   end
 
-  @spec dispatch({Activity.t(), t(), Activity.t()}, Process.result()) :: Process.result()
+  @spec dispatch({State.t(), t(), State.t()}, Process.result()) :: Process.result()
   def dispatch(_, {:error, reason}), do: {:error, reason}
 
   def dispatch(
-        {%Activity{module: from_module, name: from_name}, %__MODULE__{}, %Activity{}},
+        {%State{module: from_module, name: from_name}, %__MODULE__{}, %State{}},
         {:ok, p}
       ) do
-    {:ok, put_in(p.activities[{from_module, from_name}].state, :completed)}
+    {:ok, put_in(p.states[{from_module, from_name}].state, :completed)}
   end
 end

@@ -5,7 +5,7 @@ defmodule Flexflow.ModuleRegistry do
 
   use GenServer, restart: :temporary
 
-  alias Flexflow.Activity
+  alias Flexflow.State
   alias Flexflow.Event
   alias Flexflow.Process
   alias Flexflow.Util
@@ -13,7 +13,7 @@ defmodule Flexflow.ModuleRegistry do
   require Logger
 
   @state %{
-    Activity => %{},
+    State => %{},
     Event => %{},
     Process => %{}
   }
@@ -77,7 +77,7 @@ defmodule Flexflow.ModuleRegistry do
       if Mix.env() == :test do
         Util.implement_modules()
       else
-        Process.impls() ++ Activity.impls() ++ Event.impls()
+        Process.impls() ++ State.impls() ++ Event.impls()
       end
 
     modules

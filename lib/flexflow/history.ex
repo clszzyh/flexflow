@@ -3,29 +3,29 @@ defmodule Flexflow.History do
   History
   """
 
-  @activities [:process_init, :process_loop]
+  @states [:process_init, :process_loop]
   @stages [:start, :end]
-  @type activity :: unquote(Enum.reduce(@activities, &{:|, [], [&1, &2]}))
+  @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type stage :: unquote(Enum.reduce(@stages, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{
           name: Flexflow.name(),
           stage: stage,
           metadata: map,
           measurements: map,
-          activity: activity(),
+          state: state(),
           time: integer
         }
-  @type new_input :: t() | map() | activity()
+  @type new_input :: t() | map() | state()
 
-  @enforce_keys [:name, :activity, :time, :stage]
+  @enforce_keys [:name, :state, :time, :stage]
   defstruct @enforce_keys ++ [measurements: %{}, metadata: %{}]
 
   @spec new(new_input) :: t()
-  def new(activity) when activity in @activities,
+  def new(state) when state in @states,
     do: %__MODULE__{
       name: :process,
       stage: :start,
-      activity: activity,
+      state: state,
       time: System.monotonic_time()
     }
 

@@ -1,13 +1,13 @@
 defmodule Flexflow.Util do
   @moduledoc false
 
-  alias Flexflow.Activities.Bypass
-  alias Flexflow.Activity
+  alias Flexflow.States.Bypass
+  alias Flexflow.State
   alias Flexflow.Event
   alias Flexflow.Events.Pass
   alias Flexflow.Process
 
-  @local_behaviours [Process, Event, Activity]
+  @local_behaviours [Process, Event, State]
 
   defp module_atom?(o) when is_atom(o), do: match?("Elixir." <> _, to_string(o))
 
@@ -15,15 +15,15 @@ defmodule Flexflow.Util do
           Flexflow.state_type_or_module()
           | {Flexflow.state_type_or_module(), Flexflow.state_type_or_module(),
              Flexflow.state_type_or_module()},
-          [Activity.t()]
+          [State.t()]
         ) ::
           Flexflow.state_type()
-  def normalize_module(o, activities \\ [])
+  def normalize_module(o, states \\ [])
 
-  def normalize_module({o, name}, _activities) when is_atom(o), do: {o, name}
-  def normalize_module({{o, name}, _from, _to}, _activities) when is_atom(o), do: {o, name}
+  def normalize_module({o, name}, _states) when is_atom(o), do: {o, name}
+  def normalize_module({{o, name}, _from, _to}, _states) when is_atom(o), do: {o, name}
 
-  def normalize_module(o, activities) when is_atom(o) do
+  def normalize_module(o, states) when is_atom(o) do
     if module_atom?(o) do
       _ = Code.ensure_loaded(o)
 
@@ -33,14 +33,14 @@ defmodule Flexflow.Util do
         raise ArgumentError, "`#{o}` should have a `name/0` function"
       end
     else
-      case Enum.find(activities, fn e -> e.name == o end) do
+      case Enum.find(states, fn e -> e.name == o end) do
         nil -> {Bypass, o}
         e -> {e.module, o}
       end
     end
   end
 
-  def normalize_module({o, {_, from_name}, _to}, _activities) when is_atom(o) do
+  def normalize_module({o, {_, from_name}, _to}, _states) when is_atom(o) do
     if module_atom?(o) do
       {o, :"#{o.name()}_#{from_name}"}
     else
@@ -48,8 +48,8 @@ defmodule Flexflow.Util do
     end
   end
 
-  def normalize_module({o, from, to}, activities) when is_atom(o) and is_atom(from) do
-    normalize_module({o, normalize_module(from, activities), to}, activities)
+  def normalize_module({o, from, to}, states) when is_atom(o) and is_atom(from) do
+    normalize_module({o, normalize_module(from, states), to}, states)
   end
 
   @spec random(non_neg_integer()) :: String.t()

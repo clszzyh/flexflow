@@ -1,7 +1,7 @@
 # Used by "mix format"
 locals_without_parens = [
-  activity: 1,
-  activity: 2,
+  state: 1,
+  state: 2,
   ~>: 2,
   event: 2,
   event: 3
