@@ -36,10 +36,12 @@ defmodule Flexflow.Event do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
+  @callback parent_module :: module()
+
   @doc "Invoked after compile, return :ok if valid"
   @callback validate(t(), Process.t()) :: :ok
 
-  @optional_callbacks [validate: 2]
+  @optional_callbacks [validate: 2, parent_module: 0]
 
   def impls do
     {:consolidated, modules} = Flexflow.EventTracker.__protocol__(:impls)
@@ -75,27 +77,31 @@ defmodule Flexflow.Event do
   @spec key(t()) :: Flexflow.identity()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({key(), {key(), key()}, options}, [Activity.t()]) :: t()
-  def new({_o, {from, _to}, _opts}, _activities) when is_binary(from),
+  @spec new({key(), {key(), key()}, options}, [Activity.t()], module()) :: t()
+  def new({_o, {from, _to}, _opts}, _activities, _process_module) when is_binary(from),
     do: raise(ArgumentError, "Name `#{from}` should be an atom")
 
-  def new({_o, {_from, to}, _opts}, _activities) when is_binary(to),
+  def new({_o, {_from, to}, _opts}, _activities, _process_module) when is_binary(to),
     do: raise(ArgumentError, "Name `#{to}` should be an atom")
 
-  def new({o, {_from, _to}, _opts}, _activities) when is_binary(o),
+  def new({o, {_from, _to}, _opts}, _activities, _process_module) when is_binary(o),
     do: raise(ArgumentError, "Name `#{o}` should be an atom")
 
-  def new({o, {from, to}, opts}, activities) do
+  def new({o, {from, to}, opts}, activities, process_module) do
     from = Util.normalize_module(from, activities)
     to = Util.normalize_module(to, activities)
-    new_1({o, {from, to}, opts}, activities)
+    new_1({o, {from, to}, opts}, activities, process_module)
   end
 
-  defp new_1({o, {from, to}, opts}, activities) when is_atom(o) do
-    new_1({Util.normalize_module({o, from, to}, activities), {from, to}, opts}, activities)
+  defp new_1({o, {from, to}, opts}, activities, process_module) when is_atom(o) do
+    new_1(
+      {Util.normalize_module({o, from, to}, activities), {from, to}, opts},
+      activities,
+      process_module
+    )
   end
 
-  defp new_1({{o, name}, {from, to}, opts}, activities) do
+  defp new_1({{o, name}, {from, to}, opts}, activities, process_module) do
     unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "`#{inspect(o)}` should implement #{__MODULE__}"
     end
@@ -106,16 +112,41 @@ defmodule Flexflow.Event do
     activities[to] || raise(ArgumentError, "`#{inspect(to)}` is not defined")
 
     opts = opts ++ o.__opts__
-    {attributes, opts} = Keyword.pop(opts, :attributes, [])
+    {graphviz_attributes, opts} = Keyword.pop(opts, :graphviz_attributes, [])
+    {ast, opts} = Keyword.pop(opts, :do)
+    module = new_module(ast, o, name, process_module)
 
     %__MODULE__{
-      module: o,
+      module: module,
       name: name,
       from: from,
       to: to,
-      __graphviz__: attributes,
+      __graphviz__: graphviz_attributes,
       __opts__: opts
     }
+  end
+
+  defp new_module(nil, parent_module, _, _), do: parent_module
+
+  defp new_module(ast, parent_module, name, process_module) do
+    module_name = Module.concat([process_module, parent_module, Macro.camelize(to_string(name))])
+
+    ast =
+      quote do
+        use Flexflow.Event
+        @impl true
+        def name, do: unquote(name)
+
+        @impl true
+        def parent_module, do: unquote(parent_module)
+
+        unquote(ast)
+      end
+
+    {:module, ^module_name, _byte_code, _} =
+      Module.create(module_name, ast, Macro.Env.location(__ENV__))
+
+    module_name
   end
 
   @spec validate([t()]) :: [t()]

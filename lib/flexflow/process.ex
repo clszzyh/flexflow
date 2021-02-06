@@ -128,7 +128,7 @@ defmodule Flexflow.Process do
   end
 
   defmacro event(key, tuple, opts \\ []) do
-    quote bind_quoted: [key: key, tuple: tuple, opts: opts] do
+    quote bind_quoted: [key: key, tuple: tuple, opts: Macro.escape(opts)] do
       @__events__ {key, tuple, opts}
       @__definitions__ {:event, Tuple.insert_at(tuple, 0, key)}
     end
@@ -157,7 +157,7 @@ defmodule Flexflow.Process do
       env.module
       |> Module.get_attribute(:__events__)
       |> Enum.reverse()
-      |> Enum.map(&Event.new(&1, activities))
+      |> Enum.map(&Event.new(&1, activities, env.module))
       |> Event.validate()
 
     definitions =

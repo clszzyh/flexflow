@@ -49,11 +49,11 @@ defmodule Flexflow.ProcessLoader do
         event :first, Start ~> End
       end
 
-    {:module, final_module, _byte_code, _} = Module.create(module_name, ast, file: path, line: 0)
+    {:module, ^module_name, _byte_code, _} = Module.create(module_name, ast, file: path, line: 0)
 
-    Logger.debug("Create #{final_module} -> #{name}")
+    Logger.debug("Create #{module_name} -> #{name}")
 
-    final_module
+    module_name
   end
 
   defp compile(_body, path), do: raise(ArgumentError, "#{path} is invalid")

@@ -73,7 +73,10 @@ defmodule FlexflowDemoTest do
     activity End
     activity Slow, async: [timeout: 5000]
 
-    event :first, Start ~> Slow
+    event :first, Start ~> Slow do
+      def hello(foo, bar), do: {foo, bar}
+    end
+
     event :last, Slow ~> End
   end
 end
