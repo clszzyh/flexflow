@@ -85,7 +85,7 @@ defmodule ProcessTest do
   test "process p1" do
     name = to_string(elem(__ENV__.function, 0))
     {:ok, pid} = Flexflow.start({P1, name})
-    {:exist, pid2} = Flexflow.start({P1, name})
+    {:exist, pid2} = Flexflow.server({P1, name})
     pid3 = Flexflow.pid({P1, name})
     assert pid == pid2
     assert pid == pid3

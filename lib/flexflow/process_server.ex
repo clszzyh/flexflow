@@ -3,7 +3,6 @@ defmodule Flexflow.ProcessServer do
   ProcessServer
   """
 
-  alias Flexflow.History
   alias Flexflow.Process
   alias Flexflow.ProcessManager
 
@@ -32,10 +31,7 @@ defmodule Flexflow.ProcessServer do
 
   @impl true
   def init({module, id, opts}) do
-    case History.ensure_new({module, id}) do
-      {:ok, _} -> {:ok, Process.new(module, id, opts), {:continue, :after_init}}
-      {:error, reason} -> {:stop, reason}
-    end
+    {:ok, Process.new(module, id, opts), {:continue, :after_init}}
   end
 
   @impl true

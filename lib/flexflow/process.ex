@@ -20,6 +20,7 @@ defmodule Flexflow.Process do
           name: Flexflow.name(),
           id: Flexflow.id() | nil,
           state: state(),
+          start_activity: Flexflow.identity(),
           activities: %{Flexflow.identity() => Activity.t()},
           gateways: %{Flexflow.identity() => Gateway.t()},
           parent: Flexflow.process_key(),
@@ -41,7 +42,7 @@ defmodule Flexflow.Process do
   @type result :: {:ok, t()} | {:error, term()}
   @type definition :: {:activity | :gateway, Flexflow.identity()}
 
-  @enforce_keys [:module, :activities, :gateways, :__definitions__]
+  @enforce_keys [:module, :activities, :gateways, :start_activity, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
   defstruct @enforce_keys ++
               [
@@ -144,7 +145,7 @@ defmodule Flexflow.Process do
     :ok
   end
 
-  defmacro __before_compile__(env) do
+  defp new_process(env) do
     activities =
       env.module
       |> Module.get_attribute(:__activities__)
@@ -174,14 +175,18 @@ defmodule Flexflow.Process do
         {k, %{o | __in_edges__: in_edges, __out_edges__: out_edges}}
       end)
 
-    process = %__MODULE__{
+    %__MODULE__{
       activities: new_activities,
       module: env.module,
+      start_activity:
+        Enum.find_value(activities, fn a -> if Activity.start?(a), do: Activity.key(a) end),
       gateways: for(t <- gateways, into: %{}, do: {Gateway.key(t), t}),
       __definitions__: definitions
     }
+  end
 
-    quote bind_quoted: [module: __MODULE__, process: Macro.escape(process)] do
+  defmacro __before_compile__(env) do
+    quote bind_quoted: [module: __MODULE__, process: Macro.escape(new_process(env))] do
       alias Flexflow.Process
 
       unless Module.get_attribute(__MODULE__, :moduledoc) do

@@ -6,6 +6,7 @@ defmodule Flexflow.ProcessManager do
   use DynamicSupervisor
   use Flexflow.ProcessRegistry
 
+  alias Flexflow.History
   alias Flexflow.ProcessParentManager
   alias Flexflow.ProcessServer
   alias Flexflow.Util
@@ -36,9 +37,20 @@ defmodule Flexflow.ProcessManager do
   @spec server(Flexflow.process_key(), Flexflow.process_args()) :: server_return
   def server({module, id}, opts \\ %{}) do
     case start_child({module, id}, opts) do
-      {:ok, pid} -> {:ok, pid}
-      {:error, {:already_started, pid}} -> {:exist, pid}
-      {:error, reason} -> {:error, reason}
+      {:ok, pid} ->
+        {:ok, pid}
+
+      {:error, {:already_started, pid}} ->
+        {:exist, pid}
+
+      {:error, :already_exists} ->
+        case child_pid({module, id}) do
+          nil -> {:error, :not_exist}
+          pid -> {:exist, pid}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -79,15 +91,15 @@ defmodule Flexflow.ProcessManager do
 
   @spec start_child(Flexflow.process_key(), Flexflow.process_args()) ::
           {:ok, pid()} | {:error, term}
-  defp start_child({module, id}, opts) do
-    case server_pid(module) do
-      {:ok, srv} ->
-        case DynamicSupervisor.start_child(srv, {ProcessServer, {id, opts}}) do
-          :ignore -> {:error, :ignore}
-          {:ok, pid, _info} -> {:ok, pid}
-          rest -> rest
-        end
-
+  def start_child({module, id}, opts) do
+    with {:ok, srv} <- server_pid(module),
+         {:ok, _} <- History.ensure_new({module, id}) do
+      case DynamicSupervisor.start_child(srv, {ProcessServer, {id, opts}}) do
+        :ignore -> {:error, :ignore}
+        {:ok, pid, _info} -> {:ok, pid}
+        rest -> rest
+      end
+    else
       {:error, reason} ->
         {:error, reason}
     end
