@@ -12,13 +12,13 @@ defmodule Flexflow.Event do
 
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
-  @type key :: Flexflow.identity_or_module() | String.t()
+  @type key :: Flexflow.state_type_or_module() | String.t()
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
           state: state(),
-          from: Flexflow.identity(),
-          to: Flexflow.identity(),
+          from: Flexflow.state_type(),
+          to: Flexflow.state_type(),
           __opts__: options,
           __graphviz__: Keyword.t(),
           __context__: Context.t()
@@ -33,15 +33,17 @@ defmodule Flexflow.Event do
                 __context__: Context.new()
               ]
 
+  @type event_type :: :gen_statem.event_type()
+  @type event_handler_result :: :gen_statem.event_handler_result(Flexflow.state_type())
+  @type state_enter_result :: :gen_statem.state_enter_result(Flexflow.state_type())
+
   @doc "Module name"
   @callback name :: Flexflow.name()
-
-  @callback parent_module :: module()
 
   @doc "Invoked after compile, return :ok if valid"
   @callback validate(t(), Process.t()) :: :ok
 
-  @optional_callbacks [validate: 2, parent_module: 0]
+  @callback handle_enter(t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
 
   def impls do
     {:consolidated, modules} = Flexflow.EventTracker.__protocol__(:impls)
@@ -68,14 +70,20 @@ defmodule Flexflow.Event do
       @impl true
       def name, do: @__name__
 
+      @impl true
+      def validate(_, _), do: :ok
+
+      @impl true
+      def handle_enter(_, p), do: {:ok, p}
+
       defoverridable unquote(__MODULE__)
 
       Module.delete_attribute(__MODULE__, :__name__)
     end
   end
 
-  @spec key(t()) :: Flexflow.identity()
-  def key(%{module: module, name: name}), do: {module, name}
+  @spec key(t()) :: {Flexflow.state_type(), Flexflow.state_type()}
+  def key(%{from: from, to: to}), do: {from, to}
 
   @spec new({key(), {key(), key()}, options}, [Activity.t()], module()) :: t()
   def new({_o, {from, _to}, _opts}, _activities, _process_module) when is_binary(from),
@@ -132,15 +140,16 @@ defmodule Flexflow.Event do
     module_name = Module.concat([process_module, parent_module, Macro.camelize(to_string(name))])
 
     ast =
-      quote do
+      quote generated: true do
         use Flexflow.Event
+
+        unquote(ast)
+
         @impl true
         def name, do: unquote(name)
 
         @impl true
-        def parent_module, do: unquote(parent_module)
-
-        unquote(ast)
+        def validate(e, p), do: unquote(parent_module).validate(e, p)
       end
 
     {:module, ^module_name, _byte_code, _} =
@@ -170,20 +179,33 @@ defmodule Flexflow.Event do
     events
   end
 
-  @spec validate_process(t(), Process.t()) :: :ok
-  def validate_process(%__MODULE__{module: module} = g, %Process{} = p) do
-    if function_exported?(module, :validate, 2) do
-      :ok = module.validate(g, p)
-    else
-      :ok
-    end
-  end
-
   @spec init(Process.t()) :: Process.t()
   def init(%Process{events: events} = p) do
     Enum.reduce(events, p, fn {key, event}, p ->
       put_in(p, [:events, key], %{event | state: :initial})
     end)
+  end
+
+  @spec handle_event(:enter, Flexflow.state_type(), Flexflow.state_type(), Process.t()) ::
+          state_enter_result
+  @spec handle_event(event_type(), term, Flexflow.state_type(), Process.t()) ::
+          event_handler_result()
+  def handle_event(:enter, {from_module, _} = from, {to_module, _} = to, process) do
+    from_activity = process.activities[from]
+    to_activity = process.activities[to]
+    t = process.events[{from, to}]
+
+    with {:ok, process} = from_module.handle_leave(from_activity, process),
+         {:ok, process} = t.module.handle_enter(t, process),
+         {:ok, process} = to_module.handle_enter(to_activity, process) do
+      {:keep_state, process, process.__actions__}
+    else
+      {:error, reason} -> {:stop, reason, process}
+    end
+  end
+
+  def handle_event(_event_type, _content, _state, _process) do
+    {:next_state, :ok, nil}
   end
 
   @spec dispatch({Activity.t(), t(), Activity.t()}, Process.result()) :: Process.result()

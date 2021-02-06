@@ -14,15 +14,16 @@ defmodule Flexflow.Process do
 
   @states [:created, :active, :loop, :waiting, :paused]
 
+  @type action :: :gen_statem.action()
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
           id: Flexflow.id() | nil,
           state: state(),
-          start_activity: Flexflow.identity(),
-          activities: %{Flexflow.identity() => Activity.t()},
-          events: %{Flexflow.identity() => Event.t()},
+          start_activity: Flexflow.state_type(),
+          activities: %{Flexflow.state_type() => Activity.t()},
+          events: %{Flexflow.state_type() => Event.t()},
           parent: Flexflow.process_key(),
           childs: [Flexflow.process_key()],
           request_id: String.t(),
@@ -32,6 +33,7 @@ defmodule Flexflow.Process do
           __context__: Context.t(),
           __definitions__: [definition],
           __graphviz__: Keyword.t(),
+          __actions__: [action],
           __listeners__: %{EventDispatcher.listener() => EventDispatcher.listen_result()},
           __loop__: integer(),
           __counter__: integer(),
@@ -40,7 +42,7 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type definition :: {:activity | :event, Flexflow.identity()}
+  @type definition :: {:activity | :event, Flexflow.state_type()}
 
   @enforce_keys [:module, :activities, :events, :start_activity, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
@@ -59,6 +61,7 @@ defmodule Flexflow.Process do
                 __args__: %{},
                 __tasks__: %{},
                 __opts__: [],
+                __actions__: [],
                 __listeners__: %{},
                 __context__: Context.new()
               ]
@@ -139,8 +142,13 @@ defmodule Flexflow.Process do
   def __after_compile__(env, _bytecode) do
     process = env.module.new()
 
-    for {_, activity} <- process.activities, do: Activity.validate_process(activity, process)
-    for {_, event} <- process.events, do: Event.validate_process(event, process)
+    for {_, %{module: module} = activity} <- process.activities do
+      :ok = module.validate(activity, process)
+    end
+
+    for {_, %{module: module} = event} <- process.events do
+      :ok = module.validate(event, process)
+    end
 
     :ok
   end

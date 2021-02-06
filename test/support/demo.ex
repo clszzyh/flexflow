@@ -74,7 +74,10 @@ defmodule FlexflowDemoTest do
     activity Slow, async: [timeout: 5000]
 
     event :first, Start ~> Slow do
-      def hello(foo, bar), do: {foo, bar}
+      @impl true
+      def validate(_, _) do
+        :ok
+      end
     end
 
     event :last, Slow ~> End

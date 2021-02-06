@@ -3,10 +3,9 @@ defmodule Flexflow.ProcessStatem do
   gen_statem
   """
 
+  alias Flexflow.Event
   alias Flexflow.Process
   use Flexflow.ProcessRegistry
-
-  @type state_type :: Flexflow.identity()
 
   @behaviour :gen_statem
 
@@ -14,17 +13,31 @@ defmodule Flexflow.ProcessStatem do
     :gen_statem.start_link(via_tuple({module, id}), __MODULE__, {module, id, opts}, [])
   end
 
+  @spec state(module, Flexflow.id()) :: {:ok, Flexflow.state_type(), Process.t()}
+  def state(module, id) do
+    :gen_statem.call(pid({module, id}), :state)
+  end
+
   @impl true
   def callback_mode, do: [:handle_event_function, :state_enter]
 
   @impl true
   @spec init({module(), Flexflow.id(), Flexflow.process_args()}) ::
-          :gen_statem.init_result(state_type)
+          :gen_statem.init_result(Flexflow.state_type())
   def init({module, id, opts}) do
     case Process.new(module, id, opts) do
       {:ok, p} -> {:ok, p.start_activity, p}
       {:error, reason} -> {:stop, {:error, reason}}
     end
+  end
+
+  @impl true
+  def handle_event({:call, from}, :state, state, process) do
+    {:keep_state_and_data, [{:reply, from, {:ok, state, process}}]}
+  end
+
+  def handle_event(event, content, state, process) do
+    Event.handle_event(event, content, state, %{process | __actions__: []})
   end
 
   @impl true

@@ -17,8 +17,8 @@ defmodule Flexflow do
   @type name :: atom()
   @type id :: String.t()
 
-  @type identity_or_module :: identity | module()
-  @type identity :: {module(), name()}
+  @type state_type_or_module :: state_type | module()
+  @type state_type :: {module(), name()}
 
   defdelegate server(key, args \\ %{}), to: ProcessManager
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :start_child

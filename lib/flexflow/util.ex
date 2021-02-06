@@ -12,12 +12,12 @@ defmodule Flexflow.Util do
   defp module_atom?(o) when is_atom(o), do: match?("Elixir." <> _, to_string(o))
 
   @spec normalize_module(
-          Flexflow.identity_or_module()
-          | {Flexflow.identity_or_module(), Flexflow.identity_or_module(),
-             Flexflow.identity_or_module()},
+          Flexflow.state_type_or_module()
+          | {Flexflow.state_type_or_module(), Flexflow.state_type_or_module(),
+             Flexflow.state_type_or_module()},
           [Activity.t()]
         ) ::
-          Flexflow.identity()
+          Flexflow.state_type()
   def normalize_module(o, activities \\ [])
 
   def normalize_module({o, name}, _activities) when is_atom(o), do: {o, name}

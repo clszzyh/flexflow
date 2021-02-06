@@ -25,7 +25,7 @@ defmodule Flexflow.Activity do
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type type :: unquote(Enum.reduce(@types, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
-  @type edge :: {Flexflow.identity(), Flexflow.identity()}
+  @type edge :: {Flexflow.state_type(), Flexflow.state_type()}
   @type action_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
   @type t :: %__MODULE__{
           module: module(),
@@ -66,8 +66,6 @@ defmodule Flexflow.Activity do
 
   @callback graphviz_attribute :: keyword()
 
-  @optional_callbacks [validate: 2]
-
   def impls do
     {:consolidated, modules} = Flexflow.ActivityTracker.__protocol__(:impls)
     modules
@@ -95,6 +93,8 @@ defmodule Flexflow.Activity do
       def name, do: @__name__
       @impl true
       def graphviz_attribute, do: []
+      @impl true
+      def validate(_, _), do: :ok
 
       @impl true
       def action(_, _, _), do: :ok
@@ -105,10 +105,10 @@ defmodule Flexflow.Activity do
     end
   end
 
-  @spec key(t()) :: Flexflow.identity()
+  @spec key(t()) :: Flexflow.state_type()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({Flexflow.identity_or_module(), options}) :: t()
+  @spec new({Flexflow.state_type_or_module(), options}) :: t()
   def new({o, _opts}) when is_binary(o), do: raise(ArgumentError, "Name `#{o}` should be an atom")
   def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
 
@@ -165,19 +165,12 @@ defmodule Flexflow.Activity do
     activities
   end
 
-  @spec validate_process(t(), Process.t()) :: :ok
-  def validate_process(%__MODULE__{module: mod, type: type} = a, %Process{} = p)
-      when type in @types do
-    module = if function_exported?(mod, :validate, 2), do: mod, else: @type_map[type]
-    :ok = module.validate(a, p)
-  end
-
   @spec init(Process.t()) :: Process.t() | {:error, term()}
   def init(%Process{activities: activities} = p) do
     Enum.reduce_while(activities, p, &init_1/2)
   end
 
-  @spec init_1({Flexflow.identity(), t()}, Process.t()) ::
+  @spec init_1({Flexflow.state_type(), t()}, Process.t()) ::
           {:halt, {:error, term()}} | {:cont, Process.t()}
   defp init_1({key, %{type: :start, module: module, name: name} = activity}, p) do
     with {:ok, p} <- change(:initial, activity, p),
@@ -225,7 +218,7 @@ defmodule Flexflow.Activity do
     end
   end
 
-  @spec callback(Flexflow.identity(), Process.t(), :ok | :error, term) :: Process.result()
+  @spec callback(Flexflow.state_type(), Process.t(), :ok | :error, term) :: Process.result()
   def callback({module, name}, %Process{} = p, :ok, {:ok, %__MODULE__{} = e}) do
     {:ok, put_in(p, [:activities, {module, name}], e)}
   end
