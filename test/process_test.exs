@@ -104,7 +104,7 @@ defmodule ProcessTest do
     assert process.state == :waiting
     assert process.activities[{N1, :n1}].state == :completed
     assert process.activities[{N2, :n2}].state == :initial
-    assert process.gateways[{T1, :t1_n1}].state == :initial
+    assert process.events[{T1, :t1_n1}].state == :initial
 
     Process.sleep(60)
     process = Flexflow.state({P1, name})

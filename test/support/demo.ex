@@ -12,7 +12,7 @@ defmodule FlexflowDemoTest do
 
     defmodule String.to_atom("#{__MODULE__}.T#{i}") do
       @moduledoc false
-      use Flexflow.Gateway
+      use Flexflow.Event
     end
   end
 
@@ -33,13 +33,13 @@ defmodule FlexflowDemoTest do
     activity N1, type: :start, foo: %{aaa: :bbb}
     activity N2
 
-    gateway T1, N1 ~> N2, foo: :baz
+    event T1, N1 ~> N2, foo: :baz
 
     activity N3, async: true
     activity N4, type: :end
 
-    gateway T2, N2 ~> N3
-    gateway {T2, :t2_name}, N2 ~> N4
+    event T2, N2 ~> N3
+    event {T2, :t2_name}, N2 ~> N4
   end
 
   defmodule P2 do
@@ -73,7 +73,7 @@ defmodule FlexflowDemoTest do
     activity End
     activity Slow, async: [timeout: 5000]
 
-    gateway :first, Start ~> Slow
-    gateway :last, Slow ~> End
+    event :first, Start ~> Slow
+    event :last, Slow ~> End
   end
 end

@@ -6,6 +6,6 @@ defprotocol Flexflow.ActivityTracker do
   def ping(o)
 end
 
-defprotocol Flexflow.GatewayTracker do
+defprotocol Flexflow.EventTracker do
   def ping(o)
 end

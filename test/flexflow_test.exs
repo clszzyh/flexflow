@@ -6,7 +6,7 @@ defmodule FlexflowTest do
   @moduletag :basic
 
   alias Flexflow.Activity
-  alias Flexflow.Gateway
+  alias Flexflow.Event
 
   alias FlexflowDemoTest.{N1, N2, N3, N4}
   alias FlexflowDemoTest.{P1, P2}
@@ -40,9 +40,9 @@ defmodule FlexflowTest do
     t2_s = {T2, :t2_n2}
     t3_s = {T2, :t2_name}
 
-    t1 = %Gateway{module: T1, name: :t1_n1, __opts__: [foo: :baz], from: n1_s, to: n2_s}
-    t2 = %Gateway{module: T2, name: :t2_n2, from: n2_s, to: n3_s}
-    t3 = %Gateway{module: T2, name: :t2_name, from: n2_s, to: n4_s}
+    t1 = %Event{module: T1, name: :t1_n1, __opts__: [foo: :baz], from: n1_s, to: n2_s}
+    t2 = %Event{module: T2, name: :t2_n2, from: n2_s, to: n3_s}
+    t3 = %Event{module: T2, name: :t2_name, from: n2_s, to: n4_s}
 
     n1 = Activity.new({n1_s, foo: %{aaa: :bbb}, type: :start})
     n2 = Activity.new({n2_s, []})
@@ -57,15 +57,15 @@ defmodule FlexflowTest do
     assert P1.new().__definitions__ == [
              activity: n1_s,
              activity: n2_s,
-             gateway: t1_s,
+             event: t1_s,
              activity: n3_s,
              activity: n4_s,
-             gateway: t2_s,
-             gateway: t3_s
+             event: t2_s,
+             event: t3_s
            ]
 
     assert P1.new().activities == %{n1_s => n1, n2_s => n2, n3_s => n3, n4_s => n4}
-    assert P1.new().gateways == %{t1_s => t1, t2_s => t2, t3_s => t3}
+    assert P1.new().events == %{t1_s => t1, t2_s => t2, t3_s => t3}
   end
 
   test "p2" do
@@ -79,21 +79,21 @@ defmodule FlexflowTest do
       activity {N1, :n}, type: :start
       activity :n2
       activity N3, type: :end
-      gateway T1, :n ~> N3
-      gateway T2, :n ~> :n2
+      event T1, :n ~> N3
+      event T2, :n ~> :n2
     """ => :ok,
     """
       activity Start
       activity :foo
       activity N3, type: :end
-      gateway T1, :start ~> N3
-      gateway T2, :start ~> :foo
+      event T1, :start ~> N3
+      event T2, :start ~> :foo
     """ => :ok,
     "" => "Activity is empty",
     """
       activity N1, type: :start
       activity N2, type: :end
-    """ => "Gateway is empty",
+    """ => "Event is empty",
     """
       activity N0
     """ => "`Elixir.N0` should have a `name/0` function",
@@ -101,74 +101,74 @@ defmodule FlexflowTest do
       activity N1
       activity N2
       activity N1
-      gateway T1, N1 ~> N2
+      event T1, N1 ~> N2
     """ => "Activity `n1` is defined twice",
     """
       activity Start
       activity {N3, "n3"}, type: :end
-      gateway T1, :start ~> "n3"
+      event T1, :start ~> "n3"
     """ => "Name `n3` should be an atom",
     """
       activity N1, type: :start
       activity N2, type: :end
-      gateway T1, :n1 ~> N4
+      event T1, :n1 ~> N4
     """ => "`{FlexflowDemoTest.N4, :n4}` is not defined",
     """
       activity N1, type: :start
       activity N2, type: :end
-      gateway T1, :n1 ~> :n2
-      gateway T2, :n1 ~> :n2
-    """ => "Gateway `{{FlexflowDemoTest.N1, :n1}, {FlexflowDemoTest.N2, :n2}}` is defined twice",
+      event T1, :n1 ~> :n2
+      event T2, :n1 ~> :n2
+    """ => "Event `{{FlexflowDemoTest.N1, :n1}, {FlexflowDemoTest.N2, :n2}}` is defined twice",
     """
       activity Start
       activity End
       activity N1
-      gateway {T1, :t}, Start ~> End
-      gateway {T1, :t}, N1 ~> End
-    """ => "Gateway `{FlexflowDemoTest.T1, :t}` is defined twice",
+      event {T1, :t}, Start ~> End
+      event {T1, :t}, N1 ~> End
+    """ => "Event `{FlexflowDemoTest.T1, :t}` is defined twice",
     """
       activity N1
       activity N2
-      gateway T1, N1 ~> N2
+      event T1, N1 ~> N2
     """ => "Need a start activity",
     """
       activity N1, type: :start
       activity N2, type: :start
-      gateway T1, N1 ~> N2
+      event T1, N1 ~> N2
     """ => "Multiple start activity found",
     """
       activity N1, type: :start
       activity N2
-      gateway T1, N1 ~> N2
+      event T1, N1 ~> N2
     """ => "Need one or more end activity",
     """
       activity N1, type: :start
       activity N2
       activity N3, type: :end
-      gateway T1, N1 ~> N2
+      event T1, N1 ~> N2
     """ => "In edges of `{FlexflowDemoTest.N3, :n3}` is empty",
     """
       activity N1, type: :start
       activity N2
       activity N3, type: :end
-      gateway T1, N2 ~> N3
+      event T1, N2 ~> N3
     """ => "Out edges of `{FlexflowDemoTest.N1, :n1}` is empty",
     """
       activity N1, type: :start
       activity N2
       activity N3, type: :end
-      gateway T1, N1 ~> N3
+      event T1, N1 ~> N3
     """ => "`{FlexflowDemoTest.N2, :n2}` is isolated",
     """
       activity N1, type: :start
       activity N3, type: :end
-      gateway T1, :n ~> N3
+      event T1, :n ~> N3
     """ => "`{Flexflow.Activities.Bypass, :n}` is not defined",
     """
       activity {N1, :n}, type: :start
       activity {N2, :n}
       activity N3, type: :end
-      gateway T1, :n ~> N3
+      event T1, :n ~> N3
     """ => "Activity `n` is defined twice"
   }
 

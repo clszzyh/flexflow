@@ -24,12 +24,12 @@ defmodule Review do
   end
 
   defmodule Submit do
-    use Flexflow.Gateway
+    use Flexflow.Event
   end
 
   ## Start activity
   activity {Start, :draft}
-  ## End activity, `async` mode means this gateway run's in a separated elixir process.
+  ## End activity, `async` mode means this event run's in a separated elixir process.
   activity {End, :reviewed}, async: true
   activity {End, :canceled}
   ## Bypass activity
@@ -37,22 +37,22 @@ defmodule Review do
   ## Custom activity
   activity Reviewing
 
-  ## Define a gateway
+  ## Define a event
   ## `a ~> b` is a shortcut of `{a, b}`
-  gateway :modify1, :draft ~> :draft
-  gateway :cancel1, :draft ~> :canceled
+  event :modify1, :draft ~> :draft
+  event :cancel1, :draft ~> :canceled
 
-  ## Custom gateway
-  gateway Submit, :draft ~> Reviewing
+  ## Custom event
+  event Submit, :draft ~> Reviewing
 
-  gateway :modify2, :rejected ~> :rejected
-  gateway :cancel2, :rejected ~> :canceled
+  event :modify2, :rejected ~> :rejected
+  event :cancel2, :rejected ~> :canceled
 
   ## With custom name
-  gateway {Submit, :submit2}, :rejected ~> Reviewing
+  event {Submit, :submit2}, :rejected ~> Reviewing
 
-  gateway :reject, Reviewing ~> :rejected
-  gateway :agree, Reviewing ~> :reviewed
+  event :reject, Reviewing ~> :rejected
+  event :agree, Reviewing ~> :reviewed
 end
 ```
 

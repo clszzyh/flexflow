@@ -3,11 +3,11 @@ defmodule Flexflow.Util do
 
   alias Flexflow.Activities.Bypass
   alias Flexflow.Activity
-  alias Flexflow.Gateway
-  alias Flexflow.Gateways.Pass
+  alias Flexflow.Event
+  alias Flexflow.Events.Pass
   alias Flexflow.Process
 
-  @local_behaviours [Process, Gateway, Activity]
+  @local_behaviours [Process, Event, Activity]
 
   defp module_atom?(o) when is_atom(o), do: match?("Elixir." <> _, to_string(o))
 

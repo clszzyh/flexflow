@@ -6,7 +6,7 @@ defmodule Flexflow.ModuleRegistry do
   use GenServer, restart: :temporary
 
   alias Flexflow.Activity
-  alias Flexflow.Gateway
+  alias Flexflow.Event
   alias Flexflow.Process
   alias Flexflow.Util
 
@@ -14,7 +14,7 @@ defmodule Flexflow.ModuleRegistry do
 
   @state %{
     Activity => %{},
-    Gateway => %{},
+    Event => %{},
     Process => %{}
   }
 
@@ -77,7 +77,7 @@ defmodule Flexflow.ModuleRegistry do
       if Mix.env() == :test do
         Util.implement_modules()
       else
-        Process.impls() ++ Activity.impls() ++ Gateway.impls()
+        Process.impls() ++ Activity.impls() ++ Event.impls()
       end
 
     modules

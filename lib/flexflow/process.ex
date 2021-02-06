@@ -6,8 +6,8 @@ defmodule Flexflow.Process do
   alias Flexflow.Activity
   alias Flexflow.Config
   alias Flexflow.Context
+  alias Flexflow.Event
   alias Flexflow.EventDispatcher
-  alias Flexflow.Gateway
   alias Flexflow.TaskSupervisor
   alias Flexflow.Telemetry
   alias Flexflow.Util
@@ -22,7 +22,7 @@ defmodule Flexflow.Process do
           state: state(),
           start_activity: Flexflow.identity(),
           activities: %{Flexflow.identity() => Activity.t()},
-          gateways: %{Flexflow.identity() => Gateway.t()},
+          events: %{Flexflow.identity() => Event.t()},
           parent: Flexflow.process_key(),
           childs: [Flexflow.process_key()],
           request_id: String.t(),
@@ -40,9 +40,9 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type definition :: {:activity | :gateway, Flexflow.identity()}
+  @type definition :: {:activity | :event, Flexflow.identity()}
 
-  @enforce_keys [:module, :activities, :gateways, :start_activity, :__definitions__]
+  @enforce_keys [:module, :activities, :events, :start_activity, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
   defstruct @enforce_keys ++
               [
@@ -66,7 +66,7 @@ defmodule Flexflow.Process do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Invoked when process is started, after activities and gateways `init`, see `Flexflow.Api.init/1`"
+  @doc "Invoked when process is started, after activities and events `init`, see `Flexflow.Api.init/1`"
   @callback init(t()) :: result()
   @doc "Invoked when process child is started"
   @callback init_child(t()) :: result()
@@ -86,7 +86,7 @@ defmodule Flexflow.Process do
   defmacro __using__(opts) do
     quote do
       alias Flexflow.Activities.{Bypass, End, Start}
-      alias Flexflow.Gateways.Pass
+      alias Flexflow.Events.Pass
 
       @__opts__ unquote(opts)
 
@@ -96,9 +96,9 @@ defmodule Flexflow.Process do
         def ping(_), do: :pong
       end
 
-      import unquote(__MODULE__), only: [activity: 1, activity: 2, ~>: 2, gateway: 2, gateway: 3]
+      import unquote(__MODULE__), only: [activity: 1, activity: 2, ~>: 2, event: 2, event: 3]
 
-      for attribute <- [:__activities__, :__gateways__, :__definitions__] do
+      for attribute <- [:__activities__, :__events__, :__definitions__] do
         Module.register_attribute(__MODULE__, attribute, accumulate: true)
       end
 
@@ -127,10 +127,10 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro gateway(key, tuple, opts \\ []) do
+  defmacro event(key, tuple, opts \\ []) do
     quote bind_quoted: [key: key, tuple: tuple, opts: opts] do
-      @__gateways__ {key, tuple, opts}
-      @__definitions__ {:gateway, Tuple.insert_at(tuple, 0, key)}
+      @__events__ {key, tuple, opts}
+      @__definitions__ {:event, Tuple.insert_at(tuple, 0, key)}
     end
   end
 
@@ -140,7 +140,7 @@ defmodule Flexflow.Process do
     process = env.module.new()
 
     for {_, activity} <- process.activities, do: Activity.validate_process(activity, process)
-    for {_, gateway} <- process.gateways, do: Gateway.validate_process(gateway, process)
+    for {_, event} <- process.events, do: Event.validate_process(event, process)
 
     :ok
   end
@@ -153,12 +153,12 @@ defmodule Flexflow.Process do
       |> Enum.map(&Activity.new/1)
       |> Activity.validate()
 
-    gateways =
+    events =
       env.module
-      |> Module.get_attribute(:__gateways__)
+      |> Module.get_attribute(:__events__)
       |> Enum.reverse()
-      |> Enum.map(&Gateway.new(&1, activities))
-      |> Gateway.validate()
+      |> Enum.map(&Event.new(&1, activities))
+      |> Event.validate()
 
     definitions =
       env.module
@@ -169,8 +169,8 @@ defmodule Flexflow.Process do
     new_activities =
       Map.new(activities, fn o ->
         k = Activity.key(o)
-        in_edges = for(t <- gateways, t.to == k, do: {Gateway.key(t), t.from})
-        out_edges = for(t <- gateways, t.from == k, do: {Gateway.key(t), t.to})
+        in_edges = for(t <- events, t.to == k, do: {Event.key(t), t.from})
+        out_edges = for(t <- events, t.from == k, do: {Event.key(t), t.to})
 
         {k, %{o | __in_edges__: in_edges, __out_edges__: out_edges}}
       end)
@@ -180,7 +180,7 @@ defmodule Flexflow.Process do
       module: env.module,
       start_activity:
         Enum.find_value(activities, fn a -> if Activity.start?(a), do: Activity.key(a) end),
-      gateways: for(t <- gateways, into: %{}, do: {Gateway.key(t), t}),
+      events: for(t <- events, into: %{}, do: {Event.key(t), t}),
       __definitions__: definitions
     }
   end
@@ -229,7 +229,7 @@ defmodule Flexflow.Process do
       for attribute <- [
             :__activities__,
             :__opts__,
-            :__gateways__,
+            :__events__,
             :__definitions__,
             :__vsn__,
             :__module__,
@@ -257,7 +257,7 @@ defmodule Flexflow.Process do
   @spec init(t()) :: result()
   def init(%__MODULE__{module: module} = p) do
     with %__MODULE__{} = p <- Activity.init(p),
-         %__MODULE__{} = p <- Gateway.init(p),
+         %__MODULE__{} = p <- Event.init(p),
          {:ok, %__MODULE__{} = p} <- module.init(p),
          {:ok, %__MODULE__{} = p} <- module.init_child(p),
          {:ok, %__MODULE__{} = p} <- EventDispatcher.init_register_all(p) do
@@ -349,14 +349,14 @@ defmodule Flexflow.Process do
   @spec next(t()) :: result()
   def next(%{__loop__: loop}) when loop > @max_loop_limit, do: {:error, :deadlock_found}
 
-  def next(%{activities: activities, gateways: gateways} = p) do
+  def next(%{activities: activities, events: events} = p) do
     for {_, %{state: :ready, __out_edges__: [_ | _] = edges} = e} <- activities,
         {t, n} <- edges do
-      {e, Map.fetch!(gateways, t), Map.fetch!(activities, n)}
+      {e, Map.fetch!(events, t), Map.fetch!(activities, n)}
     end
     |> case do
       [] -> {:ok, %{p | state: :waiting}}
-      [_ | _] = a -> Enum.reduce(a, {:ok, p}, &Gateway.dispatch/2)
+      [_ | _] = a -> Enum.reduce(a, {:ok, p}, &Event.dispatch/2)
     end
   end
 end

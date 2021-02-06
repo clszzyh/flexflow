@@ -2,14 +2,14 @@ alias Flexflow.Config
 alias Flexflow.Util
 
 alias Flexflow.Activity, as: A
-alias Flexflow.Gateway, as: G
+alias Flexflow.Event, as: E
 
 alias Flexflow.Process, as: P
 
 alias Flexflow.Events
-alias Flexflow.Events.{Bypass, End, Start}
-alias Flexflow.Gateways.Pass
-alias Flexflow.Gateways
+alias Flexflow.Activities.{Bypass, End, Start}
+alias Flexflow.Events.Pass
+alias Flexflow.Events
 
 alias Flexflow.ModuleRegistry
 

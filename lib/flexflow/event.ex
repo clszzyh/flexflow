@@ -1,6 +1,6 @@
-defmodule Flexflow.Gateway do
+defmodule Flexflow.Event do
   @moduledoc """
-  Gateway
+  Event
   """
 
   alias Flexflow.Activity
@@ -42,7 +42,7 @@ defmodule Flexflow.Gateway do
   @optional_callbacks [validate: 2]
 
   def impls do
-    {:consolidated, modules} = Flexflow.GatewayTracker.__protocol__(:impls)
+    {:consolidated, modules} = Flexflow.EventTracker.__protocol__(:impls)
     modules
   end
 
@@ -56,7 +56,7 @@ defmodule Flexflow.Gateway do
         """
       end
 
-      defimpl Flexflow.GatewayTracker do
+      defimpl Flexflow.EventTracker do
         def ping(_), do: :pong
       end
 
@@ -119,24 +119,24 @@ defmodule Flexflow.Gateway do
   end
 
   @spec validate([t()]) :: [t()]
-  def validate(gateways) do
-    if Enum.empty?(gateways), do: raise(ArgumentError, "Gateway is empty")
+  def validate(events) do
+    if Enum.empty?(events), do: raise(ArgumentError, "Event is empty")
 
-    for %__MODULE__{module: module, name: name} <- gateways, reduce: [] do
+    for %__MODULE__{module: module, name: name} <- events, reduce: [] do
       ary ->
         o = {module, name}
-        if o in ary, do: raise(ArgumentError, "Gateway `#{inspect(o)}` is defined twice")
+        if o in ary, do: raise(ArgumentError, "Event `#{inspect(o)}` is defined twice")
         ary ++ [o]
     end
 
-    for %__MODULE__{from: from, to: to} <- gateways, reduce: [] do
+    for %__MODULE__{from: from, to: to} <- events, reduce: [] do
       ary ->
         o = {from, to}
-        if o in ary, do: raise(ArgumentError, "Gateway `#{inspect(o)}` is defined twice")
+        if o in ary, do: raise(ArgumentError, "Event `#{inspect(o)}` is defined twice")
         ary ++ [o]
     end
 
-    gateways
+    events
   end
 
   @spec validate_process(t(), Process.t()) :: :ok
@@ -149,9 +149,9 @@ defmodule Flexflow.Gateway do
   end
 
   @spec init(Process.t()) :: Process.t()
-  def init(%Process{gateways: gateways} = p) do
-    Enum.reduce(gateways, p, fn {key, gateway}, p ->
-      put_in(p, [:gateways, key], %{gateway | state: :initial})
+  def init(%Process{events: events} = p) do
+    Enum.reduce(events, p, fn {key, event}, p ->
+      put_in(p, [:events, key], %{event | state: :initial})
     end)
   end
 

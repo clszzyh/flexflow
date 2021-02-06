@@ -46,7 +46,7 @@ defmodule Flexflow.ProcessLoader do
         activity Start
         activity End
 
-        gateway :first, Start ~> End
+        event :first, Start ~> End
       end
 
     {:module, final_module, _byte_code, _} = Module.create(module_name, ast, file: path, line: 0)
