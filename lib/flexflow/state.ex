@@ -8,22 +8,14 @@ defmodule Flexflow.State do
   alias Flexflow.States.Blank
   alias Flexflow.Util
 
-  @states [:created, :initial, :ready, :completed, :pending, :error]
   @types [:start, :end, :bypass]
 
-  @typedoc """
-  State state
-
-  #{inspect(@states)}
-  """
-  @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type type :: unquote(Enum.reduce(@types, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
   @type edge :: Flexflow.state_type()
   @type action_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
   @type t :: %__MODULE__{
           module: module(),
-          state: state(),
           name: Flexflow.name(),
           type: type(),
           __in_edges__: [edge()],
@@ -35,7 +27,6 @@ defmodule Flexflow.State do
   @enforce_keys [:name, :module, :type]
   defstruct @enforce_keys ++
               [
-                state: :created,
                 __in_edges__: [],
                 __out_edges__: [],
                 __opts__: [],

@@ -9,17 +9,13 @@ defmodule Flexflow.Process do
   alias Flexflow.State
   alias Flexflow.Util
 
-  @states [:created, :active, :loop, :waiting, :paused]
-
   @type action :: :gen_statem.action()
-  @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type event_type :: :gen_statem.event_type()
 
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
           id: Flexflow.id() | nil,
-          state: state(),
           start_state: Flexflow.state_type(),
           states: %{Flexflow.state_type() => State.t()},
           events: %{Flexflow.state_type() => Event.t()},
@@ -52,7 +48,6 @@ defmodule Flexflow.Process do
                 :__vsn__,
                 :parent,
                 :request_id,
-                state: :created,
                 childs: [],
                 __counter__: 0,
                 __loop__: 0,

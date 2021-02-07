@@ -9,15 +9,11 @@ defmodule Flexflow.Event do
   alias Flexflow.State
   alias Flexflow.Util
 
-  @states [:created, :initial]
-
-  @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
   @type key :: Flexflow.state_type_or_module() | String.t()
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
-          state: state(),
           from: Flexflow.state_type(),
           to: Flexflow.state_type(),
           __opts__: options,
@@ -27,7 +23,6 @@ defmodule Flexflow.Event do
   @enforce_keys [:name, :module, :from, :to]
   defstruct @enforce_keys ++
               [
-                state: :created,
                 __opts__: [],
                 __context__: Context.new()
               ]
