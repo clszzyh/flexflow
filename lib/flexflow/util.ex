@@ -1,11 +1,11 @@
 defmodule Flexflow.Util do
   @moduledoc false
 
-  alias Flexflow.States.Bypass
-  alias Flexflow.State
   alias Flexflow.Event
   alias Flexflow.Events.Pass
   alias Flexflow.Process
+  alias Flexflow.State
+  alias Flexflow.States.Bypass
 
   @local_behaviours [Process, Event, State]
 

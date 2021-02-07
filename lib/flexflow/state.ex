@@ -4,8 +4,8 @@ defmodule Flexflow.State do
   """
 
   alias Flexflow.Context
-  alias Flexflow.States.{Bypass, End, Start}
   alias Flexflow.Process
+  alias Flexflow.States.{Bypass, End, Start}
   alias Flexflow.Util
 
   @states [:created, :initial, :ready, :completed, :pending, :error]

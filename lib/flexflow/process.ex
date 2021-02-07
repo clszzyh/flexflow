@@ -3,11 +3,11 @@ defmodule Flexflow.Process do
   Process
   """
 
-  alias Flexflow.State
   alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.Event
   alias Flexflow.EventDispatcher
+  alias Flexflow.State
   alias Flexflow.TaskSupervisor
   alias Flexflow.Telemetry
   alias Flexflow.Util
@@ -84,8 +84,8 @@ defmodule Flexflow.Process do
 
   defmacro __using__(opts) do
     quote do
-      alias Flexflow.States.{Bypass, End, Start}
       alias Flexflow.Events.Pass
+      alias Flexflow.States.{Bypass, End, Start}
 
       @__opts__ unquote(opts)
 

@@ -5,8 +5,8 @@ defmodule FlexflowTest do
   @moduletag capture_log: true
   @moduletag :basic
 
-  alias Flexflow.State
   alias Flexflow.Event
+  alias Flexflow.State
 
   alias FlexflowDemoTest.{N1, N2, N3, N4}
   alias FlexflowDemoTest.{P1, P2}

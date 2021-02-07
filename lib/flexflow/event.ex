@@ -3,9 +3,9 @@ defmodule Flexflow.Event do
   Event
   """
 
-  alias Flexflow.State
   alias Flexflow.Context
   alias Flexflow.Process
+  alias Flexflow.State
   alias Flexflow.Util
 
   @states [:created, :initial]
