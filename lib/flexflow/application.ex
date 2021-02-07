@@ -11,14 +11,20 @@ defmodule Flexflow.Application do
       Flexflow.History,
       Flexflow.EventDispatcher,
       Flexflow.ProcessRegistry,
-      Flexflow.ProcessParentManager,
-      Flexflow.ModuleRegistry
+      Flexflow.ProcessParentManager
     ]
 
     if Config.get(:telemetry_default_handler) do
       :ok = Flexflow.Telemetry.attach_default_handler()
     end
 
-    Supervisor.start_link(children, strategy: :one_for_one, name: Flexflow.Supervisor)
+    with {:ok, pid} <-
+           Supervisor.start_link(children, strategy: :one_for_one, name: Flexflow.Supervisor),
+         :ok <- Flexflow.ProcessParentManager.register_all(),
+         :ok <- Flexflow.Tracker.ensure_unique() do
+      {:ok, pid}
+    else
+      {:error, reason} -> {:error, reason}
+    end
   end
 end

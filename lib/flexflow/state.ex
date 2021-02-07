@@ -66,11 +66,6 @@ defmodule Flexflow.State do
 
   @callback graphviz_attribute :: keyword()
 
-  def impls do
-    {:consolidated, modules} = Flexflow.StateTracker.__protocol__(:impls)
-    modules
-  end
-
   defmacro __using__(opts \\ []) do
     quote do
       @behaviour unquote(__MODULE__)
@@ -108,14 +103,14 @@ defmodule Flexflow.State do
   @spec key(t()) :: Flexflow.state_type()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({Flexflow.state_type_or_module(), options}, module()) :: t()
+  @spec new({Flexflow.state_type_or_module(), options}, Process.process_tuple()) :: t()
   def new({o, _opts}, _) when is_binary(o),
     do: raise(ArgumentError, "Name `#{o}` should be an atom")
 
-  def new({o, opts}, process_module) when is_atom(o),
-    do: new({Util.normalize_module(o), opts}, process_module)
+  def new({o, opts}, process_tuple) when is_atom(o),
+    do: new({Util.normalize_module(o), opts}, process_tuple)
 
-  def new({{o, name}, opts}, process_module) do
+  def new({{o, name}, opts}, process_tuple) do
     unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
@@ -125,7 +120,7 @@ defmodule Flexflow.State do
     unless type in @types, do: raise(ArgumentError, "Unknown state type #{type}")
     {attributes, opts} = Keyword.pop(opts, :attributes, @type_map[type].graphviz_attribute())
     {ast, opts} = Keyword.pop(opts, :do)
-    module = new_module(ast, o, name, process_module)
+    {module, name} = new_module(ast, o, name, process_tuple)
 
     async = Keyword.get(opts, :async, false)
 
@@ -141,10 +136,11 @@ defmodule Flexflow.State do
     }
   end
 
-  defp new_module(nil, parent_module, _, _), do: parent_module
+  defp new_module(nil, parent_module, name, _), do: {parent_module, name}
 
-  defp new_module(ast, parent_module, name, process_module) do
+  defp new_module(ast, parent_module, name, {process_module, process_name}) do
     module_name = Module.concat([process_module, parent_module, Macro.camelize(to_string(name))])
+    name = String.to_atom("#{process_name}_s_#{name}")
 
     ast =
       quote generated: true do
@@ -165,7 +161,7 @@ defmodule Flexflow.State do
     {:module, ^module_name, _byte_code, _} =
       Module.create(module_name, ast, Macro.Env.location(__ENV__))
 
-    module_name
+    {module_name, name}
   end
 
   @spec start?(t()) :: boolean()

@@ -51,20 +51,6 @@ defmodule FlexflowDemoTest do
 
       @impl true
       def type, do: :bypass
-
-      @impl true
-      def action({:created, :initial}, state, %{__args__: %{slow: strategy, sleep: sleep}}) do
-        Process.sleep(sleep)
-
-        case strategy do
-          :ok -> {:ok, state}
-          :error -> {:error, :custom_error}
-          :other -> {:ok, :other}
-          :raise -> raise("fooo")
-        end
-      end
-
-      def action(o, _, %{__args__: args}), do: raise(inspect({:not_supported, o, args}))
     end
 
     use Flexflow.Process
@@ -72,7 +58,7 @@ defmodule FlexflowDemoTest do
     state Start
     state End
 
-    state Slow, async: [timeout: 5000] do
+    state {Slow, :slow1}, async: [timeout: 5000] do
       @impl true
       def validate(_, _) do
         IO.puts("state ok")
@@ -80,7 +66,7 @@ defmodule FlexflowDemoTest do
       end
     end
 
-    event :first, Start ~> Slow do
+    event :first, Start ~> :slow1 do
       @impl true
       def validate(_, _) do
         IO.puts("event ok")
@@ -88,6 +74,6 @@ defmodule FlexflowDemoTest do
       end
     end
 
-    event :last, Slow ~> End
+    event :last, :slow1 ~> End
   end
 end

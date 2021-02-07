@@ -14,7 +14,7 @@ defmodule Flexflow.MixProject do
       start_permanent: Mix.env() == :prod,
       preferred_cli_env: [ci: :test],
       elixirc_paths: elixirc_paths(Mix.env()),
-      # consolidate_protocols: Mix.env() != :test,
+      consolidate_protocols: true,
       package: [
         licenses: ["MIT"],
         files: ["lib", ".formatter.exs", "mix.exs", "README*", "CHANGELOG*", "VERSION"],

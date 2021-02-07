@@ -12,7 +12,6 @@ defmodule ProcessTest do
   alias FlexflowDemoTest.T1
 
   setup_all do
-    _ = Flexflow.ModuleRegistry.state()
     []
   end
 
@@ -45,11 +44,11 @@ defmodule ProcessTest do
     assert is_pid(pid)
   end
 
-  test "Flexflow.ModuleRegistry" do
-    pid = Flexflow.ModuleRegistry |> Process.whereis()
-    assert is_pid(pid)
-    assert Flexflow.ModuleRegistry.find(Flexflow.Process, :p1_new)
-  end
+  # test "Flexflow.ModuleRegistry" do
+  #   pid = Flexflow.ModuleRegistry |> Process.whereis()
+  #   assert is_pid(pid)
+  #   assert Flexflow.ModuleRegistry.find(Flexflow.Process, :p1_new)
+  # end
 
   test "Flexflow.ProcessParentManager" do
     pid = Flexflow.ProcessParentManager |> Process.whereis()

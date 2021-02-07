@@ -11,8 +11,6 @@ alias Flexflow.Activities.{Bypass, End, Start}
 alias Flexflow.Events.Pass
 alias Flexflow.Events
 
-alias Flexflow.ModuleRegistry
-
 alias Flexflow.ProcessParentManager
 alias Flexflow.ProcessManager
 alias Flexflow.ProcessServer
@@ -20,5 +18,6 @@ alias Flexflow.ProcessServer
 alias Flexflow.TaskSupervisor
 alias Flexflow.EventDispatcher
 alias Flexflow.History
+alias Flexflow.Tracker
 
 alias FlexflowDemoTest.{P1, P2}

@@ -45,11 +45,6 @@ defmodule Flexflow.Event do
 
   @callback handle_enter(t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
 
-  def impls do
-    {:consolidated, modules} = Flexflow.EventTracker.__protocol__(:impls)
-    modules
-  end
-
   defmacro __using__(opts \\ []) do
     quote do
       @behaviour unquote(__MODULE__)
@@ -77,7 +72,6 @@ defmodule Flexflow.Event do
       def handle_enter(_, p), do: {:ok, p}
 
       defoverridable unquote(__MODULE__)
-
       Module.delete_attribute(__MODULE__, :__name__)
     end
   end
@@ -85,44 +79,51 @@ defmodule Flexflow.Event do
   @spec key(t()) :: {Flexflow.state_type(), Flexflow.state_type()}
   def key(%{from: from, to: to}), do: {from, to}
 
-  @spec new({key(), {key(), key()}, options}, [State.t()], module()) :: t()
-  def new({_o, {from, _to}, _opts}, _states, _process_module) when is_binary(from),
+  @spec new({key(), {key(), key()}, options}, [State.t()], Process.process_tuple()) :: t()
+  def new({_o, {from, _to}, _opts}, _states, _process_tuple) when is_binary(from),
     do: raise(ArgumentError, "Name `#{from}` should be an atom")
 
-  def new({_o, {_from, to}, _opts}, _states, _process_module) when is_binary(to),
+  def new({_o, {_from, to}, _opts}, _states, _process_tuple) when is_binary(to),
     do: raise(ArgumentError, "Name `#{to}` should be an atom")
 
-  def new({o, {_from, _to}, _opts}, _states, _process_module) when is_binary(o),
+  def new({o, {_from, _to}, _opts}, _states, _process_tuple) when is_binary(o),
     do: raise(ArgumentError, "Name `#{o}` should be an atom")
 
-  def new({o, {from, to}, opts}, states, process_module) do
+  def new({o, {from, to}, opts}, states, process_tuple) do
     from = Util.normalize_module(from, states)
     to = Util.normalize_module(to, states)
-    new_1({o, {from, to}, opts}, states, process_module)
+    new_1({o, {from, to}, opts}, states, process_tuple)
   end
 
-  defp new_1({o, {from, to}, opts}, states, process_module) when is_atom(o) do
+  defp new_1({o, {from, to}, opts}, states, process_tuple) when is_atom(o) do
     new_1(
       {Util.normalize_module({o, from, to}, states), {from, to}, opts},
       states,
-      process_module
+      process_tuple
     )
   end
 
-  defp new_1({{o, name}, {from, to}, opts}, states, process_module) do
+  defp new_1(
+         {{o, name}, {{_, from_name} = from, {_, to_name} = to}, opts},
+         states,
+         {_, process_name} = process_tuple
+       ) do
     unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "`#{inspect(o)}` should implement #{__MODULE__}"
     end
 
-    states = Map.new(states, &{{&1.module, &1.name}, &1})
+    states = Map.new(states, &{&1.name, &1})
 
-    states[from] || raise(ArgumentError, "`#{inspect(from)}` is not defined")
-    states[to] || raise(ArgumentError, "`#{inspect(to)}` is not defined")
+    states[from_name] || states[String.to_atom("#{process_name}_s_#{from_name}")] ||
+      raise(ArgumentError, "`#{inspect(from)}` is not defined")
+
+    states[to_name] || states[String.to_atom("#{process_name}_s_#{to_name}")] ||
+      raise(ArgumentError, "`#{inspect(to)}` is not defined")
 
     opts = opts ++ o.__opts__
     {graphviz_attributes, opts} = Keyword.pop(opts, :graphviz_attributes, [])
     {ast, opts} = Keyword.pop(opts, :do)
-    module = new_module(ast, o, name, process_module)
+    {module, name} = new_module(ast, o, name, process_tuple)
 
     %__MODULE__{
       module: module,
@@ -134,10 +135,11 @@ defmodule Flexflow.Event do
     }
   end
 
-  defp new_module(nil, parent_module, _, _), do: parent_module
+  defp new_module(nil, parent_module, name, _), do: {parent_module, name}
 
-  defp new_module(ast, parent_module, name, process_module) do
+  defp new_module(ast, parent_module, name, {process_module, process_name}) do
     module_name = Module.concat([process_module, parent_module, Macro.camelize(to_string(name))])
+    name = String.to_atom("#{process_name}_e_#{name}")
 
     ast =
       quote generated: true do
@@ -155,7 +157,7 @@ defmodule Flexflow.Event do
     {:module, ^module_name, _byte_code, _} =
       Module.create(module_name, ast, Macro.Env.location(__ENV__))
 
-    module_name
+    {module_name, name}
   end
 
   @spec validate([t()]) :: [t()]

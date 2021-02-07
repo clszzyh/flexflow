@@ -43,6 +43,7 @@ defmodule Flexflow.Process do
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
   @type definition :: {:state | :event, Flexflow.state_type()}
+  @type process_tuple :: {module(), Flexflow.name()}
 
   @enforce_keys [:module, :states, :events, :start_state, :__definitions__]
   # @derive {Inspect, except: [:__definitions__, :__graphviz__]}
@@ -80,11 +81,6 @@ defmodule Flexflow.Process do
   @callback terminate(t(), term()) :: term()
 
   @optional_callbacks [handle_call: 3, handle_cast: 2, handle_info: 2, terminate: 2]
-
-  def impls do
-    {:consolidated, modules} = Flexflow.ProcessTracker.__protocol__(:impls)
-    modules
-  end
 
   defmacro __using__(opts) do
     quote do
@@ -167,14 +163,16 @@ defmodule Flexflow.Process do
       env.module
       |> Module.get_attribute(:__states__)
       |> Enum.reverse()
-      |> Enum.map(&State.new(&1, env.module))
+      |> Enum.map(&State.new(&1, {env.module, Module.get_attribute(env.module, :__name__)}))
       |> State.validate()
 
     events =
       env.module
       |> Module.get_attribute(:__events__)
       |> Enum.reverse()
-      |> Enum.map(&Event.new(&1, states, env.module))
+      |> Enum.map(
+        &Event.new(&1, states, {env.module, Module.get_attribute(env.module, :__name__)})
+      )
       |> Event.validate()
 
     definitions =

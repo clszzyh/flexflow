@@ -4,14 +4,10 @@ defmodule Flexflow.ProcessParentManager do
   """
 
   use DynamicSupervisor
+  alias Flexflow.Tracker
 
   def start_link(init_arg) do
     DynamicSupervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
-  end
-
-  @impl true
-  def init(_args) do
-    DynamicSupervisor.init(strategy: :one_for_one)
   end
 
   @spec register(module()) :: {:ok, pid()} | {:error, term()}
@@ -21,6 +17,21 @@ defmodule Flexflow.ProcessParentManager do
       {:ok, pid, _info} -> {:ok, pid}
       rest -> rest
     end
+  end
+
+  def register_all do
+    Tracker.impls()[Flexflow.ProcessTracker]
+    |> Enum.reduce_while(:ok, fn module, :ok ->
+      case register(module) do
+        {:ok, _pid} -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  @impl true
+  def init(_args) do
+    DynamicSupervisor.init(strategy: :one_for_one)
   end
 
   def children do
