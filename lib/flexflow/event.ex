@@ -176,23 +176,6 @@ defmodule Flexflow.Event do
 
     events
   end
-
-  @spec init(Process.t()) :: Process.t()
-  def init(%Process{events: events} = p) do
-    Enum.reduce(events, p, fn {key, event}, p ->
-      put_in(p, [:events, key], %{event | state: :initial})
-    end)
-  end
-
-  @spec dispatch({State.t(), t(), State.t()}, Process.result()) :: Process.result()
-  def dispatch(_, {:error, reason}), do: {:error, reason}
-
-  def dispatch(
-        {%State{module: from_module, name: from_name}, %__MODULE__{}, %State{}},
-        {:ok, p}
-      ) do
-    {:ok, put_in(p.states[{from_module, from_name}].state, :completed)}
-  end
 end
 
 defmodule Flexflow.Events.Blank do

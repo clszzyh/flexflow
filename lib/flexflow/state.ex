@@ -9,7 +9,6 @@ defmodule Flexflow.State do
   alias Flexflow.Util
 
   @states [:created, :initial, :ready, :completed, :pending, :error]
-  @state_changes [created: :initial, initial: :ready]
   @types [:start, :end, :bypass]
 
   @typedoc """
@@ -47,9 +46,6 @@ defmodule Flexflow.State do
   @callback name :: Flexflow.name()
 
   @callback type :: type()
-
-  @doc "Invoked before state state changes"
-  @callback action({state(), state()}, t(), Process.t()) :: action_result()
 
   @doc "Invoked after compile, return :ok if valid"
   @callback validate(t(), Process.t()) :: :ok
@@ -93,7 +89,6 @@ defmodule Flexflow.State do
         defdelegate validate(s, p), to: unquote(inherit)
         defdelegate handle_leave(s, p), to: unquote(inherit)
         defdelegate handle_enter(s, p), to: unquote(inherit)
-        defdelegate action(a, b, c), to: unquote(inherit)
       end
 
       defoverridable unquote(__MODULE__)
@@ -181,71 +176,6 @@ defmodule Flexflow.State do
 
     states
   end
-
-  @spec init(Process.t()) :: Process.t() | {:error, term()}
-  def init(%Process{states: states} = p) do
-    Enum.reduce_while(states, p, &init_1/2)
-  end
-
-  @spec init_1({Flexflow.state_type(), t()}, Process.t()) ::
-          {:halt, {:error, term()}} | {:cont, Process.t()}
-  defp init_1({key, %{type: :start, module: module, name: name} = state}, p) do
-    with {:ok, p} <- change(:initial, state, p),
-         {:ok, p} <- change(:ready, get_in(p, [:states, {module, name}]), p) do
-      {:cont, p}
-    else
-      {:error, reason} -> {:halt, {:error, {key, reason}}}
-    end
-  end
-
-  defp init_1({key, state}, p) do
-    case change(:initial, state, p) do
-      {:ok, p} -> {:cont, p}
-      {:error, reason} -> {:halt, {:error, {key, reason}}}
-    end
-  end
-
-  @spec change(state(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
-  def change(target, %__MODULE__{module: module, name: name} = e, p) do
-    case do_change(target, e, p) do
-      {:ok, %__MODULE__{} = e} -> {:ok, put_in(p, [:states, {module, name}], e)}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  @spec do_change(state(), t(), Process.t()) :: {:ok, t()} | {:error, term()}
-  defp do_change(target, %__MODULE__{module: module, state: before} = e, p)
-       when {before, target} in @state_changes do
-    module.action({before, target}, e, p)
-    |> case do
-      :ok -> {:ok, %Context{state: :ok}, e}
-      {:ok, %__MODULE__{} = e} -> {:ok, %Context{state: :ok}, e}
-      {:ok, term} -> {:ok, %Context{state: :ok, result: term}, e}
-      {:error, reason} -> {:error, reason}
-    end
-    |> case do
-      {:ok, %Context{} = ctx, %__MODULE__{} = e} -> {:ok, %{e | state: target, __context__: ctx}}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  @spec callback(Flexflow.state_type(), Process.t(), :ok | :error, term) :: Process.result()
-  def callback({module, name}, %Process{} = p, :ok, {:ok, %__MODULE__{} = e}) do
-    {:ok, put_in(p, [:states, {module, name}], e)}
-  end
-
-  def callback({module, name}, %Process{} = p, :ok, {:error, reason}) do
-    {:ok, update_in(p, [:states, {module, name}], &handle_error(&1, reason))}
-  end
-
-  def callback({module, name}, %Process{} = p, :error, reason) do
-    {:ok, update_in(p, [:states, {module, name}], &handle_error(&1, reason))}
-  end
-
-  @spec handle_error(t(), term()) :: t()
-  defp handle_error(%__MODULE__{} = e, reason) do
-    %{e | state: :error, __context__: %Context{state: :error, result: reason}}
-  end
 end
 
 defmodule Flexflow.States.Blank do
@@ -268,9 +198,6 @@ defmodule Flexflow.States.Blank do
 
   @impl true
   def graphviz_attribute, do: []
-
-  @impl true
-  def action(_, _, _), do: :ok
 
   @impl true
   def handle_leave(_, p), do: {:ok, p}
