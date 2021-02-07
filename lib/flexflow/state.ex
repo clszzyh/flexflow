@@ -160,10 +160,10 @@ defmodule Flexflow.State do
   def validate(states) do
     if Enum.empty?(states), do: raise(ArgumentError, "State is empty")
 
-    for %__MODULE__{module: module, name: name} <- states, reduce: [] do
+    for %__MODULE__{name: name} <- states, reduce: [] do
       ary ->
         if name in ary, do: raise(ArgumentError, "State `#{name}` is defined twice")
-        ary ++ [{module, name}, name]
+        [name | ary]
     end
 
     case Enum.filter(states, &start?/1) do

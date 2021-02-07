@@ -159,14 +159,14 @@ defmodule Flexflow.Event do
       ary ->
         o = {module, name}
         if o in ary, do: raise(ArgumentError, "Event `#{inspect(o)}` is defined twice")
-        ary ++ [o]
+        [o | ary]
     end
 
     for %__MODULE__{from: from, to: to} <- events, reduce: [] do
       ary ->
         o = {from, to}
         if o in ary, do: raise(ArgumentError, "Event `#{inspect(o)}` is defined twice")
-        ary ++ [o]
+        [o | ary]
     end
 
     events
