@@ -8,15 +8,16 @@ defmodule Flexflow.ProcessManager do
 
   alias Flexflow.History
   alias Flexflow.ProcessParentManager
-  alias Flexflow.ProcessServer
+  alias Flexflow.ProcessStatem
   alias Flexflow.Util
 
   @type t :: %__MODULE__{
           pid: pid(),
           id: Flexflow.id(),
+          state: Flexflow.state_type(),
           name: Flexflow.name()
         }
-  @enforce_keys [:pid, :id, :name]
+  @enforce_keys [:pid, :id, :name, :state]
   defstruct @enforce_keys
 
   @type server_return :: {:ok | :exist, pid} | {:error, term()}
@@ -64,7 +65,7 @@ defmodule Flexflow.ProcessManager do
 
   @spec child_pid(Flexflow.process_key()) :: nil | pid()
   def child_pid({module, id}) do
-    ProcessServer.pid({module, id})
+    ProcessStatem.pid({module, id})
   end
 
   @spec stop_child(pid | module | nil, Flexflow.process_identity()) :: :ok | {:error, term()}
@@ -79,7 +80,7 @@ defmodule Flexflow.ProcessManager do
   end
 
   def stop_child(srv, {module, id}) do
-    case ProcessServer.pid({module, id}) do
+    case ProcessStatem.pid({module, id}) do
       nil -> {:error, :child_not_found}
       pid -> stop_child(srv, pid)
     end
@@ -94,7 +95,7 @@ defmodule Flexflow.ProcessManager do
   def start_child({module, id}, opts) do
     with {:ok, srv} <- server_pid(module),
          {:ok, _} <- History.ensure_new({module, id}) do
-      case DynamicSupervisor.start_child(srv, {ProcessServer, {id, opts}}) do
+      case DynamicSupervisor.start_child(srv, {ProcessStatem, {id, opts}}) do
         :ignore -> {:error, :ignore}
         {:ok, pid, _info} -> {:ok, pid}
         rest -> rest
@@ -110,9 +111,9 @@ defmodule Flexflow.ProcessManager do
     {:ok, srv} = server_pid(mod)
     childs = DynamicSupervisor.which_children(srv)
 
-    for {_, pid, :worker, [ProcessServer]} <- childs do
-      process = ProcessServer.state(pid)
-      %__MODULE__{pid: pid, id: process.id, name: process.name}
+    for {_, pid, :worker, [ProcessStatem]} <- childs do
+      {:ok, state, process} = ProcessStatem.state(pid)
+      %__MODULE__{pid: pid, id: process.id, state: state, name: process.name}
     end
   end
 end

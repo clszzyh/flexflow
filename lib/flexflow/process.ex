@@ -3,13 +3,10 @@ defmodule Flexflow.Process do
   Process
   """
 
-  alias Flexflow.Config
   alias Flexflow.Context
   alias Flexflow.Event
   alias Flexflow.EventDispatcher
   alias Flexflow.State
-  alias Flexflow.TaskSupervisor
-  alias Flexflow.Telemetry
   alias Flexflow.Util
 
   @states [:created, :active, :loop, :waiting, :paused]
@@ -68,18 +65,6 @@ defmodule Flexflow.Process do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "Invoked when process is started, after states and events `init`, see `Flexflow.Api.init/1`"
-  @callback init(t()) :: result()
-  @doc "Invoked when process child is started"
-  @callback init_child(t()) :: result()
-
-  @callback handle_call(t(), term(), GenServer.from()) :: result()
-  @callback handle_cast(t(), term()) :: result()
-  @callback handle_info(t(), term()) :: result()
-  @callback terminate(t(), term()) :: term()
-
-  @optional_callbacks [handle_call: 3, handle_cast: 2, handle_info: 2, terminate: 2]
-
   defmacro __using__(opts) do
     quote do
       alias Flexflow.Events.Pass
@@ -107,12 +92,6 @@ defmodule Flexflow.Process do
 
       @impl true
       def name, do: @__name__
-
-      @impl true
-      def init(p), do: {:ok, p}
-
-      @impl true
-      def init_child(p), do: {:ok, p}
 
       defoverridable unquote(__MODULE__)
     end
@@ -261,110 +240,4 @@ defmodule Flexflow.Process do
 
   @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def new(module, id, args \\ %{}), do: module.new(id, args)
-
-  @spec init(t()) :: result()
-  def init(%__MODULE__{module: module} = p) do
-    with %__MODULE__{} = p <- State.init(p),
-         %__MODULE__{} = p <- Event.init(p),
-         {:ok, %__MODULE__{} = p} <- module.init(p),
-         {:ok, %__MODULE__{} = p} <- module.init_child(p),
-         {:ok, %__MODULE__{} = p} <- EventDispatcher.init_register_all(p) do
-      {:ok, %{p | state: :active}}
-    else
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  @spec after_init(t()) :: result()
-  def after_init(%__MODULE__{} = p) do
-    with {:ok, p} <- Telemetry.invoke_process(p, :process_init, &init/1),
-         {:ok, p} <- Telemetry.invoke_process(p, :process_loop, &loop/1) do
-      {:ok, p}
-    else
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  @spec handle_call(t(), term(), GenServer.from() | nil) :: result()
-  def handle_call(%__MODULE__{module: module} = p, input, from \\ nil) do
-    if function_exported?(module, :handle_call, 3) do
-      module.handle_call(p, input, from)
-    else
-      {:ok, p}
-    end
-  end
-
-  @spec handle_cast(t(), term()) :: result()
-  def handle_cast(%__MODULE__{module: module} = p, input) do
-    if function_exported?(module, :handle_cast, 2) do
-      module.handle_cast(p, input)
-    else
-      {:ok, p}
-    end
-  end
-
-  @spec handle_info(t(), term()) :: result()
-  def handle_info(p, {ref, result}) when is_reference(ref) do
-    Process.demonitor(ref, [:flush])
-    {{f, first_arg}, p} = pop_in(p.__tasks__[ref])
-    apply(f, [first_arg, p, :ok, result])
-  end
-
-  def handle_info(p, {:DOWN, ref, :process, _monitor_pid, reason}) when is_reference(ref) do
-    {{f, first_arg}, p} = pop_in(p.__tasks__[ref])
-    apply(f, [first_arg, p, :error, reason])
-  end
-
-  def handle_info(%__MODULE__{module: module} = p, input) do
-    if function_exported?(module, :handle_info, 2) do
-      module.handle_info(p, input)
-    else
-      {:ok, p}
-    end
-  end
-
-  @spec terminate(t(), term()) :: term()
-  def terminate(%__MODULE__{module: module} = p, reason) do
-    if function_exported?(module, :terminate, 2) do
-      module.terminate(p, reason)
-    else
-      :ok
-    end
-  end
-
-  @spec async(t(), (() -> r), (arg, t(), :ok | :error, r -> result()), arg, Keyword.t()) :: t()
-        when arg: term(), r: term()
-  def async(%__MODULE__{} = p, f, callback, value, opts \\ [])
-      when is_function(f, 0) and is_function(callback, 4) do
-    task = Task.Supervisor.async_nolink(TaskSupervisor, f, opts)
-    put_in(p.__tasks__[task.ref], {callback, value})
-  end
-
-  @spec loop(t()) :: result()
-  def loop(%{state: ignore_state} = p) when ignore_state in [:waiting, :paused], do: {:ok, p}
-  def loop(%{state: :active} = p), do: loop(%{p | state: :loop, __loop__: 0})
-
-  def loop(%{state: :loop, __loop__: loop, __counter__: counter} = p) do
-    case next(%{p | __loop__: loop + 1, __counter__: counter + 1}) do
-      {:error, reason} -> {:error, reason}
-      {:ok, %{state: :loop} = p} -> loop(p)
-      {:ok, p} -> {:ok, p}
-    end
-  end
-
-  @max_loop_limit Config.get(:max_loop_limit)
-
-  @spec next(t()) :: result()
-  def next(%{__loop__: loop}) when loop > @max_loop_limit, do: {:error, :deadlock_found}
-
-  def next(%{states: states, events: events} = p) do
-    for {_, %{state: :ready, __out_edges__: [_ | _] = edges} = e} <- states,
-        {t, n} <- edges do
-      {e, Map.fetch!(events, t), Map.fetch!(states, n)}
-    end
-    |> case do
-      [] -> {:ok, %{p | state: :waiting}}
-      [_ | _] = a -> Enum.reduce(a, {:ok, p}, &Event.dispatch/2)
-    end
-  end
 end

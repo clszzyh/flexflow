@@ -66,11 +66,13 @@ defmodule Flexflow.Telemetry do
 
   @spec handle_state([atom()], map(), map(), t()) :: :ok
   def handle_state(state, measurements, meta, config) do
-    if config.enable_process_history,
-      do: :ok = handle_history(state, measurements, meta, config)
+    if config.enable_process_history do
+      :ok = handle_history(state, measurements, meta, config)
+    end
 
-    if config.telemetry_logger,
-      do: :ok = handle_logger(state, measurements, meta, config.telemetry_logger_level)
+    if config.telemetry_logger do
+      :ok = handle_logger(state, measurements, meta, config.telemetry_logger_level)
+    end
 
     :ok
   end

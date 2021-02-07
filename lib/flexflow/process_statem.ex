@@ -13,10 +13,14 @@ defmodule Flexflow.ProcessStatem do
     :gen_statem.start_link(via_tuple({module, id}), __MODULE__, {module, id, opts}, [])
   end
 
-  @spec state(module, Flexflow.id()) :: {:ok, Flexflow.state_type(), Process.t()}
-  def state(module, id) do
-    :gen_statem.call(pid({module, id}), :state)
-  end
+  @spec state(Flexflow.process_identity()) :: {:ok, Flexflow.state_type(), Process.t()}
+  def state(identity), do: :gen_statem.call(pid(identity), :state)
+
+  @spec call(Flexflow.process_identity(), term()) :: term()
+  def call(identity, op), do: :gen_statem.call(pid(identity), op)
+
+  @spec cast(Flexflow.process_identity(), term()) :: :ok
+  def cast(identity, op), do: :gen_statem.cast(pid(identity), op)
 
   @impl true
   def callback_mode, do: [:handle_event_function, :state_enter]
@@ -47,5 +51,13 @@ defmodule Flexflow.ProcessStatem do
     else
       :ok
     end
+  end
+
+  def handle_result({:ok, %Process{} = process}, _process) do
+    {:keep_state, process, process.__actions__}
+  end
+
+  def handle_result({:error, reason}, process) do
+    {:stop, reason, process}
   end
 end

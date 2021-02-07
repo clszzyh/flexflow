@@ -17,6 +17,8 @@ defmodule Flexflow.ProcessRegistry do
         unquote(__MODULE__).via_tuple({__MODULE__, worker_id})
       end
 
+      def pid(worker_id) when is_pid(worker_id), do: worker_id
+
       def pid(worker_id) do
         unquote(__MODULE__).pid({__MODULE__, worker_id})
       end

@@ -8,7 +8,7 @@ defmodule Flexflow do
   alias Flexflow.History
   # alias Flexflow.Process
   alias Flexflow.ProcessManager
-  alias Flexflow.ProcessServer
+  alias Flexflow.ProcessStatem
 
   @type process_key :: {module(), id()}
   @type process_identity :: process_key | pid()
@@ -24,9 +24,9 @@ defmodule Flexflow do
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :start_child
   defdelegate stop(srv \\ nil, key), to: ProcessManager, as: :stop_child
   defdelegate history(key), to: History, as: :get
-  defdelegate pid(key), to: ProcessServer
-  defdelegate state(key), to: ProcessServer
-  defdelegate start_child(key, child_key, args \\ %{}), to: ProcessServer
-  defdelegate call(key, op), to: ProcessServer
-  defdelegate cast(key, op), to: ProcessServer
+  defdelegate pid(key), to: ProcessStatem
+  defdelegate state(key), to: ProcessStatem
+  # defdelegate start_child(key, child_key, args \\ %{}), to: ProcessServer
+  defdelegate call(key, op), to: ProcessStatem
+  defdelegate cast(key, op), to: ProcessStatem
 end

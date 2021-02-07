@@ -94,7 +94,7 @@ defmodule ProcessTest do
              %Flexflow.ProcessManager{pid: pid, id: name, name: :p1_new}
            ]
 
-    server_pid = Flexflow.ProcessServer.pid({P1, name})
+    server_pid = Flexflow.ProcessStatem.pid({P1, name})
 
     assert server_pid == pid
 

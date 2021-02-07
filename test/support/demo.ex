@@ -22,7 +22,7 @@ defmodule FlexflowDemoTest do
 
     @impl true
     def name, do: :p1_new
-    @impl true
+
     def terminate(p, reason) do
       IO.puts(inspect({:terminate, p.id, reason}))
     end

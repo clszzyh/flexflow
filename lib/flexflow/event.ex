@@ -41,10 +41,8 @@ defmodule Flexflow.Event do
 
   @doc "Invoked after compile, return :ok if valid"
   @callback validate(t(), Process.t()) :: :ok
-
-  @callback handle_enter(t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
-
   @callback graphviz_attribute :: keyword()
+  @callback handle_enter(t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
 
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
@@ -195,13 +193,11 @@ defmodule Flexflow.Event do
   @spec handle_event(event_type(), term, Flexflow.state_type(), Process.t()) ::
           event_handler_result()
   def handle_event(:enter, {from_module, _} = from, {to_module, _} = to, process) do
-    from_state = process.states[from]
-    to_state = process.states[to]
     t = process.events[{from, to}]
 
-    with {:ok, process} <- from_module.handle_leave(from_state, process),
+    with {:ok, process} <- from_module.handle_leave(process.states[from], process),
          {:ok, process} <- t.module.handle_enter(t, process),
-         {:ok, process} <- to_module.handle_enter(to_state, process) do
+         {:ok, process} <- to_module.handle_enter(process.states[to], process) do
       {:keep_state, process, process.__actions__}
     else
       {:error, reason} -> {:stop, reason, process}

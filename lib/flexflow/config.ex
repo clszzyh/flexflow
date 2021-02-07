@@ -1,6 +1,5 @@
 defmodule Flexflow.Config do
   @default_map %{
-    max_loop_limit: 1000,
     telemetry_default_handler: true
   }
 

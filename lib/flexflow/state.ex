@@ -56,6 +56,9 @@ defmodule Flexflow.State do
 
   @callback graphviz_attribute :: keyword()
 
+  @callback handle_leave(t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
+  @callback handle_enter(t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
+
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
 
@@ -88,6 +91,8 @@ defmodule Flexflow.State do
         defdelegate graphviz_attribute, to: unquote(inherit)
         defdelegate type, to: unquote(inherit)
         defdelegate validate(s, p), to: unquote(inherit)
+        defdelegate handle_leave(s, p), to: unquote(inherit)
+        defdelegate handle_enter(s, p), to: unquote(inherit)
         defdelegate action(a, b, c), to: unquote(inherit)
       end
 
@@ -266,4 +271,10 @@ defmodule Flexflow.States.Blank do
 
   @impl true
   def action(_, _, _), do: :ok
+
+  @impl true
+  def handle_leave(_, p), do: {:ok, p}
+
+  @impl true
+  def handle_enter(_, p), do: {:ok, p}
 end
