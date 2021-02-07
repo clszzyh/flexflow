@@ -4,6 +4,7 @@ defmodule Flexflow.Event do
   """
 
   alias Flexflow.Context
+  alias Flexflow.Events.Blank
   alias Flexflow.Process
   alias Flexflow.State
   alias Flexflow.Util
@@ -46,6 +47,8 @@ defmodule Flexflow.Event do
   @callback handle_enter(t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
 
   defmacro __using__(opts \\ []) do
+    {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
+
     quote do
       @behaviour unquote(__MODULE__)
 
@@ -65,11 +68,18 @@ defmodule Flexflow.Event do
       @impl true
       def name, do: @__name__
 
-      @impl true
-      def validate(_, _), do: :ok
+      if __MODULE__ == unquote(inherit) do
+        def __inherit__, do: nil
+      else
+        unless Util.local_behaviour(unquote(inherit)) == unquote(__MODULE__) do
+          raise ArgumentError, "Invalid inherit module: #{inspect(unquote(inherit))}"
+        end
 
-      @impl true
-      def handle_enter(_, p), do: {:ok, p}
+        def __inherit__, do: unquote(inherit)
+
+        defdelegate validate(a, p), to: unquote(inherit)
+        defdelegate handle_enter(a, p), to: unquote(inherit)
+      end
 
       defoverridable unquote(__MODULE__)
       Module.delete_attribute(__MODULE__, :__name__)
@@ -143,15 +153,11 @@ defmodule Flexflow.Event do
 
     ast =
       quote generated: true do
-        use unquote(__MODULE__)
-
+        use unquote(__MODULE__), inherit: unquote(parent_module)
         unquote(ast)
 
         @impl true
         def name, do: unquote(name)
-
-        @impl true
-        def validate(e, p), do: unquote(parent_module).validate(e, p)
       end
 
     {:module, ^module_name, _byte_code, _} =
@@ -219,4 +225,19 @@ defmodule Flexflow.Event do
       ) do
     {:ok, put_in(p.states[{from_module, from_name}].state, :completed)}
   end
+end
+
+defmodule Flexflow.Events.Blank do
+  @moduledoc false
+
+  use Flexflow.Event
+
+  @impl true
+  def name, do: :blank
+
+  @impl true
+  def validate(_, _), do: :ok
+
+  @impl true
+  def handle_enter(_, p), do: {:ok, p}
 end

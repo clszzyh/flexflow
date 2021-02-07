@@ -5,7 +5,7 @@ defmodule Flexflow.State do
 
   alias Flexflow.Context
   alias Flexflow.Process
-  alias Flexflow.States.{Bypass, End, Start}
+  alias Flexflow.States.{Blank, Bypass, End, Start}
   alias Flexflow.Util
 
   @states [:created, :initial, :ready, :completed, :pending, :error]
@@ -53,9 +53,6 @@ defmodule Flexflow.State do
   @doc "Module name"
   @callback name :: Flexflow.name()
 
-  @doc "State type"
-  @callback type :: type()
-
   @doc "Invoked before state state changes"
   @callback action({state(), state()}, t(), Process.t()) :: action_result()
 
@@ -65,6 +62,8 @@ defmodule Flexflow.State do
   @callback graphviz_attribute :: keyword()
 
   defmacro __using__(opts \\ []) do
+    {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
+
     quote do
       @behaviour unquote(__MODULE__)
       alias unquote(__MODULE__)
@@ -84,13 +83,20 @@ defmodule Flexflow.State do
 
       @impl true
       def name, do: @__name__
-      @impl true
-      def graphviz_attribute, do: []
-      @impl true
-      def validate(_, _), do: :ok
 
-      @impl true
-      def action(_, _, _), do: :ok
+      if __MODULE__ == unquote(inherit) do
+        def __inherit__, do: nil
+      else
+        unless Util.local_behaviour(unquote(inherit)) == unquote(__MODULE__) do
+          raise ArgumentError, "Invalid inherit module: #{inspect(unquote(inherit))}"
+        end
+
+        def __inherit__, do: unquote(inherit)
+
+        defdelegate graphviz_attribute, to: unquote(inherit)
+        defdelegate validate(s, p), to: unquote(inherit)
+        defdelegate action(a, b, c), to: unquote(inherit)
+      end
 
       defoverridable unquote(__MODULE__)
 
@@ -137,18 +143,12 @@ defmodule Flexflow.State do
 
     ast =
       quote generated: true do
-        use unquote(__MODULE__)
+        use unquote(__MODULE__), inherit: unquote(parent_module)
 
         unquote(ast)
 
         @impl true
-        def type, do: :bypass
-
-        @impl true
         def name, do: unquote(name)
-
-        @impl true
-        def validate(e, p), do: unquote(parent_module).validate(e, p)
       end
 
     {:module, ^module_name, _byte_code, _} =
@@ -250,4 +250,22 @@ defmodule Flexflow.State do
   defp handle_error(%__MODULE__{} = e, reason) do
     %{e | state: :error, __context__: %Context{state: :error, result: reason}}
   end
+end
+
+defmodule Flexflow.States.Blank do
+  @moduledoc false
+
+  use Flexflow.State
+
+  @impl true
+  def name, do: :blank
+
+  @impl true
+  def validate(_, _), do: :ok
+
+  @impl true
+  def graphviz_attribute, do: []
+
+  @impl true
+  def action(_, _, _), do: :ok
 end

@@ -19,7 +19,6 @@ defmodule Review do
   defmodule Reviewing do
     use Flexflow.State
 
-    @impl true
     def type, do: :bypass
   end
 

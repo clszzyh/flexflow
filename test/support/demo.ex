@@ -6,7 +6,6 @@ defmodule FlexflowDemoTest do
       @moduledoc false
       use Flexflow.State
 
-      @impl true
       def type, do: :bypass
     end
 
@@ -49,7 +48,6 @@ defmodule FlexflowDemoTest do
       @moduledoc false
       use Flexflow.State
 
-      @impl true
       def type, do: :bypass
     end
 

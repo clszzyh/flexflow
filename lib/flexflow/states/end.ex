@@ -5,7 +5,6 @@ defmodule Flexflow.States.End do
 
   use Flexflow.State
 
-  @impl true
   def type, do: :end
 
   @impl true

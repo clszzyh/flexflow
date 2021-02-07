@@ -5,7 +5,6 @@ defmodule Flexflow.States.Start do
 
   use Flexflow.State
 
-  @impl true
   def type, do: :start
 
   @impl true

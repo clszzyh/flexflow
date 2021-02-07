@@ -5,7 +5,6 @@ defmodule Flexflow.States.Bypass do
 
   use Flexflow.State
 
-  @impl true
   def type, do: :bypass
 
   @impl true
