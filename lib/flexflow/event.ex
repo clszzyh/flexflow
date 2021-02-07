@@ -33,7 +33,7 @@ defmodule Flexflow.Event do
   @doc "Invoked after compile, return :ok if valid"
   @callback validate(t(), Process.t()) :: :ok
   @callback graphviz_attribute :: keyword()
-  @callback handle_enter(t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
+  @callback handle_enter(t(), Process.t()) :: Process.result()
 
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)

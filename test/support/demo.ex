@@ -23,10 +23,6 @@ defmodule FlexflowDemoTest do
     @impl true
     def name, do: :p1_new
 
-    def terminate(p, reason) do
-      IO.puts(inspect({:terminate, p.id, reason}))
-    end
-
     state N1, type: :start, foo: %{aaa: :bbb}
     state N2
 

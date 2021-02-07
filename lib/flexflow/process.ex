@@ -250,7 +250,7 @@ defmodule Flexflow.Process do
     end
   end
 
-  def handle_event(_event_type, _content, _state, process) do
-    {:ok, process}
+  def handle_event(event_type, content, {module, _} = state, process) do
+    module.handle_event(event_type, content, process.states[state], process)
   end
 end
