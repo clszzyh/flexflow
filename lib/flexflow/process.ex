@@ -99,7 +99,8 @@ defmodule Flexflow.Process do
         def ping(_), do: :pong
       end
 
-      import unquote(__MODULE__), only: [state: 1, state: 2, ~>: 2, event: 2, event: 3]
+      import unquote(__MODULE__),
+        only: [state: 1, state: 2, state: 3, ~>: 2, event: 2, event: 3, event: 4]
 
       for attribute <- [:__states__, :__events__, :__definitions__] do
         Module.register_attribute(__MODULE__, attribute, accumulate: true)
@@ -123,14 +124,22 @@ defmodule Flexflow.Process do
     end
   end
 
-  defmacro state(key, opts \\ []) do
+  defmacro state(key), do: defstate(key, [])
+  defmacro state(key, opts), do: defstate(key, opts)
+  defmacro state(key, opts, block), do: defstate(key, opts ++ block)
+
+  defmacro event(key, tuple), do: defevent(key, tuple, [])
+  defmacro event(key, tuple, opts), do: defevent(key, tuple, opts)
+  defmacro event(key, tuple, opts, block), do: defevent(key, tuple, opts ++ block)
+
+  defp defstate(key, opts) do
     quote bind_quoted: [key: key, opts: opts] do
       @__states__ {key, opts}
       @__definitions__ {:state, key}
     end
   end
 
-  defmacro event(key, tuple, opts \\ []) do
+  defp defevent(key, tuple, opts) do
     quote bind_quoted: [key: key, tuple: tuple, opts: Macro.escape(opts)] do
       @__events__ {key, tuple, opts}
       @__definitions__ {:event, Tuple.insert_at(tuple, 0, key)}
@@ -158,7 +167,7 @@ defmodule Flexflow.Process do
       env.module
       |> Module.get_attribute(:__states__)
       |> Enum.reverse()
-      |> Enum.map(&State.new/1)
+      |> Enum.map(&State.new(&1, env.module))
       |> State.validate()
 
     events =

@@ -141,7 +141,7 @@ defmodule Flexflow.Event do
 
     ast =
       quote generated: true do
-        use Flexflow.Event
+        use unquote(__MODULE__)
 
         unquote(ast)
 

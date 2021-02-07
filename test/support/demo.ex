@@ -71,11 +71,19 @@ defmodule FlexflowDemoTest do
 
     state Start
     state End
-    state Slow, async: [timeout: 5000]
+
+    state Slow, async: [timeout: 5000] do
+      @impl true
+      def validate(_, _) do
+        IO.puts("state ok")
+        :ok
+      end
+    end
 
     event :first, Start ~> Slow do
       @impl true
       def validate(_, _) do
+        IO.puts("event ok")
         :ok
       end
     end

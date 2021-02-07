@@ -108,11 +108,14 @@ defmodule Flexflow.State do
   @spec key(t()) :: Flexflow.state_type()
   def key(%{module: module, name: name}), do: {module, name}
 
-  @spec new({Flexflow.state_type_or_module(), options}) :: t()
-  def new({o, _opts}) when is_binary(o), do: raise(ArgumentError, "Name `#{o}` should be an atom")
-  def new({o, opts}) when is_atom(o), do: new({Util.normalize_module(o), opts})
+  @spec new({Flexflow.state_type_or_module(), options}, module()) :: t()
+  def new({o, _opts}, _) when is_binary(o),
+    do: raise(ArgumentError, "Name `#{o}` should be an atom")
 
-  def new({{o, name}, opts}) do
+  def new({o, opts}, process_module) when is_atom(o),
+    do: new({Util.normalize_module(o), opts}, process_module)
+
+  def new({{o, name}, opts}, process_module) do
     unless Util.local_behaviour(o) == __MODULE__ do
       raise ArgumentError, "#{inspect(o)} should implement #{__MODULE__}"
     end
@@ -121,19 +124,48 @@ defmodule Flexflow.State do
     {type, opts} = Keyword.pop(opts, :type, o.type)
     unless type in @types, do: raise(ArgumentError, "Unknown state type #{type}")
     {attributes, opts} = Keyword.pop(opts, :attributes, @type_map[type].graphviz_attribute())
+    {ast, opts} = Keyword.pop(opts, :do)
+    module = new_module(ast, o, name, process_module)
 
     async = Keyword.get(opts, :async, false)
 
     attributes = if async, do: Keyword.merge([style: "bold"], attributes), else: attributes
 
     %__MODULE__{
-      module: o,
+      module: module,
       name: name,
       type: type,
       __async__: async,
       __opts__: opts,
       __graphviz__: attributes
     }
+  end
+
+  defp new_module(nil, parent_module, _, _), do: parent_module
+
+  defp new_module(ast, parent_module, name, process_module) do
+    module_name = Module.concat([process_module, parent_module, Macro.camelize(to_string(name))])
+
+    ast =
+      quote generated: true do
+        use unquote(__MODULE__)
+
+        unquote(ast)
+
+        @impl true
+        def type, do: :bypass
+
+        @impl true
+        def name, do: unquote(name)
+
+        @impl true
+        def validate(e, p), do: unquote(parent_module).validate(e, p)
+      end
+
+    {:module, ^module_name, _byte_code, _} =
+      Module.create(module_name, ast, Macro.Env.location(__ENV__))
+
+    module_name
   end
 
   @spec start?(t()) :: boolean()
