@@ -5,17 +5,12 @@ defmodule Flexflow.State do
 
   alias Flexflow.Context
   alias Flexflow.Process
-  alias Flexflow.States.{Blank, Bypass, End, Start}
+  alias Flexflow.States.Blank
   alias Flexflow.Util
 
   @states [:created, :initial, :ready, :completed, :pending, :error]
   @state_changes [created: :initial, initial: :ready]
   @types [:start, :end, :bypass]
-  @type_map %{
-    start: Start,
-    end: End,
-    bypass: Bypass
-  }
 
   @typedoc """
   State state
@@ -32,7 +27,6 @@ defmodule Flexflow.State do
           state: state(),
           name: Flexflow.name(),
           type: type(),
-          __graphviz__: Keyword.t(),
           __in_edges__: [edge()],
           __out_edges__: [edge()],
           __context__: Context.t(),
@@ -43,7 +37,6 @@ defmodule Flexflow.State do
   defstruct @enforce_keys ++
               [
                 state: :created,
-                __graphviz__: [],
                 __in_edges__: [],
                 __out_edges__: [],
                 __opts__: [],
@@ -122,7 +115,6 @@ defmodule Flexflow.State do
     opts = opts ++ o.__opts__
     {type, opts} = Keyword.pop(opts, :type, o.type)
     unless type in @types, do: raise(ArgumentError, "Unknown state type #{type}")
-    {attributes, opts} = Keyword.pop(opts, :attributes, @type_map[type].graphviz_attribute())
     {ast, opts} = Keyword.pop(opts, :do)
     {module, name} = new_module(ast, o, name, process_tuple)
 
@@ -130,8 +122,7 @@ defmodule Flexflow.State do
       module: module,
       name: name,
       type: type,
-      __opts__: opts,
-      __graphviz__: attributes
+      __opts__: opts
     }
   end
 

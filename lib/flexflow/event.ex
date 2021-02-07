@@ -21,7 +21,6 @@ defmodule Flexflow.Event do
           from: Flexflow.state_type(),
           to: Flexflow.state_type(),
           __opts__: options,
-          __graphviz__: Keyword.t(),
           __context__: Context.t()
         }
 
@@ -30,7 +29,6 @@ defmodule Flexflow.Event do
               [
                 state: :created,
                 __opts__: [],
-                __graphviz__: [],
                 __context__: Context.new()
               ]
 
@@ -45,6 +43,8 @@ defmodule Flexflow.Event do
   @callback validate(t(), Process.t()) :: :ok
 
   @callback handle_enter(t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
+
+  @callback graphviz_attribute :: keyword()
 
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
@@ -74,6 +74,7 @@ defmodule Flexflow.Event do
           raise ArgumentError, "Invalid inherit module: #{inspect(unquote(inherit))}"
         end
 
+        defdelegate graphviz_attribute, to: unquote(inherit)
         defdelegate validate(a, p), to: unquote(inherit)
         defdelegate handle_enter(a, p), to: unquote(inherit)
       end
@@ -128,7 +129,6 @@ defmodule Flexflow.Event do
       raise(ArgumentError, "`#{inspect(to)}` is not defined")
 
     opts = opts ++ o.__opts__
-    {graphviz_attributes, opts} = Keyword.pop(opts, :graphviz_attributes, [])
     {ast, opts} = Keyword.pop(opts, :do)
     {module, name} = new_module(ast, o, name, process_tuple)
 
@@ -137,7 +137,6 @@ defmodule Flexflow.Event do
       name: name,
       from: from,
       to: to,
-      __graphviz__: graphviz_attributes,
       __opts__: opts
     }
   end
@@ -231,6 +230,9 @@ defmodule Flexflow.Events.Blank do
 
   @impl true
   def name, do: :blank
+
+  @impl true
+  def graphviz_attribute, do: []
 
   @impl true
   def validate(_, _), do: :ok

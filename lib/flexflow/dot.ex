@@ -54,13 +54,8 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
   def suffix(_), do: "}\n//"
   def attributes(_), do: []
 
-  def name(%{
-        __definitions__: definitions,
-        states: states,
-        events: events,
-        __graphviz__: attributes
-      }) do
-    attributes_str = Enum.map_join(attributes, fn {k, v} -> "  #{k} =#{v};\n" end)
+  def name(%{__definitions__: definitions, states: states, events: events}) do
+    attributes_str = Enum.map_join([size: "\"4,4\""], fn {k, v} -> "  #{k} =#{v};\n" end)
 
     str =
       definitions
@@ -79,8 +74,8 @@ defimpl Flexflow.DotProtocol, for: Flexflow.State do
   def suffix(_), do: ";\n"
   def name(%{name: name}), do: Flexflow.Dot.escape(name)
 
-  def attributes(%{name: name, __graphviz__: attributes}),
-    do: [label: inspect(to_string(name))] ++ attributes
+  def attributes(%{name: name, module: module}),
+    do: [label: inspect(to_string(name))] ++ module.graphviz_attribute()
 end
 
 defimpl Flexflow.DotProtocol, for: Flexflow.Event do
@@ -90,6 +85,6 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Event do
   def name(%{from: {_, from_name}, to: {_, to_name}}),
     do: "#{Flexflow.Dot.escape(from_name)} -> #{Flexflow.Dot.escape(to_name)}"
 
-  def attributes(%{name: name, __graphviz__: attributes}),
-    do: [label: inspect(to_string(name))] ++ attributes
+  def attributes(%{name: name, module: module}),
+    do: [label: inspect(to_string(name))] ++ module.graphviz_attribute()
 end
