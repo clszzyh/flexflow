@@ -46,7 +46,7 @@ defmodule FlexflowTest do
 
     n1 = State.new({n1_s, foo: %{aaa: :bbb}, type: :start})
     n2 = State.new({n2_s, []})
-    n3 = State.new({n3_s, async: true})
+    n3 = State.new({n3_s, []})
     n4 = State.new({n4_s, type: :end})
 
     n1 = %{n1 | __out_edges__: [{t1_s, n2_s}]}

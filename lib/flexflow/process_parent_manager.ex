@@ -21,7 +21,7 @@ defmodule Flexflow.ProcessParentManager do
 
   def register_all do
     Tracker.impls()[Flexflow.ProcessTracker]
-    |> Enum.reduce_while(:ok, fn module, :ok ->
+    |> Enum.reduce_while(:ok, fn {module, _}, :ok ->
       case register(module) do
         {:ok, _pid} -> {:cont, :ok}
         {:error, reason} -> {:halt, {:error, reason}}

@@ -35,7 +35,7 @@ defmodule FlexflowDemoTest do
 
     event T1, N1 ~> N2, foo: :baz
 
-    state N3, async: true
+    state N3
     state N4, type: :end
 
     event T2, N2 ~> N3
@@ -58,7 +58,7 @@ defmodule FlexflowDemoTest do
     state Start
     state End
 
-    state {Slow, :slow1}, async: [timeout: 5000] do
+    state {Slow, :slow1} do
       @impl true
       def validate(_, _) do
         IO.puts("state ok")

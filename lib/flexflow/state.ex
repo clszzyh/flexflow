@@ -32,7 +32,6 @@ defmodule Flexflow.State do
           state: state(),
           name: Flexflow.name(),
           type: type(),
-          __async__: Keyword.t() | false,
           __graphviz__: Keyword.t(),
           __in_edges__: [edge()],
           __out_edges__: [edge()],
@@ -44,7 +43,6 @@ defmodule Flexflow.State do
   defstruct @enforce_keys ++
               [
                 state: :created,
-                __async__: false,
                 __graphviz__: [],
                 __in_edges__: [],
                 __out_edges__: [],
@@ -122,15 +120,10 @@ defmodule Flexflow.State do
     {ast, opts} = Keyword.pop(opts, :do)
     {module, name} = new_module(ast, o, name, process_tuple)
 
-    async = Keyword.get(opts, :async, false)
-
-    attributes = if async, do: Keyword.merge([style: "bold"], attributes), else: attributes
-
     %__MODULE__{
       module: module,
       name: name,
       type: type,
-      __async__: async,
       __opts__: opts,
       __graphviz__: attributes
     }
@@ -217,17 +210,11 @@ defmodule Flexflow.State do
   end
 
   @spec change(state(), t(), Process.t()) :: {:ok, Process.t()} | {:error, term()}
-  def change(target, %__MODULE__{module: module, name: name, __async__: false} = e, p) do
+  def change(target, %__MODULE__{module: module, name: name} = e, p) do
     case do_change(target, e, p) do
       {:ok, %__MODULE__{} = e} -> {:ok, put_in(p, [:states, {module, name}], e)}
       {:error, reason} -> {:error, reason}
     end
-  end
-
-  def change(target, %__MODULE__{module: module, name: name} = e, p) do
-    f = fn -> do_change(target, e, p) end
-    p = Process.async(p, f, &callback/4, {module, name})
-    {:ok, put_in(p, [:states, {module, name}], %{e | state: :pending})}
   end
 
   @spec do_change(state(), t(), Process.t()) :: {:ok, t()} | {:error, term()}

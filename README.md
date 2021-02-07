@@ -29,8 +29,7 @@ defmodule Review do
 
   ## Start state
   state {Start, :draft}
-  ## End state, `async` mode means this event run's in a separated elixir process.
-  state {End, :reviewed}, async: true
+  state {End, :reviewed}
   state {End, :canceled}
   ## Bypass state
   state :rejected
