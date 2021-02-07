@@ -14,7 +14,7 @@ defmodule Flexflow.ProcessManager do
   @type t :: %__MODULE__{
           pid: pid(),
           id: Flexflow.id(),
-          state: Flexflow.state_type(),
+          state: Flexflow.state_key(),
           name: Flexflow.name()
         }
   @enforce_keys [:pid, :id, :name, :state]

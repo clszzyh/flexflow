@@ -12,14 +12,13 @@ defmodule Flexflow.State do
 
   @type type :: unquote(Enum.reduce(@types, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
-  @type edge :: Flexflow.state_type()
   @type action_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
           type: type(),
-          __in_edges__: [edge()],
-          __out_edges__: [edge()],
+          __in_edges__: [Flexflow.state_key()],
+          __out_edges__: [Flexflow.state_key()],
           __context__: Context.t(),
           __opts__: options
         }
@@ -90,8 +89,8 @@ defmodule Flexflow.State do
     end
   end
 
-  @spec key(t()) :: Flexflow.state_type()
-  def key(%{module: module, name: name}), do: {module, name}
+  @spec key(t()) :: Flexflow.state_key()
+  def key(%{name: name}), do: name
 
   @spec new({Flexflow.state_type_or_module(), options}, Process.process_tuple()) :: t()
   def new({o, _opts}, _) when is_binary(o),
@@ -119,11 +118,19 @@ defmodule Flexflow.State do
     }
   end
 
+  def normalize_state_key({_, name}, [_ | _] = states, process_name) do
+    Enum.find_value(states, fn %{name: state_name} ->
+      if state_name in [name, new_name(name, process_name)], do: state_name
+    end) || raise(ArgumentError, "Cannot find #{name}")
+  end
+
+  def new_name(name, process_name), do: String.to_atom("#{process_name}_s_#{name}")
+
   defp new_module(nil, parent_module, name, _), do: {parent_module, name}
 
   defp new_module(ast, parent_module, name, {process_module, process_name}) do
     module_name = Module.concat([process_module, parent_module, Macro.camelize(to_string(name))])
-    name = String.to_atom("#{process_name}_s_#{name}")
+    name = new_name(name, process_name)
 
     ast =
       quote generated: true do

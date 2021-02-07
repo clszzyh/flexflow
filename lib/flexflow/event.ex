@@ -14,8 +14,8 @@ defmodule Flexflow.Event do
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
-          from: Flexflow.state_type(),
-          to: Flexflow.state_type(),
+          from: Flexflow.state_key(),
+          to: Flexflow.state_key(),
           __opts__: options,
           __context__: Context.t()
         }
@@ -73,7 +73,7 @@ defmodule Flexflow.Event do
     end
   end
 
-  @spec key(t()) :: {Flexflow.state_type(), Flexflow.state_type()}
+  @spec key(t()) :: {Flexflow.state_key(), Flexflow.state_key()}
   def key(%{from: from, to: to}), do: {from, to}
 
   @spec new({key(), {key(), key()}, options}, [State.t()], Process.process_tuple()) :: t()
@@ -111,11 +111,11 @@ defmodule Flexflow.Event do
 
     states = Map.new(states, &{&1.name, &1})
 
-    states[from_name] || states[String.to_atom("#{process_name}_s_#{from_name}")] ||
-      raise(ArgumentError, "`#{inspect(from)}` is not defined")
+    from_state = states[from_name] || states[String.to_atom("#{process_name}_s_#{from_name}")]
+    from_state || raise(ArgumentError, "`#{inspect(from)}` is not defined")
 
-    states[to_name] || states[String.to_atom("#{process_name}_s_#{to_name}")] ||
-      raise(ArgumentError, "`#{inspect(to)}` is not defined")
+    to_state = states[to_name] || states[String.to_atom("#{process_name}_s_#{to_name}")]
+    to_state || raise(ArgumentError, "`#{inspect(to)}` is not defined")
 
     opts = opts ++ o.__opts__
     {ast, opts} = Keyword.pop(opts, :do)
@@ -124,8 +124,8 @@ defmodule Flexflow.Event do
     %__MODULE__{
       module: module,
       name: name,
-      from: from,
-      to: to,
+      from: from_state.name,
+      to: to_state.name,
       __opts__: opts
     }
   end

@@ -9,14 +9,14 @@ defmodule Flexflow.ProcessStatem do
   @behaviour :gen_statem
 
   @type handle_event_result ::
-          :gen_statem.event_handler_result(Flexflow.state_type())
-          | :gen_statem.state_enter_result(Flexflow.state_type())
+          :gen_statem.event_handler_result(Flexflow.state_key())
+          | :gen_statem.state_enter_result(Flexflow.state_key())
 
   def start_link(module, {id, opts}) do
     :gen_statem.start_link(via_tuple({module, id}), __MODULE__, {module, id, opts}, [])
   end
 
-  @spec state(Flexflow.process_identity()) :: {:ok, Flexflow.state_type(), Process.t()}
+  @spec state(Flexflow.process_identity()) :: {:ok, Flexflow.state_key(), Process.t()}
   def state(identity), do: :gen_statem.call(pid(identity), :state)
 
   @spec call(Flexflow.process_identity(), term()) :: term()

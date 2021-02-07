@@ -60,8 +60,8 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Process do
     str =
       definitions
       |> Enum.map(fn
-        {:state, key} -> Map.fetch!(states, key)
-        {:event, key} -> Map.fetch!(events, key)
+        {:states, key} -> Map.fetch!(states, key)
+        {:events, key} -> Map.fetch!(events, key)
       end)
       |> Enum.map_join(&Flexflow.Dot.serialize/1)
 

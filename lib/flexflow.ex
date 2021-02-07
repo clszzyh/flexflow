@@ -19,6 +19,7 @@ defmodule Flexflow do
 
   @type state_type_or_module :: state_type | module()
   @type state_type :: {module(), name()}
+  @type state_key :: name()
 
   defdelegate server(key, args \\ %{}), to: ProcessManager
   defdelegate start(key, args \\ %{}), to: ProcessManager, as: :start_child

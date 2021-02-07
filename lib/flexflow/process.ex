@@ -16,9 +16,9 @@ defmodule Flexflow.Process do
           module: module(),
           name: Flexflow.name(),
           id: Flexflow.id() | nil,
-          start_state: Flexflow.state_type(),
-          states: %{Flexflow.state_type() => State.t()},
-          events: %{Flexflow.state_type() => Event.t()},
+          start_state: Flexflow.state_key(),
+          states: %{Flexflow.state_key() => State.t()},
+          events: %{Flexflow.state_key() => Event.t()},
           parent: Flexflow.process_key(),
           childs: [Flexflow.process_key()],
           request_id: String.t(),
@@ -36,7 +36,9 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type definition :: {:state | :event, Flexflow.state_type()}
+  @type definition ::
+          {:states, Flexflow.state_key()}
+          | {:events, {Flexflow.state_key(), Flexflow.state_key()}}
   @type process_tuple :: {module(), Flexflow.name()}
 
   @enforce_keys [:module, :states, :events, :start_state, :__definitions__]
@@ -94,6 +96,8 @@ defmodule Flexflow.Process do
     end
   end
 
+  def a ~> b, do: {a, b}
+
   defmacro state(key), do: defstate(key, [])
   defmacro state(key, opts), do: defstate(key, opts)
   defmacro state(key, opts, block), do: defstate(key, opts ++ block)
@@ -105,18 +109,16 @@ defmodule Flexflow.Process do
   defp defstate(key, opts) do
     quote bind_quoted: [key: key, opts: Macro.escape(opts)] do
       @__states__ {key, opts}
-      @__definitions__ {:state, key}
+      @__definitions__ {:states, key}
     end
   end
 
   defp defevent(key, tuple, opts) do
     quote bind_quoted: [key: key, tuple: tuple, opts: Macro.escape(opts)] do
       @__events__ {key, tuple, opts}
-      @__definitions__ {:event, Tuple.insert_at(tuple, 0, key)}
+      @__definitions__ {:events, Tuple.insert_at(tuple, 0, key)}
     end
   end
-
-  def a ~> b, do: {a, b}
 
   def __after_compile__(env, _bytecode) do
     process = env.module.new()
@@ -127,27 +129,41 @@ defmodule Flexflow.Process do
   end
 
   defp new_process(env) do
+    process_name = Module.get_attribute(env.module, :__name__)
+
     states =
       env.module
       |> Module.get_attribute(:__states__)
       |> Enum.reverse()
-      |> Enum.map(&State.new(&1, {env.module, Module.get_attribute(env.module, :__name__)}))
+      |> Enum.map(&State.new(&1, {env.module, process_name}))
       |> State.validate()
 
     events =
       env.module
       |> Module.get_attribute(:__events__)
       |> Enum.reverse()
-      |> Enum.map(
-        &Event.new(&1, states, {env.module, Module.get_attribute(env.module, :__name__)})
-      )
+      |> Enum.map(&Event.new(&1, states, {env.module, process_name}))
       |> Event.validate()
 
     definitions =
       env.module
       |> Module.get_attribute(:__definitions__)
       |> Enum.reverse()
-      |> Enum.map(fn {k, v} -> {k, Util.normalize_module(v, states)} end)
+      |> Enum.map(fn {k, v} ->
+        v =
+          case v do
+            {_, from, to} ->
+              {Util.normalize_module(from, states)
+               |> State.normalize_state_key(states, process_name),
+               Util.normalize_module(to, states)
+               |> State.normalize_state_key(states, process_name)}
+
+            v ->
+              Util.normalize_module(v, states) |> State.normalize_state_key(states, process_name)
+          end
+
+        {k, v}
+      end)
 
     new_states =
       Map.new(states, fn o ->
@@ -180,8 +196,9 @@ defmodule Flexflow.Process do
       end
 
       @__process__ %{process | __opts__: @__opts__}
-      @__vsn__ (for {_k, {m, _id}} <- @__process__.__definitions__, uniq: true do
-                  {m, m.module_info(:attributes)[:vsn]}
+
+      @__vsn__ (for {key, edge} <- @__process__.__definitions__, uniq: true do
+                  {key, @__process__[key][edge].module.module_info(:attributes)[:vsn]}
                 end) ++ [{:flexflow, Mix.Project.config()[:version]}]
 
       def __vsn__ do
@@ -236,21 +253,24 @@ defmodule Flexflow.Process do
   @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def new(module, id, args \\ %{}), do: module.new(id, args)
 
-  @spec handle_event(:enter, Flexflow.state_type(), Flexflow.state_type(), t()) :: result
-  @spec handle_event(event_type(), term, Flexflow.state_type(), t()) :: result
-  def handle_event(:enter, {from_module, _} = from, {to_module, _} = to, process) do
+  @spec handle_event(:enter, Flexflow.state_key(), Flexflow.state_key(), t()) :: result
+  @spec handle_event(event_type(), term, Flexflow.state_key(), t()) :: result
+  def handle_event(:enter, from, to, process) do
     t = process.events[{from, to}]
+    from_state = process.states[from]
+    to_state = process.states[to]
 
-    with {:ok, process} <- from_module.handle_leave(process.states[from], process),
+    with {:ok, process} <- from_state.module.handle_leave(from_state, process),
          {:ok, process} <- t.module.handle_enter(t, process),
-         {:ok, process} <- to_module.handle_enter(process.states[to], process) do
+         {:ok, process} <- to_state.module.handle_enter(to_state, process) do
       {:ok, process}
     else
       {:error, reason} -> {:error, reason}
     end
   end
 
-  def handle_event(event_type, content, {module, _} = state, process) do
-    module.handle_event(event_type, content, process.states[state], process)
+  def handle_event(event_type, content, state_key, process) do
+    state = process.states[state_key]
+    state.module.handle_event(event_type, content, state, process)
   end
 end
