@@ -147,12 +147,8 @@ defmodule Flexflow.Process do
   def __after_compile__(env, _bytecode) do
     process = env.module.new()
 
-    for {_, %{module: module} = state} <- process.states do
+    for map <- [process.states, process.events], {_, %{module: module} = state} <- map do
       :ok = module.validate(state, process)
-    end
-
-    for {_, %{module: module} = event} <- process.events do
-      :ok = module.validate(event, process)
     end
 
     :ok

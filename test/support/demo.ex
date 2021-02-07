@@ -61,7 +61,6 @@ defmodule FlexflowDemoTest do
     state {Slow, :slow1} do
       @impl true
       def validate(_, _) do
-        IO.puts("state ok")
         :ok
       end
     end
@@ -69,7 +68,6 @@ defmodule FlexflowDemoTest do
     event :first, Start ~> :slow1, foo: :bar do
       @impl true
       def validate(_, _) do
-        IO.puts("event ok")
         :ok
       end
     end
