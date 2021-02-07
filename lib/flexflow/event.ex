@@ -32,10 +32,6 @@ defmodule Flexflow.Event do
                 __context__: Context.new()
               ]
 
-  @type event_type :: :gen_statem.event_type()
-  @type event_handler_result :: :gen_statem.event_handler_result(Flexflow.state_type())
-  @type state_enter_result :: :gen_statem.state_enter_result(Flexflow.state_type())
-
   @doc "Module name"
   @callback name :: Flexflow.name()
 
@@ -186,26 +182,6 @@ defmodule Flexflow.Event do
     Enum.reduce(events, p, fn {key, event}, p ->
       put_in(p, [:events, key], %{event | state: :initial})
     end)
-  end
-
-  @spec handle_event(:enter, Flexflow.state_type(), Flexflow.state_type(), Process.t()) ::
-          state_enter_result
-  @spec handle_event(event_type(), term, Flexflow.state_type(), Process.t()) ::
-          event_handler_result()
-  def handle_event(:enter, {from_module, _} = from, {to_module, _} = to, process) do
-    t = process.events[{from, to}]
-
-    with {:ok, process} <- from_module.handle_leave(process.states[from], process),
-         {:ok, process} <- t.module.handle_enter(t, process),
-         {:ok, process} <- to_module.handle_enter(process.states[to], process) do
-      {:keep_state, process, process.__actions__}
-    else
-      {:error, reason} -> {:stop, reason, process}
-    end
-  end
-
-  def handle_event(_event_type, _content, _state, _process) do
-    {:next_state, :ok, nil}
   end
 
   @spec dispatch({State.t(), t(), State.t()}, Process.result()) :: Process.result()

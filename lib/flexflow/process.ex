@@ -13,6 +13,8 @@ defmodule Flexflow.Process do
 
   @type action :: :gen_statem.action()
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
+  @type event_type :: :gen_statem.event_type()
+
   @type t :: %__MODULE__{
           module: module(),
           name: Flexflow.name(),
@@ -127,8 +129,6 @@ defmodule Flexflow.Process do
     for map <- [process.states, process.events], {_, %{module: module} = state} <- map do
       :ok = module.validate(state, process)
     end
-
-    :ok
   end
 
   defp new_process(env) do
@@ -240,4 +240,22 @@ defmodule Flexflow.Process do
 
   @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def new(module, id, args \\ %{}), do: module.new(id, args)
+
+  @spec handle_event(:enter, Flexflow.state_type(), Flexflow.state_type(), t()) :: result
+  @spec handle_event(event_type(), term, Flexflow.state_type(), t()) :: result
+  def handle_event(:enter, {from_module, _} = from, {to_module, _} = to, process) do
+    t = process.events[{from, to}]
+
+    with {:ok, process} <- from_module.handle_leave(process.states[from], process),
+         {:ok, process} <- t.module.handle_enter(t, process),
+         {:ok, process} <- to_module.handle_enter(process.states[to], process) do
+      {:ok, process}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def handle_event(_event_type, _content, _state, process) do
+    {:ok, process}
+  end
 end

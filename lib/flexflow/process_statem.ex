@@ -3,11 +3,14 @@ defmodule Flexflow.ProcessStatem do
   gen_statem
   """
 
-  alias Flexflow.Event
   alias Flexflow.Process
   use Flexflow.ProcessRegistry
 
   @behaviour :gen_statem
+
+  @type handle_event_result ::
+          :gen_statem.event_handler_result(Flexflow.state_type())
+          | :gen_statem.state_enter_result(Flexflow.state_type())
 
   def start_link(module, {id, opts}) do
     :gen_statem.start_link(via_tuple({module, id}), __MODULE__, {module, id, opts}, [])
@@ -41,7 +44,8 @@ defmodule Flexflow.ProcessStatem do
   end
 
   def handle_event(event, content, state, process) do
-    Event.handle_event(event, content, state, %{process | __actions__: []})
+    Process.handle_event(event, content, state, %{process | __actions__: []})
+    |> handle_result(process)
   end
 
   @impl true
@@ -53,6 +57,7 @@ defmodule Flexflow.ProcessStatem do
     end
   end
 
+  @spec handle_result(Process.result(), Process.t()) :: handle_event_result()
   def handle_result({:ok, %Process{} = process}, _process) do
     {:keep_state, process, process.__actions__}
   end
