@@ -21,11 +21,7 @@ defmodule Flexflow.Event do
         }
 
   @enforce_keys [:name, :module, :from, :to]
-  defstruct @enforce_keys ++
-              [
-                __opts__: [],
-                __context__: Context.new()
-              ]
+  defstruct @enforce_keys ++ [__opts__: [], __context__: Context.new()]
 
   @doc "Module name"
   @callback name :: Flexflow.name()
@@ -47,9 +43,7 @@ defmodule Flexflow.Event do
         """
       end
 
-      defimpl Flexflow.EventTracker do
-        def ping(_), do: :pong
-      end
+      defimpl(Flexflow.EventTracker, do: def(ping(_), do: :pong))
 
       @__name__ Flexflow.Util.module_name(__MODULE__)
       def __opts__, do: unquote(opts)

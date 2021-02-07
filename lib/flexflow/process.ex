@@ -73,9 +73,7 @@ defmodule Flexflow.Process do
 
       @behaviour unquote(__MODULE__)
 
-      defimpl Flexflow.ProcessTracker do
-        def ping(_), do: :pong
-      end
+      defimpl(Flexflow.ProcessTracker, do: def(ping(_), do: :pong))
 
       import unquote(__MODULE__),
         only: [state: 1, state: 2, state: 3, ~>: 2, event: 2, event: 3, event: 4]
@@ -91,17 +89,14 @@ defmodule Flexflow.Process do
 
       @impl true
       def name, do: @__name__
-
       defoverridable unquote(__MODULE__)
     end
   end
 
   def a ~> b, do: {a, b}
-
   defmacro state(key), do: defstate(key, [])
   defmacro state(key, opts), do: defstate(key, opts)
   defmacro state(key, opts, block), do: defstate(key, opts ++ block)
-
   defmacro event(key, tuple), do: defevent(key, tuple, [])
   defmacro event(key, tuple, opts), do: defevent(key, tuple, opts)
   defmacro event(key, tuple, opts, block), do: defevent(key, tuple, opts ++ block)
@@ -196,13 +191,13 @@ defmodule Flexflow.Process do
       end
 
       @__process__ %{process | __opts__: @__opts__}
-
-      @__vsn__ (for {key, edge} <- @__process__.__definitions__, uniq: true do
-                  {key, @__process__[key][edge].module.module_info(:attributes)[:vsn]}
-                end) ++ [{:flexflow, Mix.Project.config()[:version]}]
+      @__vsn__ (for {key, name} <- @__process__.__definitions__, uniq: true do
+                  module = @__process__[key][name].module
+                  {key, {name, module}, module.module_info(:attributes)[:vsn]}
+                end) ++ [{:app, :flexflow, Mix.Project.config()[:version]}]
 
       def __vsn__ do
-        [{__MODULE__, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
+        [{:process, {name(), __MODULE__}, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
       end
 
       @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()

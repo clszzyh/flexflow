@@ -34,14 +34,10 @@ defmodule Flexflow.State do
 
   @doc "Module name"
   @callback name :: Flexflow.name()
-
   @callback type :: type()
-
   @doc "Invoked after compile, return :ok if valid"
   @callback validate(t(), Process.t()) :: :ok
-
   @callback graphviz_attribute :: keyword()
-
   @callback handle_leave(t(), Process.t()) :: Process.result()
   @callback handle_enter(t(), Process.t()) :: Process.result()
   @callback handle_event(Process.event_type(), term(), t(), Process.t()) :: Process.result()
@@ -59,9 +55,7 @@ defmodule Flexflow.State do
         """
       end
 
-      defimpl Flexflow.StateTracker do
-        def ping(_), do: :pong
-      end
+      defimpl(Flexflow.StateTracker, do: def(ping(_), do: :pong))
 
       @__name__ Flexflow.Util.module_name(__MODULE__)
       def __opts__, do: unquote(opts)
@@ -84,7 +78,6 @@ defmodule Flexflow.State do
       end
 
       defoverridable unquote(__MODULE__)
-
       Module.delete_attribute(__MODULE__, :__name__)
     end
   end
