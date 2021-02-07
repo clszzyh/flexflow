@@ -66,7 +66,7 @@ defmodule FlexflowDemoTest do
       end
     end
 
-    event :first, Start ~> :slow1 do
+    event :first, Start ~> :slow1, foo: :bar do
       @impl true
       def validate(_, _) do
         IO.puts("event ok")

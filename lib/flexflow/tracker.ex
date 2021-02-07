@@ -6,7 +6,6 @@ defmodule Flexflow.Tracker do
   def impls do
     for t <- @trackers, into: %{} do
       {:consolidated, modules} = t.__protocol__(:impls)
-
       {t, modules}
     end
   end

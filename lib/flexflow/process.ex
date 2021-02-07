@@ -129,7 +129,7 @@ defmodule Flexflow.Process do
   defmacro event(key, tuple, opts, block), do: defevent(key, tuple, opts ++ block)
 
   defp defstate(key, opts) do
-    quote bind_quoted: [key: key, opts: opts] do
+    quote bind_quoted: [key: key, opts: Macro.escape(opts)] do
       @__states__ {key, opts}
       @__definitions__ {:state, key}
     end
