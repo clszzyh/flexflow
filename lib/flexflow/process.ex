@@ -180,8 +180,8 @@ defmodule Flexflow.Process do
     new_states =
       Map.new(states, fn o ->
         k = State.key(o)
-        in_edges = for(t <- events, t.to == k, do: {Event.key(t), t.from})
-        out_edges = for(t <- events, t.from == k, do: {Event.key(t), t.to})
+        in_edges = for(t <- events, t.to == k, do: t.from)
+        out_edges = for(t <- events, t.from == k, do: t.to)
 
         {k, %{o | __in_edges__: in_edges, __out_edges__: out_edges}}
       end)

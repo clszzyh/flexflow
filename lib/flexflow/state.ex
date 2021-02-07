@@ -25,7 +25,7 @@ defmodule Flexflow.State do
   @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
   @type type :: unquote(Enum.reduce(@types, &{:|, [], [&1, &2]}))
   @type options :: Keyword.t()
-  @type edge :: {Flexflow.state_type(), Flexflow.state_type()}
+  @type edge :: Flexflow.state_type()
   @type action_result :: :ok | {:ok, t()} | {:ok, term()} | {:error, term()}
   @type t :: %__MODULE__{
           module: module(),
