@@ -91,7 +91,7 @@ defmodule ProcessTest do
     assert [_ | _] = Flexflow.history({P1, name})
 
     assert Flexflow.ProcessManager.children(P1) == [
-             %Flexflow.ProcessManager{pid: pid, id: name, name: :p1_new}
+             %Flexflow.ProcessManager{pid: pid, id: name, name: :p1_new, state: :a}
            ]
 
     server_pid = Flexflow.ProcessStatem.pid({P1, name})

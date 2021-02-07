@@ -82,7 +82,7 @@ defimpl Flexflow.DotProtocol, for: Flexflow.Event do
   def prefix(_), do: "  "
   def suffix(_), do: ";\n"
 
-  def name(%{from: {_, from_name}, to: {_, to_name}}),
+  def name(%{from: from_name, to: to_name}),
     do: "#{Flexflow.Dot.escape(from_name)} -> #{Flexflow.Dot.escape(to_name)}"
 
   def attributes(%{name: name, module: module}),
