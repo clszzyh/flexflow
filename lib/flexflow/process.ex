@@ -116,7 +116,7 @@ defmodule Flexflow.Process do
   end
 
   def __after_compile__(env, _bytecode) do
-    process = env.module.new()
+    {:ok, process} = env.module.new()
 
     for map <- [process.states, process.events], {_, %{module: module} = state} <- map do
       :ok = module.validate(state, process)
@@ -200,24 +200,21 @@ defmodule Flexflow.Process do
         [{:process, {name(), __MODULE__}, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
       end
 
-      @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()
+      @spec new(Flexflow.id(), Flexflow.process_args()) :: {:ok, Process.t()}
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
-        special_map = Map.take(args, [:parent, :request_id])
-        args = Map.drop(args, [:parent, :request_id])
-
-        struct!(
-          @__process__,
+        body =
           Map.merge(
             %{
               name: name(),
               id: id,
               request_id: Util.random(),
               __vsn__: :crypto.hash(:md5, :erlang.term_to_binary(__vsn__())),
-              __args__: args
+              __args__: Map.drop(args, [:parent, :request_id])
             },
-            special_map
+            Map.take(args, [:parent, :request_id])
           )
-        )
+
+        {:ok, struct!(@__process__, body)}
       end
 
       for attribute <- [
@@ -250,6 +247,8 @@ defmodule Flexflow.Process do
 
   @spec handle_event(:enter, Flexflow.state_key(), Flexflow.state_key(), t()) :: result
   @spec handle_event(event_type(), term, Flexflow.state_key(), t()) :: result
+  def handle_event(:enter, to, to, process), do: {:ok, process}
+
   def handle_event(:enter, from, to, process) do
     t = process.events[{from, to}]
     from_state = process.states[from]

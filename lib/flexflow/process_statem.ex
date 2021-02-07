@@ -12,6 +12,16 @@ defmodule Flexflow.ProcessStatem do
           :gen_statem.event_handler_result(Flexflow.state_key())
           | :gen_statem.state_enter_result(Flexflow.state_key())
 
+  def child_spec(opts) do
+    %{
+      id: __MODULE__,
+      start: {__MODULE__, :start_link, [opts]},
+      type: :worker,
+      restart: :permanent,
+      shutdown: 500
+    }
+  end
+
   def start_link(module, {id, opts}) do
     :gen_statem.start_link(via_tuple({module, id}), __MODULE__, {module, id, opts}, [])
   end

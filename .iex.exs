@@ -13,7 +13,7 @@ alias Flexflow.Events
 
 alias Flexflow.ProcessParentManager
 alias Flexflow.ProcessManager
-alias Flexflow.ProcessServer
+alias Flexflow.ProcessStatem
 
 alias Flexflow.TaskSupervisor
 alias Flexflow.EventDispatcher
