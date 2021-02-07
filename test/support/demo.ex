@@ -5,8 +5,6 @@ defmodule FlexflowDemoTest do
     defmodule String.to_atom("#{__MODULE__}.N#{i}") do
       @moduledoc false
       use Flexflow.State
-
-      def type, do: :bypass
     end
 
     defmodule String.to_atom("#{__MODULE__}.T#{i}") do
@@ -47,8 +45,6 @@ defmodule FlexflowDemoTest do
     defmodule Slow do
       @moduledoc false
       use Flexflow.State
-
-      def type, do: :bypass
     end
 
     use Flexflow.Process

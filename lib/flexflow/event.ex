@@ -64,18 +64,15 @@ defmodule Flexflow.Event do
 
       @__name__ Flexflow.Util.module_name(__MODULE__)
       def __opts__, do: unquote(opts)
+      def __inherit__, do: unquote(if __MODULE__ == inherit, do: nil, else: inherit)
 
       @impl true
       def name, do: @__name__
 
-      if __MODULE__ == unquote(inherit) do
-        def __inherit__, do: nil
-      else
+      if __MODULE__ != unquote(inherit) do
         unless Util.local_behaviour(unquote(inherit)) == unquote(__MODULE__) do
           raise ArgumentError, "Invalid inherit module: #{inspect(unquote(inherit))}"
         end
-
-        def __inherit__, do: unquote(inherit)
 
         defdelegate validate(a, p), to: unquote(inherit)
         defdelegate handle_enter(a, p), to: unquote(inherit)

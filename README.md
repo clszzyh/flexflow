@@ -18,8 +18,6 @@ defmodule Review do
 
   defmodule Reviewing do
     use Flexflow.State
-
-    def type, do: :bypass
   end
 
   defmodule Submit do
