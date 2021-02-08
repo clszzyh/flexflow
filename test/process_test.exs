@@ -116,7 +116,7 @@ defmodule ProcessTest do
     Process.sleep(60)
     process = Flexflow.state({P2, name})
     assert process.states[{P2.Slow, :slow}].state == :initial
-    assert process.states[{P2.Slow, :slow}].__context__.state == :ok
+    assert process.states[{P2.Slow, :slow}].context.state == :ok
   end
 
   test "p2 slow other" do
@@ -125,8 +125,8 @@ defmodule ProcessTest do
     Process.sleep(60)
     process = Flexflow.state({P2, name})
     assert process.states[{P2.Slow, :slow}].state == :initial
-    assert process.states[{P2.Slow, :slow}].__context__.state == :ok
-    assert process.states[{P2.Slow, :slow}].__context__.result == :other
+    assert process.states[{P2.Slow, :slow}].context.state == :ok
+    assert process.states[{P2.Slow, :slow}].context.result == :other
   end
 
   test "p2 slow error" do
@@ -135,8 +135,8 @@ defmodule ProcessTest do
     Process.sleep(60)
     process = Flexflow.state({P2, name})
     assert process.states[{P2.Slow, :slow}].state == :error
-    assert process.states[{P2.Slow, :slow}].__context__.state == :error
-    assert process.states[{P2.Slow, :slow}].__context__.result == :custom_error
+    assert process.states[{P2.Slow, :slow}].context.state == :error
+    assert process.states[{P2.Slow, :slow}].context.result == :custom_error
   end
 
   test "p2 slow raise" do
@@ -145,9 +145,9 @@ defmodule ProcessTest do
     Process.sleep(60)
     process = Flexflow.state({P2, name})
     assert process.states[{P2.Slow, :slow}].state == :error
-    assert process.states[{P2.Slow, :slow}].__context__.state == :error
+    assert process.states[{P2.Slow, :slow}].context.state == :error
 
     assert {%RuntimeError{message: "fooo"}, [_ | _]} =
-             process.states[{P2.Slow, :slow}].__context__.result
+             process.states[{P2.Slow, :slow}].context.result
   end
 end

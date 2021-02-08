@@ -17,19 +17,21 @@ defmodule Flexflow.Event do
           from: Flexflow.state_key(),
           to: Flexflow.state_key(),
           __opts__: options,
-          __context__: Context.t()
+          context: Context.t()
         }
 
   @enforce_keys [:name, :module, :from, :to]
-  defstruct @enforce_keys ++ [__opts__: [], __context__: Context.new()]
+  defstruct @enforce_keys ++ [__opts__: [], context: Context.new()]
 
   @doc "Module name"
   @callback name :: Flexflow.name()
 
   @doc "Invoked after compile, return :ok if valid"
+  @callback init(t(), Process.t()) :: Process.result()
   @callback validate(t(), Process.t()) :: :ok
   @callback graphviz_attribute :: keyword()
-  @callback handle_enter(t(), Process.t()) :: Process.result()
+  @callback before_enter(t(), Process.t()) :: Process.result()
+  @callback handle_enter(Process.event_type(), t(), Process.t()) :: Process.result()
 
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
@@ -58,8 +60,10 @@ defmodule Flexflow.Event do
         end
 
         defdelegate graphviz_attribute, to: unquote(inherit)
+        defdelegate init(a, p), to: unquote(inherit)
         defdelegate validate(a, p), to: unquote(inherit)
-        defdelegate handle_enter(a, p), to: unquote(inherit)
+        defdelegate before_enter(a, p), to: unquote(inherit)
+        defdelegate handle_enter(t, a, p), to: unquote(inherit)
       end
 
       defoverridable unquote(__MODULE__)
@@ -165,6 +169,16 @@ defmodule Flexflow.Event do
 
     events
   end
+
+  @spec init(Process.t()) :: Process.result()
+  def init(%{events: events} = p) do
+    Enum.reduce_while(events, p, fn {key, event}, p ->
+      case event.module.init(event, p) do
+        {:ok, event} -> {:cont, put_in(p, [:events, key], event)}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
 end
 
 defmodule Flexflow.Events.Blank do
@@ -176,11 +190,17 @@ defmodule Flexflow.Events.Blank do
   def name, do: :blank
 
   @impl true
+  def init(e, _), do: {:ok, e}
+
+  @impl true
   def graphviz_attribute, do: []
 
   @impl true
   def validate(_, _), do: :ok
 
   @impl true
-  def handle_enter(_, p), do: {:ok, p}
+  def before_enter(_, p), do: {:ok, p}
+
+  @impl true
+  def handle_enter(_, _, p), do: {:ok, p}
 end

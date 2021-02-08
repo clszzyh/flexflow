@@ -25,7 +25,7 @@ defmodule Flexflow.Process do
           __args__: Flexflow.process_args(),
           __vsn__: [{module(), term()}],
           __opts__: Keyword.t(),
-          __context__: Context.t(),
+          context: Context.t(),
           __definitions__: [definition],
           __actions__: [action],
           __listeners__: %{EventDispatcher.listener() => EventDispatcher.listen_result()},
@@ -58,11 +58,13 @@ defmodule Flexflow.Process do
                 __opts__: [],
                 __actions__: [],
                 __listeners__: %{},
-                __context__: Context.new()
+                context: Context.new()
               ]
 
   @doc "Module name"
   @callback name :: Flexflow.name()
+
+  @callback init(t()) :: result()
 
   defmacro __using__(opts) do
     quote do
@@ -89,6 +91,9 @@ defmodule Flexflow.Process do
 
       @impl true
       def name, do: @__name__
+
+      @impl true
+      def init(p), do: {:ok, p}
       defoverridable unquote(__MODULE__)
     end
   end
@@ -248,6 +253,18 @@ defmodule Flexflow.Process do
   @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def new(module, id, args \\ %{}), do: module.new(id, args)
 
+  @spec init(module(), Flexflow.id(), Flexflow.process_args()) :: result()
+  def init(module, id, args \\ %{}) do
+    with {:ok, %__MODULE__{} = p} <- module.new(id, args),
+         %__MODULE__{} = p <- State.init(p),
+         %__MODULE__{} = p <- Event.init(p),
+         {:ok, %__MODULE__{} = p} <- module.init(p) do
+      {:ok, p}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   @spec handle_event(:enter, Flexflow.state_key(), t()) :: result
   @spec handle_event(event_type(), term, t()) :: result
   def handle_event(:enter, state, %{state: state} = process), do: {:ok, process}
@@ -258,7 +275,7 @@ defmodule Flexflow.Process do
     to_state = process.states[to]
 
     with {:ok, process} <- from_state.module.handle_leave(from_state, process),
-         {:ok, process} <- t.module.handle_enter(t, process),
+         {:ok, process} <- t.module.before_enter(t, process),
          {:ok, process} <- to_state.module.handle_enter(to_state, process) do
       {:ok, process}
     else
@@ -266,8 +283,15 @@ defmodule Flexflow.Process do
     end
   end
 
+  def handle_event(event_type, {:to, to}, %{state: from} = process) do
+    case process.events[{from, to}] do
+      nil -> {:error, "Undefined event #{inspect({from, to})}"}
+      event -> event.module.handle_to(event_type, event, process)
+    end
+  end
+
   def handle_event(event_type, content, %{state: state} = process) do
-    state = process.states[state_key]
+    state = process.states[state]
     state.module.handle_event(event_type, content, state, process)
   end
 end

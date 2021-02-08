@@ -3,14 +3,7 @@ defmodule Flexflow.Context do
   Context
   """
 
-  @states [:initial, :ok, :error]
-  @type state :: unquote(Enum.reduce(@states, &{:|, [], [&1, &2]}))
-  @type t :: %__MODULE__{
-          result: term(),
-          state: state()
-        }
+  @type t :: map()
 
-  defstruct [:result, state: :initial]
-
-  def new, do: %__MODULE__{}
+  def new, do: %{}
 end

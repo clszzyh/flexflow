@@ -42,7 +42,7 @@ defmodule Flexflow.ProcessStatem do
   @spec init({module(), Flexflow.id(), Flexflow.process_args()}) ::
           :gen_statem.init_result(Flexflow.state_type())
   def init({module, id, opts}) do
-    case Process.new(module, id, opts) do
+    case Process.init(module, id, opts) do
       {:ok, p} -> {:ok, p.state, p}
       {:error, reason} -> {:stop, {:error, reason}}
     end

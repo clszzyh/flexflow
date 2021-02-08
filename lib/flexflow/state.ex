@@ -19,7 +19,7 @@ defmodule Flexflow.State do
           type: type(),
           __in_edges__: [Flexflow.state_key()],
           __out_edges__: [Flexflow.state_key()],
-          __context__: Context.t(),
+          context: Context.t(),
           __opts__: options
         }
 
@@ -29,7 +29,7 @@ defmodule Flexflow.State do
                 __in_edges__: [],
                 __out_edges__: [],
                 __opts__: [],
-                __context__: Context.new()
+                context: Context.new()
               ]
 
   @doc "Module name"
@@ -37,6 +37,7 @@ defmodule Flexflow.State do
   @callback type :: type()
   @doc "Invoked after compile, return :ok if valid"
   @callback validate(t(), Process.t()) :: :ok
+  @callback init(t(), Process.t()) :: Process.result()
   @callback graphviz_attribute :: keyword()
   @callback handle_leave(t(), Process.t()) :: Process.result()
   @callback handle_enter(t(), Process.t()) :: Process.result()
@@ -72,6 +73,7 @@ defmodule Flexflow.State do
         defdelegate graphviz_attribute, to: unquote(inherit)
         defdelegate type, to: unquote(inherit)
         defdelegate validate(s, p), to: unquote(inherit)
+        defdelegate init(s, p), to: unquote(inherit)
         defdelegate handle_leave(s, p), to: unquote(inherit)
         defdelegate handle_enter(s, p), to: unquote(inherit)
         defdelegate handle_event(e, c, s, p), to: unquote(inherit)
@@ -169,6 +171,16 @@ defmodule Flexflow.State do
 
     states
   end
+
+  @spec init(Process.t()) :: Process.result()
+  def init(%{states: states} = p) do
+    Enum.reduce_while(states, p, fn {key, state}, p ->
+      case state.module.init(state, p) do
+        {:ok, state} -> {:cont, put_in(p, [:states, key], state)}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
 end
 
 defmodule Flexflow.States.Blank do
@@ -181,6 +193,9 @@ defmodule Flexflow.States.Blank do
 
   @impl true
   def type, do: :bypass
+
+  @impl true
+  def init(s, _), do: {:ok, s}
 
   @impl true
   def validate(%{__out_edges__: [], __in_edges__: []} = state, _) do
