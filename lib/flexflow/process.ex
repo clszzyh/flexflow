@@ -200,6 +200,9 @@ defmodule Flexflow.Process do
         [{:process, {name(), __MODULE__}, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
       end
 
+      transitions = for {:events, {from, to}} <- @__process__.__definitions__, do: {from, to}
+      defguard is_transition(from, to) when {from, to} in unquote(transitions)
+
       @spec new(Flexflow.id(), Flexflow.process_args()) :: {:ok, Process.t()}
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
         body =
