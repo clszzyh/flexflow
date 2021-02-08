@@ -16,7 +16,7 @@ defmodule Flexflow.Process do
           module: module(),
           name: Flexflow.name(),
           id: Flexflow.id() | nil,
-          start_state: Flexflow.state_key(),
+          state: Flexflow.state_key(),
           states: %{Flexflow.state_key() => State.t()},
           events: %{Flexflow.state_key() => Event.t()},
           parent: Flexflow.process_key(),
@@ -41,7 +41,7 @@ defmodule Flexflow.Process do
           | {:events, {Flexflow.state_key(), Flexflow.state_key()}}
   @type process_tuple :: {module(), Flexflow.name()}
 
-  @enforce_keys [:module, :states, :events, :start_state, :__definitions__]
+  @enforce_keys [:module, :states, :events, :state, :__definitions__]
   # @derive {Inspect, except: [:__definitions__]}
   defstruct @enforce_keys ++
               [
@@ -172,7 +172,7 @@ defmodule Flexflow.Process do
     %__MODULE__{
       states: new_states,
       module: env.module,
-      start_state: Enum.find_value(states, fn a -> if State.start?(a), do: State.key(a) end),
+      state: Enum.find_value(states, fn a -> if State.start?(a), do: State.key(a) end),
       events: for(t <- events, into: %{}, do: {Event.key(t), t}),
       __definitions__: definitions
     }
@@ -248,11 +248,11 @@ defmodule Flexflow.Process do
   @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def new(module, id, args \\ %{}), do: module.new(id, args)
 
-  @spec handle_event(:enter, Flexflow.state_key(), Flexflow.state_key(), t()) :: result
-  @spec handle_event(event_type(), term, Flexflow.state_key(), t()) :: result
-  def handle_event(:enter, to, to, process), do: {:ok, process}
+  @spec handle_event(:enter, Flexflow.state_key(), t()) :: result
+  @spec handle_event(event_type(), term, t()) :: result
+  def handle_event(:enter, state, %{state: state} = process), do: {:ok, process}
 
-  def handle_event(:enter, from, to, process) do
+  def handle_event(:enter, from, %{state: to} = process) do
     t = process.events[{from, to}]
     from_state = process.states[from]
     to_state = process.states[to]
@@ -266,7 +266,7 @@ defmodule Flexflow.Process do
     end
   end
 
-  def handle_event(event_type, content, state_key, process) do
+  def handle_event(event_type, content, %{state: state} = process) do
     state = process.states[state_key]
     state.module.handle_event(event_type, content, state, process)
   end

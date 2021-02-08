@@ -26,7 +26,7 @@ defmodule Flexflow.ProcessStatem do
     :gen_statem.start_link(via_tuple({module, id}), __MODULE__, {module, id, opts}, [])
   end
 
-  @spec state(Flexflow.process_identity()) :: {:ok, Flexflow.state_key(), Process.t()}
+  @spec state(Flexflow.process_identity()) :: {:ok, Process.t()}
   def state(identity), do: :gen_statem.call(pid(identity), :state)
 
   @spec call(Flexflow.process_identity(), term()) :: term()
@@ -43,18 +43,18 @@ defmodule Flexflow.ProcessStatem do
           :gen_statem.init_result(Flexflow.state_type())
   def init({module, id, opts}) do
     case Process.new(module, id, opts) do
-      {:ok, p} -> {:ok, p.start_state, p}
+      {:ok, p} -> {:ok, p.state, p}
       {:error, reason} -> {:stop, {:error, reason}}
     end
   end
 
   @impl true
   def handle_event({:call, from}, :state, state, process) do
-    {:keep_state_and_data, [{:reply, from, {:ok, state, process}}]}
+    {:keep_state_and_data, [{:reply, from, {:ok, %{process | state: state}}}]}
   end
 
   def handle_event(event, content, state, process) do
-    Process.handle_event(event, content, state, %{process | __actions__: []})
+    Process.handle_event(event, content, %{process | state: state, __actions__: []})
     |> handle_result(process)
   end
 
