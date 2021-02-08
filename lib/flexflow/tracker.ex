@@ -1,12 +1,16 @@
 defmodule Flexflow.Tracker do
   @moduledoc false
 
-  @trackers [Flexflow.ProcessTracker, Flexflow.StateTracker, Flexflow.EventTracker]
+  @trackers %{
+    Flexflow.ProcessTracker => :processes,
+    Flexflow.StateTracker => :states,
+    Flexflow.EventTracker => :events
+  }
 
   def impls do
-    for t <- @trackers, into: %{} do
+    for {t, kind} <- @trackers, into: %{} do
       {:consolidated, modules} = t.__protocol__(:impls)
-      {t, Map.new(modules, &{&1, &1.name()})}
+      {kind, Map.new(modules, &{&1, &1.name()})}
     end
   end
 

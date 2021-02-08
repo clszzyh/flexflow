@@ -20,8 +20,8 @@ defmodule Flexflow.Application do
 
     with {:ok, pid} <-
            Supervisor.start_link(children, strategy: :one_for_one, name: Flexflow.Supervisor),
-         :ok <- Flexflow.ProcessParentManager.register_all(),
-         :ok <- Flexflow.Tracker.ensure_unique() do
+         :ok <- Flexflow.Tracker.ensure_unique(),
+         :ok <- Flexflow.ProcessParentManager.register_all() do
       {:ok, pid}
     else
       {:error, reason} -> {:error, reason}
