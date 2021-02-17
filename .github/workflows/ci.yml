@@ -30,7 +30,7 @@ jobs:
     strategy:
       matrix:
         elixir: ["1.11.3"]
-        otp: [23.2.4]
+        otp: [23.2.5]
     steps:
       - name: Init
         uses: logflare/action@v1
