@@ -67,8 +67,10 @@ defmodule Flexflow.Process do
   @callback name :: Flexflow.name()
 
   @callback init(t()) :: result()
-
   @callback handle_result(term(), t()) :: result()
+  @callback terminate(term(), t()) :: term()
+
+  @optional_callbacks [terminate: 2]
 
   defmacro __using__(opts) do
     quote do
@@ -321,13 +323,6 @@ defmodule Flexflow.Process do
     end
   end
 
-  # def handle_event(event_type, {:to, to}, %{state: from} = process) do
-  #   case process.events[{from, to}] do
-  #     nil -> {:error, "Undefined event #{inspect({from, to})}"}
-  #     event -> event.module.handle_to(event_type, event, process) |> parse_result(process)
-  #   end
-  # end
-
   def handle_event(event_type, {:event, {event, data}}, %{state: state_key} = process) do
     state = process.states[state_key]
 
@@ -362,6 +357,7 @@ defmodule Flexflow.Process do
   end
 
   def handle_event(event_type, content, %{state: state_key} = process) do
+    IO.puts(inspect({event_type, content, state_key}))
     state = process.states[state_key]
     state.module.handle_event(event_type, content, state, process) |> parse_result(process)
   end

@@ -60,8 +60,8 @@ defmodule Flexflow.ProcessStatem do
 
   @impl true
   def terminate(reason, state, %{module: module} = p) do
-    if function_exported?(module, :terminate, 3) do
-      module.terminate(reason, state, p)
+    if function_exported?(module, :terminate, 2) do
+      module.terminate(reason, %{p | state: state})
     else
       :ok
     end
