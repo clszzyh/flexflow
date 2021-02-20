@@ -58,6 +58,14 @@ defmodule CodeLock do
         do: {:ok, :incorrect}
 
     def handle_input(_, %State{name: :locked}, _p), do: {:ok, :collect}
+
+    def clear_buttons(%State{context: %{} = context} = state) do
+      %{state | context: %{context | buttons: []}}
+    end
+
+    def collect_button(%State{context: %{buttons: buttons} = context} = state, button) do
+      %{state | context: %{context | buttons: [button | buttons]}}
+    end
   end
 
   defmodule Door do
@@ -70,28 +78,24 @@ defmodule CodeLock do
     event Button, Locked ~> Opened, results: [:correct] do
       @impl true
       def handle_result(:correct, :cast, _, state, _p) do
-        {:ok, clear_button(state)}
+        {:ok, Button.clear_buttons(state)}
       end
     end
 
     event Button, Locked ~> Locked, results: [:incorrect, :collect] do
       @impl true
       def handle_result(:incorrect, :cast, _, state, _p) do
-        {:ok, clear_button(state)}
+        {:ok, Button.clear_buttons(state)}
       end
 
-      def handle_result(:collect, :cast, _, state, _p) do
-        {:ok}
+      def handle_result(:collect, :cast, button, state, _p) do
+        {:ok, Button.collect_button(state, button)}
       end
     end
 
     event Button, Opened ~> Opened do
       @impl true
       def handle_result(:ignore, :cast, _button, _state, _p), do: :ignore
-    end
-
-    def clear_button(%Event{context: %{} = context} = e) do
-      %{e | context: %{context | buttons: []}}
     end
   end
 end

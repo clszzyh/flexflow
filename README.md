@@ -36,19 +36,19 @@ defmodule Review do
   ## Define a event
   ## `a ~> b` is a shortcut of `{a, b}`
   event :modify1, :draft ~> :draft
-  event :cancel1, :draft ~> :canceled
+  event :cancel1, :draft ~> :canceled, results: [:foo]
 
   ## Custom event
   event Submit, :draft ~> Reviewing
 
   event :modify2, :rejected ~> :rejected
-  event :cancel2, :rejected ~> :canceled
+  event :cancel2, :rejected ~> :canceled, results: [:foo]
 
   ## With custom name
   event {Submit, :submit2}, :rejected ~> Reviewing
 
   event :reject, Reviewing ~> :rejected
-  event :agree, Reviewing ~> :reviewed
+  event :agree, Reviewing ~> :reviewed, results: [:foo]
 end
 ```
 
