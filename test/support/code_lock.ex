@@ -73,7 +73,8 @@ defmodule CodeLock do
     @moduledoc false
     use Flexflow.Event
 
-    defguard is_button(button) when is_binary(button) and byte_size(button) == 1
+    @impl true
+    defguard is_event(button) when is_binary(button) and byte_size(button) == 1
   end
 
   defmodule Door do
@@ -88,10 +89,7 @@ defmodule CodeLock do
 
     event Button, Opened ~> Opened do
       @impl true
-      def handle_input(:cast, button, _state, _p)
-          when is_binary(button) and byte_size(button) == 1 do
-        :ignore
-      end
+      def handle_event(:cast, _button, _state, _p), do: :ignore
     end
   end
 end

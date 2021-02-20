@@ -37,6 +37,7 @@ defmodule Flexflow.Process do
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
   @type state_result :: :ignore | result | {:ok, State.t()}
+  @type event_result :: :ignore | result | {:ok, State.t()}
   @type definition ::
           {:states, Flexflow.state_key()}
           | {:events, {Flexflow.state_key(), Flexflow.state_key()}}
@@ -208,10 +209,10 @@ defmodule Flexflow.Process do
                 end) ++ [{:app, :flexflow, Mix.Project.config()[:version]}]
       @states for {_, %{module: module}} <- @__process__.states,
                   into: %{},
-                  do: {module.name, module}
+                  do: {{module.name, !!module.__info__(:attributes)[:dynamic]}, module}
       @events for {_, %{module: module}} <- @__process__.events,
                   into: %{},
-                  do: {module.name, module}
+                  do: {{module.name, !!module.__info__(:attributes)[:dynamic]}, module}
 
       def __vsn__ do
         [{:process, {name(), __MODULE__}, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
@@ -311,13 +312,27 @@ defmodule Flexflow.Process do
   #   end
   # end
 
-  def handle_event(event_type, {:event, input}, %{state: key} = process) do
-    state = process.states[key]
-    state.module.handle_input(event_type, input, state, process) |> parse_result(process)
+  def handle_event(event_type, {:event, {event, data}}, %{state: state_key} = process) do
+    state = process.states[state_key]
+    event_module = process.module.__events__[{event, false}]
+
+    if Util.defined?(event_module) do
+      if {:is_event, 1} in event_module.__info__(:macros) and !event_module.is_event(data) do
+        {:error, :invalid_input}
+      else
+        event_module.handle_event(event_type, data, state, process) |> parse_result(process)
+      end
+    else
+      {:error, :invalid_event}
+    end
   end
 
-  def handle_event(event_type, content, %{state: state} = process) do
-    state = process.states[state]
+  def handle_event(_event_type, {:event, event}, _process) do
+    {:error, "Unknown event #{inspect(event)}"}
+  end
+
+  def handle_event(event_type, content, %{state: state_key} = process) do
+    state = process.states[state_key]
     state.module.handle_event(event_type, content, state, process) |> parse_result(process)
   end
 

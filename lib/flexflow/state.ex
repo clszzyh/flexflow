@@ -132,8 +132,10 @@ defmodule Flexflow.State do
     ast =
       quote generated: true do
         use unquote(__MODULE__), inherit: unquote(parent_module)
-
         unquote(ast)
+
+        Module.register_attribute(__MODULE__, :dynamic, persist: true)
+        @dynamic :ok
 
         @impl true
         def name, do: unquote(name)
