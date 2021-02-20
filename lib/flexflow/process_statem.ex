@@ -5,6 +5,7 @@ defmodule Flexflow.ProcessStatem do
 
   alias Flexflow.Process
   use Flexflow.ProcessRegistry
+  require Logger
 
   @behaviour :gen_statem
 
@@ -54,12 +55,22 @@ defmodule Flexflow.ProcessStatem do
   end
 
   def handle_event(event, content, state, process) do
-    Process.handle_event(event, content, %{process | state: state, __actions__: []})
-    |> handle_result(process)
+    result =
+      Process.handle_event(event, content, %{process | state: state, __actions__: []})
+      |> handle_result(process)
+
+    # Logger.debug(inspect({event, content, state, result}))
+    result
+  catch
+    kind, reason ->
+      formatted = Exception.format(kind, reason, __STACKTRACE__)
+      {:stop, formatted, process}
   end
 
   @impl true
   def terminate(reason, state, %{module: module} = p) do
+    Logger.error("Terminated: #{state} #{module}: #{reason}")
+
     if function_exported?(module, :terminate, 2) do
       module.terminate(reason, %{p | state: state})
     else
@@ -68,8 +79,12 @@ defmodule Flexflow.ProcessStatem do
   end
 
   @spec handle_result(Process.result(), Process.t()) :: handle_event_result()
-  def handle_result({:ok, %Process{} = process}, _process) do
+  def handle_result({:ok, %Process{state: state} = process}, %Process{state: state}) do
     {:keep_state, process, process.__actions__}
+  end
+
+  def handle_result({:ok, %Process{state: state} = process}, _) do
+    {:next_state, state, process, process.__actions__}
   end
 
   def handle_result({:error, reason}, process) do

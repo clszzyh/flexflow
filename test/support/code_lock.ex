@@ -22,7 +22,13 @@ defmodule CodeLock do
 
     @impl true
     def handle_enter(_e, p) do
-      IO.puts("[#{p.id}] locked...")
+      IO.puts("[#{p.id}] enter locked...")
+      {:ok, p}
+    end
+
+    @impl true
+    def handle_leave(_e, p) do
+      IO.puts("[#{p.id}] leave locked...")
       {:ok, p}
     end
   end
@@ -34,7 +40,13 @@ defmodule CodeLock do
 
     @impl true
     def handle_enter(_e, p) do
-      IO.puts("[#{p.id}] unlocked...")
+      IO.puts("[#{p.id}] enter unlocked...")
+      {:ok, p}
+    end
+
+    @impl true
+    def handle_leave(_e, p) do
+      IO.puts("[#{p.id}] leave unlocked...")
       {:ok, p}
     end
   end

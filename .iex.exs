@@ -22,3 +22,5 @@ alias Flexflow.Tracker
 
 alias FlexflowDemoTest.{P1, P2}
 alias CodeLock.{Button, Locked, Opened, Door}
+
+require Logger

@@ -143,7 +143,7 @@ defmodule Flexflow.Process do
   defp events(%__MODULE__{__definitions__: definitions, events: events}) do
     for {:events, {from, to}} <- definitions do
       %{module: module, __op__: op, parent_module: parent, results: results} = events[{from, to}]
-      {from, op, parent, MapSet.to_list(results), module}
+      {from, op, parent, MapSet.to_list(results), {to, module}}
     end
     |> Enum.group_by(
       fn {from, op, parent, _results, _module} -> {from, op, parent} end,
@@ -334,13 +334,17 @@ defmodule Flexflow.Process do
               {:error, reason}
 
             {:ok, result} when is_atom(result) ->
-              result_module = modules[result]
+              case modules[result] do
+                nil ->
+                  {:error, "Invalid result #{module} #{result} -> #{inspect(modules)}"}
 
-              if result_module do
-                result_module.handle_result(result, event_type, data, state, process)
-                |> parse_result(process)
-              else
-                {:error, :invalid_result}
+                {target_state, result_module} ->
+                  result_module.handle_result(result, event_type, data, state, process)
+                  |> case do
+                    {:ok, %__MODULE__{}} -> {:error, "Cannot modify process in event #{event}"}
+                    other -> other
+                  end
+                  |> parse_result(%{process | state: target_state})
               end
           end
         else
@@ -366,11 +370,15 @@ defmodule Flexflow.Process do
   def parse_result(:ignore, process), do: {:ok, process}
   def parse_result({:ok, %__MODULE__{} = p}, _process), do: {:ok, p}
 
-  def parse_result({:ok, %State{} = state}, %{state: key} = process) do
-    {:ok, put_in(process, [:states, key], state)}
+  def parse_result({:ok, %State{name: name} = state}, process) do
+    {:ok, put_in(process, [:states, name], state)}
   end
 
-  def parse_result(result, %{module: module} = process) do
-    module.handle_result(result, process)
+  def parse_result({:ok, %State{name: name} = state, [_ | _] = actions}, process) do
+    {:ok, put_in(%{process | __actions__: actions}, [:states, name], state)}
   end
+
+  # def parse_result(result, %{module: module} = process) do
+  #   module.handle_result(result, process)
+  # end
 end
