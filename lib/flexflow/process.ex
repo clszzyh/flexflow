@@ -36,6 +36,7 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
+  @type state_result :: result | {:ok, State.t()}
   @type definition ::
           {:states, Flexflow.state_key()}
           | {:events, {Flexflow.state_key(), Flexflow.state_key()}}
@@ -66,6 +67,8 @@ defmodule Flexflow.Process do
 
   @callback init(t()) :: result()
 
+  @callback handle_result(term(), t()) :: result()
+
   defmacro __using__(opts) do
     quote do
       alias Flexflow.Events.Pass
@@ -94,6 +97,9 @@ defmodule Flexflow.Process do
 
       @impl true
       def init(p), do: {:ok, p}
+
+      @impl true
+      def handle_result(_, p), do: {:ok, p}
       defoverridable unquote(__MODULE__)
     end
   end
@@ -267,16 +273,22 @@ defmodule Flexflow.Process do
 
   @spec handle_event(:enter, Flexflow.state_key(), t()) :: result
   @spec handle_event(event_type(), term, t()) :: result
-  def handle_event(:enter, state, %{state: state} = process), do: {:ok, process}
+
+  def handle_event(:enter, to, %{state: to} = process) do
+    state = process.states[to]
+    state.module.handle_enter(state, process)
+  end
 
   def handle_event(:enter, from, %{state: to} = process) do
     t = process.events[{from, to}]
     from_state = process.states[from]
     to_state = process.states[to]
 
-    with {:ok, process} <- from_state.module.handle_leave(from_state, process),
-         {:ok, process} <- t.module.before_enter(t, process),
-         {:ok, process} <- to_state.module.handle_enter(to_state, process) do
+    with {:ok, process} <-
+           from_state.module.handle_leave(from_state, process) |> parse_result(process),
+         {:ok, process} <- t.module.before_enter(t, process) |> parse_result(process),
+         {:ok, process} <-
+           to_state.module.handle_enter(to_state, process) |> parse_result(process) do
       {:ok, process}
     else
       {:error, reason} -> {:error, reason}
@@ -286,12 +298,28 @@ defmodule Flexflow.Process do
   def handle_event(event_type, {:to, to}, %{state: from} = process) do
     case process.events[{from, to}] do
       nil -> {:error, "Undefined event #{inspect({from, to})}"}
-      event -> event.module.handle_to(event_type, event, process)
+      event -> event.module.handle_to(event_type, event, process) |> parse_result(process)
     end
+  end
+
+  def handle_event(event_type, {:input, input}, %{state: key} = process) do
+    state = process.states[key]
+    state.module.handle_input(event_type, input, state, process) |> parse_result(process)
   end
 
   def handle_event(event_type, content, %{state: state} = process) do
     state = process.states[state]
-    state.module.handle_event(event_type, content, state, process)
+    state.module.handle_event(event_type, content, state, process) |> parse_result(process)
+  end
+
+  def parse_result({:error, reason}, _process), do: {:error, reason}
+  def parse_result({:ok, %__MODULE__{} = p}, _process), do: {:ok, p}
+
+  def parse_result({:ok, %State{} = state}, %{state: key} = process) do
+    {:ok, put_in(process, [:states, key], state)}
+  end
+
+  def parse_result(result, %{module: module} = process) do
+    module.handle_result(result, process)
   end
 end

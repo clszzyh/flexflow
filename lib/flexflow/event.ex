@@ -38,6 +38,7 @@ defmodule Flexflow.Event do
 
     quote do
       @behaviour unquote(__MODULE__)
+      alias Flexflow.{Event, Process, State}
 
       unless Module.get_attribute(__MODULE__, :moduledoc) do
         @moduledoc """

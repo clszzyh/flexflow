@@ -39,16 +39,17 @@ defmodule Flexflow.State do
   @callback validate(t(), Process.t()) :: :ok
   @callback init(t(), Process.t()) :: Process.result()
   @callback graphviz_attribute :: keyword()
-  @callback handle_leave(t(), Process.t()) :: Process.result()
-  @callback handle_enter(t(), Process.t()) :: Process.result()
-  @callback handle_event(Process.event_type(), term(), t(), Process.t()) :: Process.result()
+  @callback handle_leave(t(), Process.t()) :: Process.state_result()
+  @callback handle_enter(t(), Process.t()) :: Process.state_result()
+  @callback handle_event(Process.event_type(), term(), t(), Process.t()) :: Process.state_result()
+  @callback handle_input(Process.event_type(), term(), t(), Process.t()) :: Process.state_result()
 
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
 
     quote do
       @behaviour unquote(__MODULE__)
-      alias unquote(__MODULE__)
+      alias Flexflow.{Event, Process, State}
 
       unless Module.get_attribute(__MODULE__, :moduledoc) do
         @moduledoc """
@@ -77,6 +78,7 @@ defmodule Flexflow.State do
         defdelegate handle_leave(s, p), to: unquote(inherit)
         defdelegate handle_enter(s, p), to: unquote(inherit)
         defdelegate handle_event(e, c, s, p), to: unquote(inherit)
+        defdelegate handle_input(e, c, s, p), to: unquote(inherit)
       end
 
       defoverridable unquote(__MODULE__)
@@ -167,8 +169,6 @@ defmodule Flexflow.State do
       [_, _ | _] -> raise(ArgumentError, "Multiple start state found")
     end
 
-    Enum.find(states, &end?/1) || raise(ArgumentError, "Need one or more end state")
-
     states
   end
 
@@ -219,4 +219,7 @@ defmodule Flexflow.States.Blank do
 
   @impl true
   def handle_event(_, _, _, p), do: {:ok, p}
+
+  @impl true
+  def handle_input(_, _, _, p), do: {:ok, p}
 end

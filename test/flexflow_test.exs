@@ -139,11 +139,6 @@ defmodule FlexflowTest do
     """
       state N1, type: :start
       state N2
-      event T1, N1 ~> N2
-    """ => "Need one or more end state",
-    """
-      state N1, type: :start
-      state N2
       state N3, type: :end
       event T1, N1 ~> N2
     """ => "In edges of `{FlexflowDemoTest.N3, :n3}` is empty",
