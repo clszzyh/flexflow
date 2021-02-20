@@ -131,7 +131,7 @@ defmodule Flexflow.Process do
   end
 
   def __after_compile__(env, _bytecode) do
-    {:ok, process} = env.module.new()
+    process = env.module.new()
 
     for map <- [process.states, process.events], {_, %{module: module} = state} <- map do
       :ok = module.validate(state, process)
@@ -241,7 +241,7 @@ defmodule Flexflow.Process do
       @events events
       def __events__, do: @events
 
-      @spec new(Flexflow.id(), Flexflow.process_args()) :: {:ok, Process.t()}
+      @spec new(Flexflow.id(), Flexflow.process_args()) :: Process.t()
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
         body =
           Map.merge(
@@ -255,7 +255,7 @@ defmodule Flexflow.Process do
             Map.take(args, [:parent, :request_id])
           )
 
-        {:ok, struct!(@__process__, body)}
+        struct!(@__process__, body)
       end
 
       for attribute <- [
@@ -284,12 +284,12 @@ defmodule Flexflow.Process do
 
   ###### Api ######
 
-  @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: result()
-  def new(module, id, args \\ %{}), do: module.new(id, args)
+  @spec new(module(), Flexflow.id(), Flexflow.process_args()) :: {:ok, t()}
+  def new(module, id, args \\ %{}), do: {:ok, module.new(id, args)}
 
   @spec init(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def init(module, id, args \\ %{}) do
-    with {:ok, %__MODULE__{} = p} <- module.new(id, args),
+    with %__MODULE__{} = p <- module.new(id, args),
          {:ok, %__MODULE__{} = p} <- State.init(p),
          {:ok, %__MODULE__{} = p} <- Event.init(p),
          {:ok, %__MODULE__{} = p} <- module.init(p) do

@@ -11,6 +11,9 @@ defmodule Flexflow.Event do
 
   @type options :: Keyword.t()
   @type key :: Flexflow.state_type_or_module() | String.t()
+  @type atom_result :: atom()
+  @type event_result :: {:ok, atom_result()} | {:error, term()}
+
   @type t :: %__MODULE__{
           module: module(),
           parent_module: module(),
@@ -19,14 +22,12 @@ defmodule Flexflow.Event do
           to: Flexflow.state_key(),
           __opts__: options,
           __op__: Flexflow.name(),
-          results: MapSet.t(atom()),
+          results: MapSet.t(atom_result()),
           context: Context.t()
         }
 
   @enforce_keys [:name, :module, :from, :to, :results, :parent_module, :__op__]
   defstruct @enforce_keys ++ [__opts__: [], context: Context.new()]
-
-  @type event_result :: {:ok, atom()} | {:error, term()}
 
   @doc "Module name"
   @callback name :: Flexflow.name()
@@ -37,7 +38,7 @@ defmodule Flexflow.Event do
   @callback graphviz_attribute :: keyword()
   @callback handle_input(term(), State.t(), Process.t()) :: event_result
   @callback is_event(term()) :: boolean()
-  @callback handle_result(event_result, Process.event_type(), term(), State.t(), Process.t()) ::
+  @callback handle_result(atom_result, Process.event_type(), term(), State.t(), Process.t()) ::
               Process.event_result()
 
   defmacro __using__(opts \\ []) do
