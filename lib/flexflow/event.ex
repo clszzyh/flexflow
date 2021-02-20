@@ -32,9 +32,7 @@ defmodule Flexflow.Event do
   @callback graphviz_attribute :: keyword()
   @callback handle_event(Process.event_type(), term(), State.t(), Process.t()) ::
               Process.event_result()
-  @macrocallback is_event(term()) :: boolean()
-
-  @optional_callbacks [is_event: 1]
+  @callback is_event(term()) :: boolean()
 
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
@@ -67,6 +65,7 @@ defmodule Flexflow.Event do
         defdelegate init(a, p), to: unquote(inherit)
         defdelegate validate(a, p), to: unquote(inherit)
         defdelegate handle_event(t, term, s, p), to: unquote(inherit)
+        defdelegate is_event(t), to: unquote(inherit)
       end
 
       defoverridable unquote(__MODULE__)
@@ -210,4 +209,7 @@ defmodule Flexflow.Events.Blank do
 
   @impl true
   def handle_event(_, _, _, p), do: {:ok, p}
+
+  @impl true
+  def is_event(_), do: true
 end

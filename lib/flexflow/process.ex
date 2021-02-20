@@ -317,7 +317,7 @@ defmodule Flexflow.Process do
     event_module = process.module.__events__[{event, false}]
 
     if Util.defined?(event_module) do
-      if {:is_event, 1} in event_module.__info__(:macros) and !event_module.is_event(data) do
+      if !event_module.is_event(data) do
         {:error, :invalid_input}
       else
         event_module.handle_event(event_type, data, state, process) |> parse_result(process)
