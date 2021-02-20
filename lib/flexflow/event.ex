@@ -142,7 +142,7 @@ defmodule Flexflow.Event do
         unquote(ast)
 
         Module.register_attribute(__MODULE__, :dynamic, persist: true)
-        @dynamic :ok
+        @dynamic unquote(parent_module.name)
 
         @impl true
         def name, do: unquote(name)

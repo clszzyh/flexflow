@@ -209,10 +209,12 @@ defmodule Flexflow.Process do
                 end) ++ [{:app, :flexflow, Mix.Project.config()[:version]}]
       @states for {_, %{module: module}} <- @__process__.states,
                   into: %{},
-                  do: {{module.name, !!module.__info__(:attributes)[:dynamic]}, module}
-      @events for {_, %{module: module}} <- @__process__.events,
-                  into: %{},
-                  do: {{module.name, !!module.__info__(:attributes)[:dynamic]}, module}
+                  do: {module.name, module}
+      @events (for {_, %{module: module, from: from}} <- @__process__.events,
+                   into: %{} do
+                 [dynamic_name] = module.__info__(:attributes)[:dynamic] || [nil]
+                 {{from, dynamic_name || module.name}, module}
+               end)
 
       def __vsn__ do
         [{:process, {name(), __MODULE__}, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
@@ -314,7 +316,7 @@ defmodule Flexflow.Process do
 
   def handle_event(event_type, {:event, {event, data}}, %{state: state_key} = process) do
     state = process.states[state_key]
-    event_module = process.module.__events__[{event, false}]
+    event_module = process.module.__events__[{state_key, event}]
 
     if Util.defined?(event_module) do
       if !event_module.is_event(data) do
