@@ -138,6 +138,21 @@ defmodule Flexflow.Process do
     end
   end
 
+  defp events(%__MODULE__{__definitions__: definitions, events: events}) do
+    for {:events, {from, to}} <- definitions do
+      %{module: module, __op__: op, parent_module: parent, results: results} = events[{from, to}]
+      {from, op, parent, MapSet.to_list(results), module}
+    end
+    |> Enum.group_by(
+      fn {from, op, parent, _results, _module} -> {from, op, parent} end,
+      fn {_from, _op, _parent, results, module} -> {results, module} end
+    )
+    |> Enum.into(%{}, fn {{a, b, c}, d} ->
+      new_map = for {k, v} <- d, z <- k, into: %{}, do: {z, v}
+      {{a, b}, {c, new_map}}
+    end)
+  end
+
   defp new_process(env) do
     process_name = Module.get_attribute(env.module, :__name__)
 
@@ -194,7 +209,15 @@ defmodule Flexflow.Process do
   end
 
   defmacro __before_compile__(env) do
-    quote bind_quoted: [module: __MODULE__, process: Macro.escape(new_process(env))] do
+    process = new_process(env)
+    events = events(process)
+
+    quote bind_quoted: [
+            module: __MODULE__,
+            process: Macro.escape(process),
+            events: Macro.escape(events),
+            definitions: process.__definitions__
+          ] do
       alias Flexflow.Process
 
       unless Module.get_attribute(__MODULE__, :moduledoc) do
@@ -206,34 +229,17 @@ defmodule Flexflow.Process do
       end
 
       @__process__ %{process | __opts__: @__opts__}
-      @__vsn__ (for {key, name} <- @__process__.__definitions__, uniq: true do
+      @__vsn__ (for {key, name} <- definitions, uniq: true do
                   module = @__process__[key][name].module
                   {key, {name, module}, module.module_info(:attributes)[:vsn]}
                 end) ++ [{:app, :flexflow, Mix.Project.config()[:version]}]
-      @states for {_, %{module: module}} <- @__process__.states,
-                  into: %{},
-                  do: {module.name, module}
-      @events (for {:events, {from, to}} <- @__process__.__definitions__ do
-                 %{module: module, __op__: op, parent_module: parent, results: results} =
-                   @__process__.events[{from, to}]
-
-                 {from, op, parent, MapSet.to_list(results), module}
-               end)
-              |> Enum.group_by(
-                fn {from, op, parent, _results, _module} -> {from, op, parent} end,
-                fn {_from, _op, _parent, results, module} -> {results, module} end
-              )
-              |> Enum.into(%{}, fn {{a, b, c}, d} ->
-                new_map = for {k, v} <- d, z <- k, into: %{}, do: {z, v}
-                {{a, b}, {c, new_map}}
-              end)
 
       def __vsn__ do
         [{:process, {name(), __MODULE__}, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
       end
 
+      @events events
       def __events__, do: @events
-      def __states__, do: @states
 
       @spec new(Flexflow.id(), Flexflow.process_args()) :: {:ok, Process.t()}
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
@@ -254,7 +260,6 @@ defmodule Flexflow.Process do
 
       for attribute <- [
             :events,
-            :states,
             :__states__,
             :__opts__,
             :__events__,

@@ -169,34 +169,30 @@ defmodule Flexflow.Event do
   def validate(events) do
     if Enum.empty?(events), do: raise(ArgumentError, "Event is empty")
 
-    for %__MODULE__{module: module, name: name} <- events, reduce: [] do
-      ary ->
-        o = {module, name}
-        if o in ary, do: raise(ArgumentError, "Event `#{inspect(o)}` is defined twice")
-        [o | ary]
-    end
+    for %__MODULE__{module: module, name: name, from: from, to: to, results: results, __op__: op} <-
+          events,
+        reduce: {[], [], %{}} do
+      {ary1, ary2, map} ->
+        o1 = {module, name}
+        if o1 in ary1, do: raise(ArgumentError, "Event `#{inspect(o1)}` is defined twice")
 
-    for %__MODULE__{from: from, to: to} <- events, reduce: [] do
-      ary ->
-        o = {from, to}
-        if o in ary, do: raise(ArgumentError, "Event `#{inspect(o)}` is defined twice")
-        [o | ary]
-    end
+        o2 = {from, to}
+        if o2 in ary2, do: raise(ArgumentError, "Event `#{inspect(o2)}` is defined twice")
 
-    for %__MODULE__{results: results, name: name, from: from, __op__: op} <- events,
-        reduce: %{} do
-      %{} = map ->
-        case map[{from, op}] do
-          nil ->
-            Map.put(map, {from, op}, results)
+        map =
+          case map[{from, op}] do
+            nil ->
+              Map.put(map, {from, op}, results)
 
-          mapset ->
-            if MapSet.disjoint?(mapset, results) do
-              Map.put(map, {from, op}, MapSet.union(mapset, results))
-            else
-              raise(ArgumentError, "Event #{name} has duplicate results: #{inspect(results)}")
-            end
-        end
+            mapset ->
+              if MapSet.disjoint?(mapset, results) do
+                Map.put(map, {from, op}, MapSet.union(mapset, results))
+              else
+                raise(ArgumentError, "Event #{name} has duplicate results: #{inspect(results)}")
+              end
+          end
+
+        {[o1 | ary1], [o2 | ary2], map}
     end
 
     events
