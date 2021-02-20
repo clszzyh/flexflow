@@ -256,8 +256,8 @@ defmodule Flexflow.Process do
   @spec init(module(), Flexflow.id(), Flexflow.process_args()) :: result()
   def init(module, id, args \\ %{}) do
     with {:ok, %__MODULE__{} = p} <- module.new(id, args),
-         %__MODULE__{} = p <- State.init(p),
-         %__MODULE__{} = p <- Event.init(p),
+         {:ok, %__MODULE__{} = p} <- State.init(p),
+         {:ok, %__MODULE__{} = p} <- Event.init(p),
          {:ok, %__MODULE__{} = p} <- module.init(p) do
       {:ok, p}
     else

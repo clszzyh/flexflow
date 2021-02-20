@@ -178,6 +178,10 @@ defmodule Flexflow.Event do
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+    |> case do
+      {:error, reason} -> {:error, reason}
+      %Process{} = p -> {:ok, p}
+    end
   end
 end
 

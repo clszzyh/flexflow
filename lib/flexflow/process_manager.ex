@@ -112,8 +112,8 @@ defmodule Flexflow.ProcessManager do
     childs = DynamicSupervisor.which_children(srv)
 
     for {_, pid, :worker, [ProcessStatem]} <- childs do
-      {:ok, state, process} = ProcessStatem.state(pid)
-      %__MODULE__{pid: pid, id: process.id, state: state, name: process.name}
+      {:ok, process} = ProcessStatem.state(pid)
+      %__MODULE__{pid: pid, id: process.id, state: process.state, name: process.name}
     end
   end
 end
