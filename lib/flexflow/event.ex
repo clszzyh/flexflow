@@ -30,8 +30,7 @@ defmodule Flexflow.Event do
   @callback init(t(), Process.t()) :: Process.result()
   @callback validate(t(), Process.t()) :: :ok
   @callback graphviz_attribute :: keyword()
-  @callback before_enter(t(), Process.t()) :: Process.result()
-  @callback handle_enter(Process.event_type(), t(), Process.t()) :: Process.result()
+  @callback handle_event(Process.event_type(), t(), Process.t()) :: Process.result()
 
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
@@ -63,8 +62,7 @@ defmodule Flexflow.Event do
         defdelegate graphviz_attribute, to: unquote(inherit)
         defdelegate init(a, p), to: unquote(inherit)
         defdelegate validate(a, p), to: unquote(inherit)
-        defdelegate before_enter(a, p), to: unquote(inherit)
-        defdelegate handle_enter(t, a, p), to: unquote(inherit)
+        defdelegate handle_event(t, a, p), to: unquote(inherit)
       end
 
       defoverridable unquote(__MODULE__)
@@ -204,8 +202,5 @@ defmodule Flexflow.Events.Blank do
   def validate(_, _), do: :ok
 
   @impl true
-  def before_enter(_, p), do: {:ok, p}
-
-  @impl true
-  def handle_enter(_, _, p), do: {:ok, p}
+  def handle_event(_, _, p), do: {:ok, p}
 end

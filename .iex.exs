@@ -21,4 +21,4 @@ alias Flexflow.History
 alias Flexflow.Tracker
 
 alias FlexflowDemoTest.{P1, P2}
-alias CodeLock.{Locked, Opened, Door}
+alias CodeLock.{Button, Locked, Opened, Door}

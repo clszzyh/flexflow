@@ -72,6 +72,8 @@ defmodule CodeLock do
   defmodule Button do
     @moduledoc false
     use Flexflow.Event
+
+    defguard is_button(button) when is_binary(button) and byte_size(button) == 1
   end
 
   defmodule Door do

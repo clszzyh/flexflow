@@ -291,13 +291,11 @@ defmodule Flexflow.Process do
   end
 
   def handle_event(:enter, from, %{state: to} = process) do
-    t = process.events[{from, to}]
     from_state = process.states[from]
     to_state = process.states[to]
 
     with {:ok, process} <-
            from_state.module.handle_leave(from_state, process) |> parse_result(process),
-         {:ok, process} <- t.module.before_enter(t, process) |> parse_result(process),
          {:ok, process} <-
            to_state.module.handle_enter(to_state, process) |> parse_result(process) do
       {:ok, process}
@@ -313,7 +311,7 @@ defmodule Flexflow.Process do
   #   end
   # end
 
-  def handle_event(event_type, {:input, input}, %{state: key} = process) do
+  def handle_event(event_type, {:event, input}, %{state: key} = process) do
     state = process.states[key]
     state.module.handle_input(event_type, input, state, process) |> parse_result(process)
   end
