@@ -72,7 +72,10 @@ defmodule Flexflow.Process do
 
   defmacro __using__(opts) do
     quote do
+      alias Flexflow.Event
       alias Flexflow.Events.Pass
+      alias Flexflow.Process
+      alias Flexflow.State
       alias Flexflow.States.{Bypass, End, Start}
 
       @__opts__ unquote(opts)
@@ -210,11 +213,20 @@ defmodule Flexflow.Process do
       @states for {_, %{module: module}} <- @__process__.states,
                   into: %{},
                   do: {module.name, module}
-      @events (for {_, %{module: module, from: from}} <- @__process__.events,
-                   into: %{} do
-                 [dynamic_name] = module.__info__(:attributes)[:dynamic] || [nil]
-                 {{from, dynamic_name || module.name}, module}
+      @events (for {:events, {from, to}} <- @__process__.__definitions__ do
+                 %{module: module, __op__: op, parent_module: parent, results: results} =
+                   @__process__.events[{from, to}]
+
+                 {from, op, parent, MapSet.to_list(results), module}
                end)
+              |> Enum.group_by(
+                fn {from, op, parent, _results, _module} -> {from, op, parent} end,
+                fn {_from, _op, _parent, results, module} -> {results, module} end
+              )
+              |> Enum.into(%{}, fn {{a, b, c}, d} ->
+                new_map = for {k, v} <- d, z <- k, into: %{}, do: {z, v}
+                {{a, b}, {c, new_map}}
+              end)
 
       def __vsn__ do
         [{:process, {name(), __MODULE__}, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
@@ -222,9 +234,6 @@ defmodule Flexflow.Process do
 
       def __events__, do: @events
       def __states__, do: @states
-
-      transitions = for {:events, {from, to}} <- @__process__.__definitions__, do: {from, to}
-      defguard is_transition(from, to) when {from, to} in unquote(transitions)
 
       @spec new(Flexflow.id(), Flexflow.process_args()) :: {:ok, Process.t()}
       def new(id \\ Flexflow.Util.make_id(), args \\ %{}) do
@@ -316,16 +325,30 @@ defmodule Flexflow.Process do
 
   def handle_event(event_type, {:event, {event, data}}, %{state: state_key} = process) do
     state = process.states[state_key]
-    event_module = process.module.__events__[{state_key, event}]
 
-    if Util.defined?(event_module) do
-      if !event_module.is_event(data) do
-        {:error, :invalid_input}
-      else
-        event_module.handle_event(event_type, data, state, process) |> parse_result(process)
-      end
-    else
-      {:error, :invalid_event}
+    case process.module.__events__[{state_key, event}] do
+      {module, modules} ->
+        if module.is_event(data) do
+          case module.handle_input(data, state, process) do
+            {:error, reason} ->
+              {:error, reason}
+
+            {:ok, result} when is_atom(result) ->
+              result_module = modules[result]
+
+              if result_module do
+                result_module.handle_result(result, event_type, data, state, process)
+                |> parse_result(process)
+              else
+                {:error, :invalid_result}
+              end
+          end
+        else
+          {:error, :invalid_input}
+        end
+
+      _ ->
+        {:error, :invalid_event}
     end
   end
 

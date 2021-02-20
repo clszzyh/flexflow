@@ -32,7 +32,7 @@ defmodule FlexflowDemoTest do
     state N4, type: :end
 
     event T2, N2 ~> N3
-    event {T2, :t2_name}, N2 ~> N4
+    event {T2, :t2_name}, N2 ~> N4, results: [:foo]
   end
 
   defmodule P2 do

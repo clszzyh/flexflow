@@ -13,15 +13,20 @@ defmodule Flexflow.Event do
   @type key :: Flexflow.state_type_or_module() | String.t()
   @type t :: %__MODULE__{
           module: module(),
+          parent_module: module(),
           name: Flexflow.name(),
           from: Flexflow.state_key(),
           to: Flexflow.state_key(),
           __opts__: options,
+          __op__: Flexflow.name(),
+          results: MapSet.t(atom()),
           context: Context.t()
         }
 
-  @enforce_keys [:name, :module, :from, :to]
+  @enforce_keys [:name, :module, :from, :to, :results, :parent_module, :__op__]
   defstruct @enforce_keys ++ [__opts__: [], context: Context.new()]
+
+  @type event_result :: {:ok, atom()} | {:error, term()}
 
   @doc "Module name"
   @callback name :: Flexflow.name()
@@ -30,9 +35,10 @@ defmodule Flexflow.Event do
   @callback init(t(), Process.t()) :: Process.result()
   @callback validate(t(), Process.t()) :: :ok
   @callback graphviz_attribute :: keyword()
-  @callback handle_event(Process.event_type(), term(), State.t(), Process.t()) ::
-              Process.event_result()
+  @callback handle_input(term(), State.t(), Process.t()) :: event_result
   @callback is_event(term()) :: boolean()
+  @callback handle_result(event_result, Process.event_type(), term(), State.t(), Process.t()) ::
+              Process.event_result()
 
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
@@ -61,11 +67,13 @@ defmodule Flexflow.Event do
           raise ArgumentError, "Invalid inherit module: #{inspect(unquote(inherit))}"
         end
 
-        defdelegate graphviz_attribute, to: unquote(inherit)
+        defdelegate graphviz_attribute, to: Blank
+        defdelegate is_event(t), to: Blank
+
         defdelegate init(a, p), to: unquote(inherit)
         defdelegate validate(a, p), to: unquote(inherit)
-        defdelegate handle_event(t, term, s, p), to: unquote(inherit)
-        defdelegate is_event(t), to: unquote(inherit)
+        defdelegate handle_input(term, s, p), to: unquote(inherit)
+        defdelegate handle_result(result, t, term, s, p), to: unquote(inherit)
       end
 
       defoverridable unquote(__MODULE__)
@@ -118,15 +126,19 @@ defmodule Flexflow.Event do
     to_state || raise(ArgumentError, "`#{inspect(to)}` is not defined")
 
     opts = opts ++ o.__opts__
+    {results, opts} = Keyword.pop(opts, :results, [:ignore])
     {ast, opts} = Keyword.pop(opts, :do)
-    {module, name} = new_module(ast, o, name, process_tuple)
+    {new_module, name} = new_module(ast, o, name, process_tuple)
 
     %__MODULE__{
-      module: module,
+      module: new_module,
       name: name,
       from: from_state.name,
       to: to_state.name,
-      __opts__: opts
+      __opts__: opts,
+      results: MapSet.new(results),
+      parent_module: o,
+      __op__: o.name
     }
   end
 
@@ -140,9 +152,6 @@ defmodule Flexflow.Event do
       quote generated: true do
         use unquote(__MODULE__), inherit: unquote(parent_module)
         unquote(ast)
-
-        Module.register_attribute(__MODULE__, :dynamic, persist: true)
-        @dynamic unquote(parent_module.name)
 
         @impl true
         def name, do: unquote(name)
@@ -170,6 +179,22 @@ defmodule Flexflow.Event do
         o = {from, to}
         if o in ary, do: raise(ArgumentError, "Event `#{inspect(o)}` is defined twice")
         [o | ary]
+    end
+
+    for %__MODULE__{results: results, name: name, from: from, __op__: op} <- events,
+        reduce: %{} do
+      %{} = map ->
+        case map[{from, op}] do
+          nil ->
+            Map.put(map, {from, op}, results)
+
+          mapset ->
+            if MapSet.disjoint?(mapset, results) do
+              Map.put(map, {from, op}, MapSet.union(mapset, results))
+            else
+              raise(ArgumentError, "Event #{name} has duplicate results: #{inspect(results)}")
+            end
+        end
     end
 
     events
@@ -208,8 +233,11 @@ defmodule Flexflow.Events.Blank do
   def validate(_, _), do: :ok
 
   @impl true
-  def handle_event(_, _, _, p), do: {:ok, p}
+  def handle_input(_, _, _), do: {:ok, :ignore}
 
   @impl true
   def is_event(_), do: true
+
+  @impl true
+  def handle_result(_, _, _, _, p), do: {:ok, p}
 end

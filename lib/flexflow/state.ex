@@ -42,7 +42,6 @@ defmodule Flexflow.State do
   @callback handle_leave(t(), Process.t()) :: Process.state_result()
   @callback handle_enter(t(), Process.t()) :: Process.state_result()
   @callback handle_event(Process.event_type(), term(), t(), Process.t()) :: Process.state_result()
-  @callback handle_input(Process.event_type(), term(), t(), Process.t()) :: Process.state_result()
 
   defmacro __using__(opts \\ []) do
     {inherit, opts} = Keyword.pop(opts, :inherit, Blank)
@@ -78,7 +77,6 @@ defmodule Flexflow.State do
         defdelegate handle_leave(s, p), to: unquote(inherit)
         defdelegate handle_enter(s, p), to: unquote(inherit)
         defdelegate handle_event(e, c, s, p), to: unquote(inherit)
-        defdelegate handle_input(e, c, s, p), to: unquote(inherit)
       end
 
       defoverridable unquote(__MODULE__)
@@ -133,9 +131,6 @@ defmodule Flexflow.State do
       quote generated: true do
         use unquote(__MODULE__), inherit: unquote(parent_module)
         unquote(ast)
-
-        Module.register_attribute(__MODULE__, :dynamic, persist: true)
-        @dynamic :ok
 
         @impl true
         def name, do: unquote(name)
@@ -221,7 +216,4 @@ defmodule Flexflow.States.Blank do
 
   @impl true
   def handle_event(_, _, _, p), do: {:ok, p}
-
-  @impl true
-  def handle_input(_, _, _, p), do: {:ok, p}
 end
