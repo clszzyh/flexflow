@@ -20,7 +20,7 @@ defmodule Flexflow.ProcessManager do
   @enforce_keys [:pid, :id, :name, :state]
   defstruct @enforce_keys
 
-  @type server_return :: {:ok | :exist, pid} | {:error, term()}
+  @type server_return :: {:ok, pid} | {:error, term()}
 
   def start_link(module) do
     unless Util.local_behaviour(module) == Flexflow.Process do
@@ -42,12 +42,12 @@ defmodule Flexflow.ProcessManager do
         {:ok, pid}
 
       {:error, {:already_started, pid}} ->
-        {:exist, pid}
+        {:ok, pid}
 
       {:error, :already_exists} ->
         case child_pid({module, id}) do
           nil -> {:error, :not_exist}
-          pid -> {:exist, pid}
+          pid -> {:ok, pid}
         end
 
       {:error, reason} ->
