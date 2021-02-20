@@ -36,7 +36,7 @@ defmodule Flexflow.Process do
 
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
-  @type state_result :: result | {:ok, State.t()}
+  @type state_result :: :ignore | result | {:ok, State.t()}
   @type definition ::
           {:states, Flexflow.state_key()}
           | {:events, {Flexflow.state_key(), Flexflow.state_key()}}
@@ -206,10 +206,19 @@ defmodule Flexflow.Process do
                   module = @__process__[key][name].module
                   {key, {name, module}, module.module_info(:attributes)[:vsn]}
                 end) ++ [{:app, :flexflow, Mix.Project.config()[:version]}]
+      @states for {_, %{module: module}} <- @__process__.states,
+                  into: %{},
+                  do: {module.name, module}
+      @events for {_, %{module: module}} <- @__process__.events,
+                  into: %{},
+                  do: {module.name, module}
 
       def __vsn__ do
         [{:process, {name(), __MODULE__}, __MODULE__.module_info(:attributes)[:vsn]} | @__vsn__]
       end
+
+      def __events__, do: @events
+      def __states__, do: @states
 
       transitions = for {:events, {from, to}} <- @__process__.__definitions__, do: {from, to}
       defguard is_transition(from, to) when {from, to} in unquote(transitions)
@@ -232,6 +241,8 @@ defmodule Flexflow.Process do
       end
 
       for attribute <- [
+            :events,
+            :states,
             :__states__,
             :__opts__,
             :__events__,
@@ -295,12 +306,12 @@ defmodule Flexflow.Process do
     end
   end
 
-  def handle_event(event_type, {:to, to}, %{state: from} = process) do
-    case process.events[{from, to}] do
-      nil -> {:error, "Undefined event #{inspect({from, to})}"}
-      event -> event.module.handle_to(event_type, event, process) |> parse_result(process)
-    end
-  end
+  # def handle_event(event_type, {:to, to}, %{state: from} = process) do
+  #   case process.events[{from, to}] do
+  #     nil -> {:error, "Undefined event #{inspect({from, to})}"}
+  #     event -> event.module.handle_to(event_type, event, process) |> parse_result(process)
+  #   end
+  # end
 
   def handle_event(event_type, {:input, input}, %{state: key} = process) do
     state = process.states[key]
@@ -313,6 +324,7 @@ defmodule Flexflow.Process do
   end
 
   def parse_result({:error, reason}, _process), do: {:error, reason}
+  def parse_result(:ignore, process), do: {:ok, process}
   def parse_result({:ok, %__MODULE__{} = p}, _process), do: {:ok, p}
 
   def parse_result({:ok, %State{} = state}, %{state: key} = process) do

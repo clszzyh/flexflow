@@ -40,9 +40,9 @@ defmodule Flexflow.Util do
     end
   end
 
-  def normalize_module({o, {_, from_name}, _to}, _states) when is_atom(o) do
+  def normalize_module({o, {_, from_name}, {_, to_name}}, _states) when is_atom(o) do
     if module_atom?(o) do
-      {o, :"#{o.name()}_#{from_name}"}
+      {o, :"#{o.name()}_#{from_name}_#{to_name}"}
     else
       {Pass, o}
     end

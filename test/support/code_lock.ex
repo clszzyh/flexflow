@@ -69,6 +69,11 @@ defmodule CodeLock do
     end
   end
 
+  defmodule Button do
+    @moduledoc false
+    use Flexflow.Event
+  end
+
   defmodule Door do
     @moduledoc false
     use Flexflow.Process
@@ -76,9 +81,15 @@ defmodule CodeLock do
     state Locked, type: :start
     state Opened
 
-    event :unlock, Locked ~> Opened
+    event Button, Locked ~> Locked
+    event Button, Locked ~> Opened
 
-    event :lock, Locked ~> Locked do
+    event Button, Opened ~> Opened do
+      @impl true
+      def handle_input(:cast, button, _state, _p)
+          when is_binary(button) and byte_size(button) == 1 do
+        :ignore
+      end
     end
   end
 end
