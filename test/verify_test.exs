@@ -1,6 +1,6 @@
 defmodule ReviewTest do
   use ExUnit.Case, async: true
-  doctest Flexflow.Dot
+  # doctest Flexflow.Dot
 
   @moduletag capture_log: true
   @moduletag :review

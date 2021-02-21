@@ -49,6 +49,7 @@ defmodule Flexflow.State do
     quote do
       @behaviour unquote(__MODULE__)
       alias Flexflow.{Event, Process, State}
+      require Logger
 
       unless Module.get_attribute(__MODULE__, :moduledoc) do
         @moduledoc """

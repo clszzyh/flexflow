@@ -45,8 +45,12 @@ defmodule Flexflow.ProcessStatem do
   def init({module, id, opts}) do
     case Process.init(module, id, opts) do
       {:ok, p} -> {:ok, p.state, p}
-      {:error, reason} -> {:stop, {:error, reason}}
+      {:error, reason} -> {:stop, reason}
     end
+  catch
+    kind, reason ->
+      formatted = Exception.format(kind, reason, __STACKTRACE__)
+      {:stop, formatted}
   end
 
   @impl true
@@ -55,12 +59,8 @@ defmodule Flexflow.ProcessStatem do
   end
 
   def handle_event(event, content, state, process) do
-    result =
-      Process.handle_event(event, content, %{process | state: state, __actions__: []})
-      |> handle_result(process)
-
-    # Logger.debug(inspect({event, content, state, result}))
-    result
+    Process.handle_event(event, content, %{process | state: state, __actions__: []})
+    |> handle_result(process)
   catch
     kind, reason ->
       formatted = Exception.format(kind, reason, __STACKTRACE__)

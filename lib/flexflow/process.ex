@@ -79,6 +79,7 @@ defmodule Flexflow.Process do
       alias Flexflow.Process
       alias Flexflow.State
       alias Flexflow.States.{Bypass, End, Start}
+      require Logger
 
       @__opts__ unquote(opts)
 
@@ -326,7 +327,7 @@ defmodule Flexflow.Process do
   def handle_event(event_type, {:event, {event, data}}, %{state: state_key} = process) do
     state = process.states[state_key]
 
-    unless {state_key, event} in process.module.__events__ do
+    unless Map.has_key?(process.module.__events__, {state_key, event}) do
       raise ArgumentError, "Invalid event #{inspect({state_key, event})}"
     end
 
