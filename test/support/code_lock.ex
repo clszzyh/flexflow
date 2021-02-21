@@ -105,9 +105,6 @@ defmodule CodeLock do
       end
     end
 
-    event Button, Opened ~> Opened do
-      @impl true
-      def handle_result(:ignore, :cast, _button, _state, _p), do: :ignore
-    end
+    event Button, Opened ~> Opened
   end
 end

@@ -238,5 +238,5 @@ defmodule Flexflow.Events.Blank do
   def is_event(_), do: true
 
   @impl true
-  def handle_result(_, _, _, _, p), do: {:ok, p}
+  def handle_result(:ignore, _, _, _, _), do: :ignore
 end

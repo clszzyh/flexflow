@@ -326,33 +326,33 @@ defmodule Flexflow.Process do
   def handle_event(event_type, {:event, {event, data}}, %{state: state_key} = process) do
     state = process.states[state_key]
 
-    case process.module.__events__[{state_key, event}] do
-      {module, modules} ->
-        if module.is_event(data) do
-          case module.handle_input(data, state, process) do
-            {:error, reason} ->
-              {:error, reason}
+    unless {state_key, event} in process.module.__events__ do
+      raise ArgumentError, "Invalid event #{inspect({state_key, event})}"
+    end
 
-            {:ok, result} when is_atom(result) ->
-              case modules[result] do
-                nil ->
-                  {:error, "Invalid result #{module} #{result} -> #{inspect(modules)}"}
+    {module, modules} = process.module.__events__[{state_key, event}]
 
-                {target_state, result_module} ->
-                  result_module.handle_result(result, event_type, data, state, process)
-                  |> case do
-                    {:ok, %__MODULE__{}} -> {:error, "Cannot modify process in event #{event}"}
-                    other -> other
-                  end
-                  |> parse_result(%{process | state: target_state})
-              end
-          end
-        else
-          {:error, :invalid_input}
+    unless module.is_event(data) do
+      raise ArgumentError, "Invalid input #{inspect(data)}"
+    end
+
+    case module.handle_input(data, state, process) do
+      {:error, reason} ->
+        {:error, reason}
+
+      {:ok, result} when is_atom(result) ->
+        unless modules[result] do
+          raise ArgumentError, "Invalid result #{module} #{result} -> #{inspect(modules)}"
         end
 
-      _ ->
-        {:error, :invalid_event}
+        {target_state, result_module} = modules[result]
+
+        result_module.handle_result(result, event_type, data, state, process)
+        |> case do
+          {:ok, %__MODULE__{}} -> {:error, "Cannot modify process in event #{event}"}
+          other -> other
+        end
+        |> parse_result(%{process | state: target_state})
     end
   end
 
