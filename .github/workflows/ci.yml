@@ -69,6 +69,7 @@ jobs:
       - name: Set up Elixir
         uses: actions/setup-elixir@v1
         with:
+          experimental-otp: true
           elixir-version: ${{ matrix.elixir }}
           otp-version: ${{ matrix.otp }}
       - name: Build info
@@ -346,6 +347,7 @@ jobs:
       - name: Set up Elixir
         uses: actions/setup-elixir@v1
         with:
+          experimental-otp: true
           elixir-version: ${{ matrix.elixir }}
           otp-version: ${{ matrix.otp }}
       - name: Build info
