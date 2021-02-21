@@ -1,6 +1,6 @@
-defmodule Flexflow.Events.Pass do
+defmodule Flexflow.Events.Basic do
   @moduledoc """
-  Pass
+  Basic
   """
 
   use Flexflow.Event

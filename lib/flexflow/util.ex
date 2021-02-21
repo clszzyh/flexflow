@@ -2,7 +2,7 @@ defmodule Flexflow.Util do
   @moduledoc false
 
   alias Flexflow.Event
-  alias Flexflow.Events.Pass
+  alias Flexflow.Events.Basic
   alias Flexflow.Process
   alias Flexflow.State
   alias Flexflow.States.Bypass
@@ -44,7 +44,7 @@ defmodule Flexflow.Util do
     if module_atom?(o) do
       {o, :"#{o.name()}_#{from_name}_#{to_name}"}
     else
-      {Pass, o}
+      {Basic, o}
     end
   end
 

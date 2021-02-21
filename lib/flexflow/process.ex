@@ -37,7 +37,7 @@ defmodule Flexflow.Process do
   @typedoc "Init result"
   @type result :: {:ok, t()} | {:error, term()}
   @type state_result :: :ignore | result | {:ok, State.t()}
-  @type event_result :: :ignore | result | {:ok, State.t()}
+  @type event_result :: :ignore | result | {:ok, State.t()} | {:ok, State.t(), [action]}
   @type definition ::
           {:states, Flexflow.state_key()}
           | {:events, {Flexflow.state_key(), Flexflow.state_key()}}
@@ -75,7 +75,7 @@ defmodule Flexflow.Process do
   defmacro __using__(opts) do
     quote do
       alias Flexflow.Event
-      alias Flexflow.Events.{Pass, StateTimeout}
+      alias Flexflow.Events.{Basic, StateTimeout}
       alias Flexflow.Process
       alias Flexflow.State
       alias Flexflow.States.{Bypass, End, Start}
