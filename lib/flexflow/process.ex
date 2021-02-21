@@ -75,7 +75,7 @@ defmodule Flexflow.Process do
   defmacro __using__(opts) do
     quote do
       alias Flexflow.Event
-      alias Flexflow.Events.Pass
+      alias Flexflow.Events.{Pass, StateTimeout}
       alias Flexflow.Process
       alias Flexflow.State
       alias Flexflow.States.{Bypass, End, Start}
@@ -361,8 +361,12 @@ defmodule Flexflow.Process do
     {:error, "Unknown event #{inspect(event)}"}
   end
 
+  def handle_event(:state_timeout, data, process) do
+    handle_event(:cast, {:event, {:state_timeout, data}}, process)
+  end
+
   def handle_event(event_type, content, %{state: state_key} = process) do
-    IO.puts(inspect({event_type, content, state_key}))
+    IO.puts(inspect({:unknown_event, event_type, content, state_key}))
     state = process.states[state_key]
     state.module.handle_event(event_type, content, state, process) |> parse_result(process)
   end

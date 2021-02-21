@@ -34,6 +34,7 @@ defmodule Flexflow.Event do
 
   @doc "Invoked after compile, return :ok if valid"
   @callback init(t(), Process.t()) :: Process.result()
+  @callback default_results :: [atom_result()]
   @callback validate(t(), Process.t()) :: :ok
   @callback graphviz_attribute :: keyword()
   @callback handle_input(term(), State.t(), Process.t()) :: event_result
@@ -72,6 +73,7 @@ defmodule Flexflow.Event do
         defdelegate graphviz_attribute, to: Blank
         defdelegate is_event(t), to: Blank
 
+        defdelegate default_results, to: unquote(inherit)
         defdelegate init(a, p), to: unquote(inherit)
         defdelegate validate(a, p), to: unquote(inherit)
         defdelegate handle_input(term, s, p), to: unquote(inherit)
@@ -128,9 +130,11 @@ defmodule Flexflow.Event do
     to_state || raise(ArgumentError, "`#{inspect(to)}` is not defined")
 
     opts = opts ++ o.__opts__
-    {results, opts} = Keyword.pop(opts, :results, [:ignore])
+    {results, opts} = Keyword.pop(opts, :results)
     {ast, opts} = Keyword.pop(opts, :do)
     {new_module, name} = new_module(ast, o, name, process_tuple)
+
+    results = results || new_module.default_results()
 
     %__MODULE__{
       module: new_module,
@@ -222,6 +226,9 @@ defmodule Flexflow.Events.Blank do
 
   @impl true
   def name, do: :blank
+
+  @impl true
+  def default_results, do: [:ignore]
 
   @impl true
   def init(e, _), do: {:ok, e}

@@ -90,7 +90,7 @@ defmodule CodeLock do
     event Button, Locked ~> Opened, results: [:correct] do
       @impl true
       def handle_result(:correct, :cast, _, state, _p) do
-        {:ok, Button.clear_buttons(state)}
+        {:ok, Button.clear_buttons(state), [{:state_timeout, 100, :ok}]}
       end
     end
 
@@ -106,5 +106,7 @@ defmodule CodeLock do
     end
 
     event Button, Opened ~> Opened
+
+    event StateTimeout, Opened ~> Locked
   end
 end
