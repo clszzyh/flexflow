@@ -21,13 +21,14 @@ defmodule Flexflow.History do
   defstruct @enforce_keys ++ [measurements: %{}, metadata: %{}]
 
   @spec new(new_input) :: t()
-  def new(state) when state in @states,
-    do: %__MODULE__{
+  def new(state) when state in @states do
+    %__MODULE__{
       name: :process,
       stage: :start,
       state: state,
       time: System.monotonic_time()
     }
+  end
 
   def new(%{} = map) do
     struct!(__MODULE__, Map.merge(map, %{name: :process, time: System.monotonic_time()}))

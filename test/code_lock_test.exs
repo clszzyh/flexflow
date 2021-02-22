@@ -23,7 +23,7 @@ defmodule CodeLockTest do
     {:ok, ^srv} = Flexflow.server(key)
     {:ok, %P{} = p} = Flexflow.state(key)
     assert p.id == name
-    assert p.states[:locked].context == %{buttons: [], code: ["3", "2", "1", "3", "2", "1"]}
+    assert p.states.locked.context == %{buttons: [], code: ["3", "2", "1", "3", "2", "1"]}
   end
 
   test "unlock" do
@@ -42,17 +42,17 @@ defmodule CodeLockTest do
 
     {:ok, %P{} = p} = Flexflow.state(key)
     assert p.state == :locked
-    assert p.states[:locked].context.buttons == ["2", "1", "3", "2", "1"]
+    assert p.states.locked.context.buttons == ["2", "1", "3", "2", "1"]
 
     :ok = Flexflow.cast(key, {:event, {:button, "3"}})
 
     {:ok, %P{} = p} = Flexflow.state(key)
-    assert p.states[:locked].context.buttons == []
+    assert p.states.locked.context.buttons == []
     assert p.state == :opened
 
     :ok = Flexflow.cast(key, {:event, {:button, "3"}})
     {:ok, %P{} = p} = Flexflow.state(key)
-    assert p.states[:locked].context.buttons == []
+    assert p.states.locked.context.buttons == []
     assert p.state == :opened
 
     Process.sleep(120)

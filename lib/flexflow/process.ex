@@ -382,8 +382,4 @@ defmodule Flexflow.Process do
   def parse_result({:ok, %State{name: name} = state, [_ | _] = actions}, process) do
     {:ok, put_in(%{process | __actions__: actions}, [:states, name], state)}
   end
-
-  # def parse_result(result, %{module: module} = process) do
-  #   module.handle_result(result, process)
-  # end
 end
