@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.23.0">
+    <meta name="project" content="flexflow v0.2.0">
+
+    <title>API Reference — flexflow v0.2.0</title>
+    <link rel="stylesheet" href="dist/elixir-9f91ebe876dc01d67920.css" />
+
+    <script src="dist/sidebar_items-033494bcff.js"></script>
+
+      <script src="docs_config.js"></script>
+
+    <script async src="dist/app-60a0c9f10e9e52eae31f.js"></script>
+
+
+  </head>
+  <body data-type="extras">
+    <script>try { if(localStorage.getItem('night-mode') === 'true') document.body.className += ' night-mode'; } catch (e) { }</script>
+
+<div class="main">
+
+<button class="sidebar-button sidebar-toggle">
+  <span class="icon-menu" title="Collapse/expand sidebar"></span>
+</button>
+
+<section class="sidebar">
+  <form class="sidebar-search" action="search.html">
+    <button type="submit" class="search-button" aria-label="Submit Search">
+      <span class="icon-search" aria-hidden="true" title="Submit search"></span>
+    </button>
+    <button type="button" tabindex="-1" class="search-close-button" aria-label="Cancel Search">
+      <span class="icon-cross" aria-hidden="true" title="Cancel search"></span>
+    </button>
+    <label class="search-label">
+      <input name="q" type="text" id="search-list" class="search-input" placeholder="Search..." aria-label="Input your search terms" autocomplete="off" />
+    </label>
+  </form>
+
+  <div class="autocomplete">
+    <div class="autocomplete-results">
+    </div>
+  </div>
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectDetails">
+      <a href="readme.html" class="sidebar-projectName">
+flexflow
+      </a>
+      <strong class="sidebar-projectVersion">
+        v0.2.0
+      </strong>
+    </div>
+
+  </div>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+
+
+  </ul>
+  <div class="gradient"></div>
+  <ul id="full-list" class="sidebar-fullList"></ul>
+</section>
+
+<section class="content">
+  <div class="content-outer">
+    <div id="content" class="content-inner">
+
+<h1>
+  API Reference <small class="app-vsn">flexflow v0.2.0</small>
+</h1>
+
+  <section class="details-list">
+    <h2 id="modules" class="section-heading">
+  <a href="#modules" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Modules
+</h2>
+
+    <div class="summary">
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.html">Flexflow</a>
+
+  </div>
+
+    <div class="summary-synopsis"><h2 id="usage" class="section-heading">
+  <a href="#usage" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Usage
+</h2>
+<pre><code class="nohighlight makeup elixir"><span class="kd">defmodule</span><span class="w"> </span><span class="nc">Review</span><span class="w"> </span><span class="k" data-group-id="2469743641-1">do</span><span class="w">
+  </span><span class="na">@vsn</span><span class="w"> </span><span class="s">&quot;1.0.1&quot;</span><span class="w">
+  </span><span class="kn">use</span><span class="w"> </span><span class="nc">Flexflow.Process</span><span class="w">
+
+  </span><span class="kd">defmodule</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w"> </span><span class="k" data-group-id="2469743641-2">do</span><span class="w">
+    </span><span class="kn">use</span><span class="w"> </span><span class="nc">Flexflow.State</span><span class="w">
+  </span><span class="k" data-group-id="2469743641-2">end</span><span class="w">
+
+  </span><span class="kd">defmodule</span><span class="w"> </span><span class="nc">Submit</span><span class="w"> </span><span class="k" data-group-id="2469743641-3">do</span><span class="w">
+    </span><span class="kn">use</span><span class="w"> </span><span class="nc">Flexflow.Event</span><span class="w">
+  </span><span class="k" data-group-id="2469743641-3">end</span><span class="w">
+
+  </span><span class="c1">## Start state</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="p" data-group-id="2469743641-4">{</span><span class="nc">Start</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="p" data-group-id="2469743641-4">}</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="p" data-group-id="2469743641-5">{</span><span class="nc">End</span><span class="p">,</span><span class="w"> </span><span class="ss">:reviewed</span><span class="p" data-group-id="2469743641-5">}</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="p" data-group-id="2469743641-6">{</span><span class="nc">End</span><span class="p">,</span><span class="w"> </span><span class="ss">:canceled</span><span class="p" data-group-id="2469743641-6">}</span><span class="w">
+  </span><span class="c1">## Bypass state</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="ss">:rejected</span><span class="w">
+  </span><span class="c1">## Custom state</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w">
+
+  </span><span class="c1">## Define a event</span><span class="w">
+  </span><span class="c1">## `a ~&gt; b` is a shortcut of `{a, b}`</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:modify1</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:draft</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:cancel1</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:canceled</span><span class="p">,</span><span class="w"> </span><span class="ss">results</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2469743641-7">[</span><span class="ss">:foo</span><span class="p" data-group-id="2469743641-7">]</span><span class="w">
+
+  </span><span class="c1">## Custom event</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="nc">Submit</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w">
+
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:modify2</span><span class="p">,</span><span class="w"> </span><span class="ss">:rejected</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:rejected</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:cancel2</span><span class="p">,</span><span class="w"> </span><span class="ss">:rejected</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:canceled</span><span class="p">,</span><span class="w"> </span><span class="ss">results</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2469743641-8">[</span><span class="ss">:foo</span><span class="p" data-group-id="2469743641-8">]</span><span class="w">
+
+  </span><span class="c1">## With custom name</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="p" data-group-id="2469743641-9">{</span><span class="nc">Submit</span><span class="p">,</span><span class="w"> </span><span class="ss">:submit2</span><span class="p" data-group-id="2469743641-9">}</span><span class="p">,</span><span class="w"> </span><span class="ss">:rejected</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w">
+
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:reject</span><span class="p">,</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:rejected</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:agree</span><span class="p">,</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:reviewed</span><span class="p">,</span><span class="w"> </span><span class="ss">results</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2469743641-10">[</span><span class="ss">:foo</span><span class="p" data-group-id="2469743641-10">]</span><span class="w">
+</span><span class="k" data-group-id="2469743641-1">end</span></code></pre></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.Config.html">Flexflow.Config</a>
+
+  </div>
+
+    <div class="summary-synopsis"><h2 id="default-value" class="section-heading">
+  <a href="#default-value" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Default value:
+</h2>
+<ul><li>telemetry_default_handler: true</li></ul></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.Context.html">Flexflow.Context</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Context</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.Dot.html">Flexflow.Dot</a>
+
+  </div>
+
+    <div class="summary-synopsis"><ul><li><a href="https://en.wikipedia.org/wiki/DOT_(graph_description_language)">https://en.wikipedia.org/wiki/DOT_(graph_description_language)</a></li><li><a href="https://github.com/TLmaK0/gravizo">https://github.com/TLmaK0/gravizo</a></li><li><a href="https://gravizo.com/">https://gravizo.com/</a></li><li><a href="http://www.graphviz.org/doc/info/attrs.html">http://www.graphviz.org/doc/info/attrs.html</a></li></ul></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.DotProtocol.html">Flexflow.DotProtocol</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.Event.html">Flexflow.Event</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Event</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.EventDispatcher.html">Flexflow.EventDispatcher</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>EventDispatcher</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.EventTracker.html">Flexflow.EventTracker</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.Events.Basic.html">Flexflow.Events.Basic</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Basic</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.Events.StateTimeout.html">Flexflow.Events.StateTimeout</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p><a href="https://erlang.org/doc/man/gen_statem.html#type-state_timeout">https://erlang.org/doc/man/gen_statem.html#type-state_timeout</a></p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.History.html">Flexflow.History</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>History</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.Process.html">Flexflow.Process</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Process</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.ProcessLoader.html">Flexflow.ProcessLoader</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>YamlLoader</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.ProcessManager.html">Flexflow.ProcessManager</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>ProcessManager</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.ProcessParentManager.html">Flexflow.ProcessParentManager</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>ProcessParentManager</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.ProcessRegistry.html">Flexflow.ProcessRegistry</a>
+
+  </div>
+
+    <div class="summary-synopsis"><h2 id="examples" class="section-heading">
+  <a href="#examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Examples
+</h2>
+<pre><code class="nohighlight makeup elixir"><span class="gp unselectable">iex&gt; </span><span class="kd">defmodule</span><span class="w"> </span><span class="nc">DemoRegistry</span><span class="w"> </span><span class="k" data-group-id="6701103842-1">do</span><span class="w">
+</span><span class="gp unselectable">...&gt; </span><span class="w">  </span><span class="kn">use</span><span class="w"> </span><span class="nc">Elixir.Flexflow.ProcessRegistry</span><span class="w">
+</span><span class="gp unselectable">...&gt; </span><span class="k" data-group-id="6701103842-1">end</span><span class="w">
+</span><span class="gp unselectable">...&gt; </span><span class="n">match?</span><span class="p" data-group-id="6701103842-2">(</span><span class="p" data-group-id="6701103842-3">{</span><span class="ss">:via</span><span class="p">,</span><span class="w"> </span><span class="nc">Registry</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="6701103842-4">{</span><span class="nc">Elixir.Flexflow.ProcessRegistry</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="6701103842-5">{</span><span class="nc">DemoRegistry</span><span class="p">,</span><span class="w"> </span><span class="ss">:abc</span><span class="p" data-group-id="6701103842-5">}</span><span class="p" data-group-id="6701103842-4">}</span><span class="p" data-group-id="6701103842-3">}</span><span class="p">,</span><span class="w"> </span><span class="nc">DemoRegistry</span><span class="o">.</span><span class="n">via_tuple</span><span class="p" data-group-id="6701103842-6">(</span><span class="ss">:abc</span><span class="p" data-group-id="6701103842-6">)</span><span class="p" data-group-id="6701103842-2">)</span><span class="w">
+</span><span class="no">true</span></code></pre></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.ProcessStatem.html">Flexflow.ProcessStatem</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>gen_statem</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.ProcessTracker.html">Flexflow.ProcessTracker</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.Processes.Demo.html">Flexflow.Processes.Demo</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="Flexflow.Process.html"><code class="inline">Elixir.Flexflow.Process</code></a></p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.State.html">Flexflow.State</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>State</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.StateTracker.html">Flexflow.StateTracker</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.States.Bypass.html">Flexflow.States.Bypass</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Bypass</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.States.End.html">Flexflow.States.End</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>End</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.States.Start.html">Flexflow.States.Start</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Start</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="Flexflow.Telemetry.html">Flexflow.Telemetry</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>Telemetry</p></div>
+
+</div>
+
+    </div>
+  </section>
+
+
+      <footer class="footer">
+        <p>
+          <span class="line">
+            Built using
+            <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener">ExDoc</a> (v0.23.0) for the
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank">Elixir programming language</a>.
+          </span>
+          <span class="line">
+            Designed by
+            <a href="https://twitter.com/dignifiedquire" target="_blank" rel="noopener" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+          </span>
+        </p>
+        <p>
+
+            <a href="api-reference.html" title="API reference" class="line footer-button">API Reference</a>
+
+          <button class="line footer-button display-shortcuts-help">
+            Display keyboard shortcuts
+          </button>
+          <button class="line footer-button night-mode-toggle">
+            Toggle night mode
+          </button>
+          <button class="line footer-button display-quick-switch">
+            Go to a HexDocs package
+          </button>
+          <button class="line footer-button tooltips-toggle">
+            <span class="tooltips-option-disable">Disable tooltips</span>
+            <span class="tooltips-option-enable">Enable tooltips</span>
+          </button>
+        </p>
+      </footer>
+    </div>
+  </div>
+</section>
+</div>
+
+
+  </body>
+</html>

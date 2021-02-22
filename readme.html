@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.23.0">
+    <meta name="project" content="flexflow v0.2.0">
+
+    <title>Flexflow — flexflow v0.2.0</title>
+    <link rel="stylesheet" href="dist/elixir-9f91ebe876dc01d67920.css" />
+
+    <script src="dist/sidebar_items-033494bcff.js"></script>
+
+      <script src="docs_config.js"></script>
+
+    <script async src="dist/app-60a0c9f10e9e52eae31f.js"></script>
+
+
+  </head>
+  <body data-type="extras">
+    <script>try { if(localStorage.getItem('night-mode') === 'true') document.body.className += ' night-mode'; } catch (e) { }</script>
+
+<div class="main">
+
+<button class="sidebar-button sidebar-toggle">
+  <span class="icon-menu" title="Collapse/expand sidebar"></span>
+</button>
+
+<section class="sidebar">
+  <form class="sidebar-search" action="search.html">
+    <button type="submit" class="search-button" aria-label="Submit Search">
+      <span class="icon-search" aria-hidden="true" title="Submit search"></span>
+    </button>
+    <button type="button" tabindex="-1" class="search-close-button" aria-label="Cancel Search">
+      <span class="icon-cross" aria-hidden="true" title="Cancel search"></span>
+    </button>
+    <label class="search-label">
+      <input name="q" type="text" id="search-list" class="search-input" placeholder="Search..." aria-label="Input your search terms" autocomplete="off" />
+    </label>
+  </form>
+
+  <div class="autocomplete">
+    <div class="autocomplete-results">
+    </div>
+  </div>
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectDetails">
+      <a href="readme.html" class="sidebar-projectName">
+flexflow
+      </a>
+      <strong class="sidebar-projectVersion">
+        v0.2.0
+      </strong>
+    </div>
+
+  </div>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+
+
+  </ul>
+  <div class="gradient"></div>
+  <ul id="full-list" class="sidebar-fullList"></ul>
+</section>
+
+<section class="content">
+  <div class="content-outer">
+    <div id="content" class="content-inner">
+
+<h1>Flexflow</h1><p><a href="https://github.com/clszzyh/flexflow/actions"><img src="https://github.com/clszzyh/flexflow/workflows/ci/badge.svg" alt="ci"></img></a>
+<a href="http://hex.pm/packages/flexflow"><img src="https://img.shields.io/hexpm/v/flexflow" alt="Hex.pm"></img></a>
+<a href="http://hex.pm/packages/flexflow"><img src="https://img.shields.io/hexpm/dt/flexflow" alt="Hex.pm"></img></a>
+<a href="https://hexdocs.pm/flexflow/readme.html"><img src="https://img.shields.io/badge/hexdocs-latest-blue.svg" alt="Documentation"></img></a>
+<a href="https://github.com/clszzyh/flexflow/commits/master"><img src="https://img.shields.io/github/last-commit/clszzyh/flexflow.svg" alt="Last Updated"></img></a>
+<img src="https://img.shields.io/tokei/lines/github/clszzyh/flexflow" alt="Lines of code"></img></p><h2 id="usage" class="section-heading">
+  <a href="#usage" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Usage
+</h2>
+<pre><code class="nohighlight makeup elixir"><span class="kd">defmodule</span><span class="w"> </span><span class="nc">Review</span><span class="w"> </span><span class="k" data-group-id="9536081024-1">do</span><span class="w">
+  </span><span class="na">@vsn</span><span class="w"> </span><span class="s">&quot;1.0.1&quot;</span><span class="w">
+  </span><span class="kn">use</span><span class="w"> </span><span class="nc">Flexflow.Process</span><span class="w">
+
+  </span><span class="kd">defmodule</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w"> </span><span class="k" data-group-id="9536081024-2">do</span><span class="w">
+    </span><span class="kn">use</span><span class="w"> </span><span class="nc">Flexflow.State</span><span class="w">
+  </span><span class="k" data-group-id="9536081024-2">end</span><span class="w">
+
+  </span><span class="kd">defmodule</span><span class="w"> </span><span class="nc">Submit</span><span class="w"> </span><span class="k" data-group-id="9536081024-3">do</span><span class="w">
+    </span><span class="kn">use</span><span class="w"> </span><span class="nc">Flexflow.Event</span><span class="w">
+  </span><span class="k" data-group-id="9536081024-3">end</span><span class="w">
+
+  </span><span class="c1">## Start state</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="p" data-group-id="9536081024-4">{</span><span class="nc">Start</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="p" data-group-id="9536081024-4">}</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="p" data-group-id="9536081024-5">{</span><span class="nc">End</span><span class="p">,</span><span class="w"> </span><span class="ss">:reviewed</span><span class="p" data-group-id="9536081024-5">}</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="p" data-group-id="9536081024-6">{</span><span class="nc">End</span><span class="p">,</span><span class="w"> </span><span class="ss">:canceled</span><span class="p" data-group-id="9536081024-6">}</span><span class="w">
+  </span><span class="c1">## Bypass state</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="ss">:rejected</span><span class="w">
+  </span><span class="c1">## Custom state</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w">
+
+  </span><span class="c1">## Define a event</span><span class="w">
+  </span><span class="c1">## `a ~&gt; b` is a shortcut of `{a, b}`</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:modify1</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:draft</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:cancel1</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:canceled</span><span class="p">,</span><span class="w"> </span><span class="ss">results</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="9536081024-7">[</span><span class="ss">:foo</span><span class="p" data-group-id="9536081024-7">]</span><span class="w">
+
+  </span><span class="c1">## Custom event</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="nc">Submit</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w">
+
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:modify2</span><span class="p">,</span><span class="w"> </span><span class="ss">:rejected</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:rejected</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:cancel2</span><span class="p">,</span><span class="w"> </span><span class="ss">:rejected</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:canceled</span><span class="p">,</span><span class="w"> </span><span class="ss">results</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="9536081024-8">[</span><span class="ss">:foo</span><span class="p" data-group-id="9536081024-8">]</span><span class="w">
+
+  </span><span class="c1">## With custom name</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="p" data-group-id="9536081024-9">{</span><span class="nc">Submit</span><span class="p">,</span><span class="w"> </span><span class="ss">:submit2</span><span class="p" data-group-id="9536081024-9">}</span><span class="p">,</span><span class="w"> </span><span class="ss">:rejected</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w">
+
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:reject</span><span class="p">,</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:rejected</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:agree</span><span class="p">,</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:reviewed</span><span class="p">,</span><span class="w"> </span><span class="ss">results</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="9536081024-10">[</span><span class="ss">:foo</span><span class="p" data-group-id="9536081024-10">]</span><span class="w">
+</span><span class="k" data-group-id="9536081024-1">end</span></code></pre><h2 id="graphviz-dot" class="section-heading">
+  <a href="#graphviz-dot" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Graphviz Dot
+</h2>
+<details>&lt;summary&gt;&lt;img src=&quot;https://g.gravizo.com/source/review_mark?https%3A%2F%2Fraw.githubusercontent.com%2Fclszzyh%2Fflexflow%2Fmaster%2FREADME.md&quot;&gt;&lt;/summary&gt;```dot// review_markdigraph review {  size =&quot;4,4&quot;;  draft [label=&quot;draft&quot;,shape=doublecircle,color=&quot;.7 .3 1.0&quot;];  reviewed [label=&quot;reviewed&quot;,style=bold,shape=circle,color=red];  canceled [label=&quot;canceled&quot;,shape=circle,color=red];  rejected [label=&quot;rejected&quot;,shape=box];  reviewing [label=&quot;reviewing&quot;,shape=box];  draft -&gt; draft [label=&quot;modify1&quot;];  draft -&gt; canceled [label=&quot;cancel1&quot;];  draft -&gt; reviewing [label=&quot;submit_draft&quot;];  rejected -&gt; rejected [label=&quot;modify2&quot;];  rejected -&gt; canceled [label=&quot;cancel2&quot;];  rejected -&gt; reviewing [label=&quot;submit2&quot;];  reviewing -&gt; rejected [label=&quot;reject&quot;];  reviewing -&gt; reviewed [label=&quot;agree&quot;];}// review_mark```</details><h2 id="todo" class="section-heading">
+  <a href="#todo" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  TODO
+</h2>
+<ol><li>Support <code class="inline">:gen_statem</code></li></ol><pre><code class="nohighlight makeup elixir"><span class="nc">State</span><span class="p" data-group-id="2414546416-1">(</span><span class="nc">S</span><span class="p" data-group-id="2414546416-1">)</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="nc">Event</span><span class="p" data-group-id="2414546416-2">(</span><span class="nc">E</span><span class="p" data-group-id="2414546416-2">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nc">Actions</span><span class="p" data-group-id="2414546416-3">(</span><span class="nc">A</span><span class="p" data-group-id="2414546416-3">)</span><span class="p">,</span><span class="w"> </span><span class="nc">State</span><span class="p" data-group-id="2414546416-4">(</span><span class="nc">S</span><span class="err">&#39;</span><span class="p" data-group-id="2414546416-4">)</span></code></pre><h2 id="see-also" class="section-heading">
+  <a href="#see-also" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  See also
+</h2>
+<ul><li><a href="https://erlang.org/doc/design_principles/statem.html">https://erlang.org/doc/design_principles/statem.html</a></li><li><a href="https://en.wikipedia.org/wiki/Business_Process_Model_and_Notation">https://en.wikipedia.org/wiki/Business_Process_Model_and_Notation</a></li></ul>
+      <footer class="footer">
+        <p>
+          <span class="line">
+            Built using
+            <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener">ExDoc</a> (v0.23.0) for the
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank">Elixir programming language</a>.
+          </span>
+          <span class="line">
+            Designed by
+            <a href="https://twitter.com/dignifiedquire" target="_blank" rel="noopener" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+          </span>
+        </p>
+        <p>
+
+            <a href="api-reference.html" title="API reference" class="line footer-button">API Reference</a>
+
+          <button class="line footer-button display-shortcuts-help">
+            Display keyboard shortcuts
+          </button>
+          <button class="line footer-button night-mode-toggle">
+            Toggle night mode
+          </button>
+          <button class="line footer-button display-quick-switch">
+            Go to a HexDocs package
+          </button>
+          <button class="line footer-button tooltips-toggle">
+            <span class="tooltips-option-disable">Disable tooltips</span>
+            <span class="tooltips-option-enable">Enable tooltips</span>
+          </button>
+        </p>
+      </footer>
+    </div>
+  </div>
+</section>
+</div>
+
+
+  </body>
+</html>

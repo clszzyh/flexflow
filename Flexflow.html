@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.23.0">
+    <meta name="project" content="flexflow v0.2.0">
+
+    <title>Flexflow — flexflow v0.2.0</title>
+    <link rel="stylesheet" href="dist/elixir-9f91ebe876dc01d67920.css" />
+
+    <script src="dist/sidebar_items-033494bcff.js"></script>
+
+      <script src="docs_config.js"></script>
+
+    <script async src="dist/app-60a0c9f10e9e52eae31f.js"></script>
+
+
+  </head>
+  <body data-type="modules">
+    <script>try { if(localStorage.getItem('night-mode') === 'true') document.body.className += ' night-mode'; } catch (e) { }</script>
+
+<div class="main">
+
+<button class="sidebar-button sidebar-toggle">
+  <span class="icon-menu" title="Collapse/expand sidebar"></span>
+</button>
+
+<section class="sidebar">
+  <form class="sidebar-search" action="search.html">
+    <button type="submit" class="search-button" aria-label="Submit Search">
+      <span class="icon-search" aria-hidden="true" title="Submit search"></span>
+    </button>
+    <button type="button" tabindex="-1" class="search-close-button" aria-label="Cancel Search">
+      <span class="icon-cross" aria-hidden="true" title="Cancel search"></span>
+    </button>
+    <label class="search-label">
+      <input name="q" type="text" id="search-list" class="search-input" placeholder="Search..." aria-label="Input your search terms" autocomplete="off" />
+    </label>
+  </form>
+
+  <div class="autocomplete">
+    <div class="autocomplete-results">
+    </div>
+  </div>
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectDetails">
+      <a href="readme.html" class="sidebar-projectName">
+flexflow
+      </a>
+      <strong class="sidebar-projectVersion">
+        v0.2.0
+      </strong>
+    </div>
+
+  </div>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+
+
+  </ul>
+  <div class="gradient"></div>
+  <ul id="full-list" class="sidebar-fullList"></ul>
+</section>
+
+<section class="content">
+  <div class="content-outer">
+    <div id="content" class="content-inner">
+
+      <h1>
+Flexflow <small class="app-vsn">(flexflow v0.2.0)</small>
+
+          <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L1" title="View Source" class="view-source" rel="help">
+            <span class="icon-code" aria-hidden="true"></span>
+            <span class="sr-only">View Source</span>
+          </a>
+
+      </h1>
+
+
+        <section id="moduledoc">
+<h2 id="module-usage" class="section-heading">
+  <a href="#module-usage" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Usage
+</h2>
+<pre><code class="nohighlight makeup elixir"><span class="kd">defmodule</span><span class="w"> </span><span class="nc">Review</span><span class="w"> </span><span class="k" data-group-id="2469743641-1">do</span><span class="w">
+  </span><span class="na">@vsn</span><span class="w"> </span><span class="s">&quot;1.0.1&quot;</span><span class="w">
+  </span><span class="kn">use</span><span class="w"> </span><span class="nc">Flexflow.Process</span><span class="w">
+
+  </span><span class="kd">defmodule</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w"> </span><span class="k" data-group-id="2469743641-2">do</span><span class="w">
+    </span><span class="kn">use</span><span class="w"> </span><span class="nc">Flexflow.State</span><span class="w">
+  </span><span class="k" data-group-id="2469743641-2">end</span><span class="w">
+
+  </span><span class="kd">defmodule</span><span class="w"> </span><span class="nc">Submit</span><span class="w"> </span><span class="k" data-group-id="2469743641-3">do</span><span class="w">
+    </span><span class="kn">use</span><span class="w"> </span><span class="nc">Flexflow.Event</span><span class="w">
+  </span><span class="k" data-group-id="2469743641-3">end</span><span class="w">
+
+  </span><span class="c1">## Start state</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="p" data-group-id="2469743641-4">{</span><span class="nc">Start</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="p" data-group-id="2469743641-4">}</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="p" data-group-id="2469743641-5">{</span><span class="nc">End</span><span class="p">,</span><span class="w"> </span><span class="ss">:reviewed</span><span class="p" data-group-id="2469743641-5">}</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="p" data-group-id="2469743641-6">{</span><span class="nc">End</span><span class="p">,</span><span class="w"> </span><span class="ss">:canceled</span><span class="p" data-group-id="2469743641-6">}</span><span class="w">
+  </span><span class="c1">## Bypass state</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="ss">:rejected</span><span class="w">
+  </span><span class="c1">## Custom state</span><span class="w">
+  </span><span class="n">state</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w">
+
+  </span><span class="c1">## Define a event</span><span class="w">
+  </span><span class="c1">## `a ~&gt; b` is a shortcut of `{a, b}`</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:modify1</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:draft</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:cancel1</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:canceled</span><span class="p">,</span><span class="w"> </span><span class="ss">results</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2469743641-7">[</span><span class="ss">:foo</span><span class="p" data-group-id="2469743641-7">]</span><span class="w">
+
+  </span><span class="c1">## Custom event</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="nc">Submit</span><span class="p">,</span><span class="w"> </span><span class="ss">:draft</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w">
+
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:modify2</span><span class="p">,</span><span class="w"> </span><span class="ss">:rejected</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:rejected</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:cancel2</span><span class="p">,</span><span class="w"> </span><span class="ss">:rejected</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:canceled</span><span class="p">,</span><span class="w"> </span><span class="ss">results</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2469743641-8">[</span><span class="ss">:foo</span><span class="p" data-group-id="2469743641-8">]</span><span class="w">
+
+  </span><span class="c1">## With custom name</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="p" data-group-id="2469743641-9">{</span><span class="nc">Submit</span><span class="p">,</span><span class="w"> </span><span class="ss">:submit2</span><span class="p" data-group-id="2469743641-9">}</span><span class="p">,</span><span class="w"> </span><span class="ss">:rejected</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w">
+
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:reject</span><span class="p">,</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:rejected</span><span class="w">
+  </span><span class="n">event</span><span class="w"> </span><span class="ss">:agree</span><span class="p">,</span><span class="w"> </span><span class="nc">Reviewing</span><span class="w"> </span><span class="o">~&gt;</span><span class="w"> </span><span class="ss">:reviewed</span><span class="p">,</span><span class="w"> </span><span class="ss">results</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="2469743641-10">[</span><span class="ss">:foo</span><span class="p" data-group-id="2469743641-10">]</span><span class="w">
+</span><span class="k" data-group-id="2469743641-1">end</span></code></pre>
+        </section>
+
+
+        <section id="summary" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#summary">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Summary
+          </h1>
+
+  <div class="summary-types summary">
+    <h2>
+      <a href="#types">Types</a>
+    </h2>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:id/0">id()</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:name/0">name()</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:process_args/0">process_args()</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:process_identity/0">process_identity()</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:process_key/0">process_key()</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:state_key/0">state_key()</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:state_type/0">state_type()</a>
+
+  </div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#t:state_type_or_module/0">state_type_or_module()</a>
+
+  </div>
+
+</div>
+
+  </div>
+
+  <div class="summary-functions summary">
+    <h2>
+      <a href="#functions">Functions</a>
+    </h2>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#call/2">call(key, op)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="Flexflow.ProcessStatem.html#call/2"><code class="inline">Flexflow.ProcessStatem.call/2</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#cast/2">cast(key, op)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="Flexflow.ProcessStatem.html#cast/2"><code class="inline">Flexflow.ProcessStatem.cast/2</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#history/1">history(key)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="Flexflow.History.html#get/1"><code class="inline">Flexflow.History.get/1</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#pid/1">pid(key)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="Flexflow.ProcessStatem.html#pid/1"><code class="inline">Flexflow.ProcessStatem.pid/1</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#server/2">server(key, args \\ %{})</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="Flexflow.ProcessManager.html#server/2"><code class="inline">Flexflow.ProcessManager.server/2</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#start/2">start(key, args \\ %{})</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="Flexflow.ProcessManager.html#start_child/2"><code class="inline">Flexflow.ProcessManager.start_child/2</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#state/1">state(key)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="Flexflow.ProcessStatem.html#state/1"><code class="inline">Flexflow.ProcessStatem.state/1</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#stop/2">stop(srv \\ nil, key)</a>
+
+  </div>
+
+    <div class="summary-synopsis"><p>See <a href="Flexflow.ProcessManager.html#stop_child/2"><code class="inline">Flexflow.ProcessManager.stop_child/2</code></a>.</p></div>
+
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#version/0">version()</a>
+
+  </div>
+
+</div>
+
+  </div>
+
+        </section>
+
+
+        <section id="types" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#types">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+Types
+          </h1>
+          <div class="types-list">
+<section class="detail" id="t:id/0">
+
+  <div class="detail-header">
+    <a href="#t:id/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">id()</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L18" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>id() :: <a href="https://hexdocs.pm/elixir/String.html#t:t/0">String.t</a>()</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:name/0">
+
+  <div class="detail-header">
+    <a href="#t:name/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">name()</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L17" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>name() :: <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">atom</a>()</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:process_args/0">
+
+  <div class="detail-header">
+    <a href="#t:process_args/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">process_args()</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L15" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>process_args() :: <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">map</a>()</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:process_identity/0">
+
+  <div class="detail-header">
+    <a href="#t:process_identity/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">process_identity()</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L14" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>process_identity() :: <a href="#t:process_key/0">process_key</a>() | <a href="https://hexdocs.pm/elixir/typespecs.html#basic-types">pid</a>()</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:process_key/0">
+
+  <div class="detail-header">
+    <a href="#t:process_key/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">process_key()</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L13" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>process_key() :: {<a href="https://hexdocs.pm/elixir/typespecs.html#built-in-types">module</a>(), <a href="#t:id/0">id</a>()}</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:state_key/0">
+
+  <div class="detail-header">
+    <a href="#t:state_key/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">state_key()</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L22" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>state_key() :: <a href="#t:name/0">name</a>()</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:state_type/0">
+
+  <div class="detail-header">
+    <a href="#t:state_type/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">state_type()</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L21" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>state_type() :: {<a href="https://hexdocs.pm/elixir/typespecs.html#built-in-types">module</a>(), <a href="#t:name/0">name</a>()}</pre>
+
+      </div>
+
+
+  </section>
+</section>
+<section class="detail" id="t:state_type_or_module/0">
+
+  <div class="detail-header">
+    <a href="#t:state_type_or_module/0" class="detail-link" title="Link to this type">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this type</span>
+    </a>
+    <h1 class="signature">state_type_or_module()</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L20" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+      <h2>Specs</h2>
+      <div class="specs">
+
+          <pre>state_type_or_module() :: <a href="#t:state_type/0">state_type</a>() | <a href="https://hexdocs.pm/elixir/typespecs.html#built-in-types">module</a>()</pre>
+
+      </div>
+
+
+  </section>
+</section>
+
+          </div>
+        </section>
+
+        <section id="functions" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#functions">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+Functions
+          </h1>
+          <div class="functions-list">
+<section class="detail" id="call/2">
+
+  <div class="detail-header">
+    <a href="#call/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">call(key, op)</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L31" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>See <a href="Flexflow.ProcessStatem.html#call/2"><code class="inline">Flexflow.ProcessStatem.call/2</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="cast/2">
+
+  <div class="detail-header">
+    <a href="#cast/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">cast(key, op)</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L32" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>See <a href="Flexflow.ProcessStatem.html#cast/2"><code class="inline">Flexflow.ProcessStatem.cast/2</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="history/1">
+
+  <div class="detail-header">
+    <a href="#history/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">history(key)</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L27" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>See <a href="Flexflow.History.html#get/1"><code class="inline">Flexflow.History.get/1</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="pid/1">
+
+  <div class="detail-header">
+    <a href="#pid/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">pid(key)</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L28" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>See <a href="Flexflow.ProcessStatem.html#pid/1"><code class="inline">Flexflow.ProcessStatem.pid/1</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="server/2">
+
+    <span id="server/1"></span>
+
+  <div class="detail-header">
+    <a href="#server/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">server(key, args \\ %{})</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L24" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>See <a href="Flexflow.ProcessManager.html#server/2"><code class="inline">Flexflow.ProcessManager.server/2</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="start/2">
+
+    <span id="start/1"></span>
+
+  <div class="detail-header">
+    <a href="#start/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">start(key, args \\ %{})</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L25" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>See <a href="Flexflow.ProcessManager.html#start_child/2"><code class="inline">Flexflow.ProcessManager.start_child/2</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="state/1">
+
+  <div class="detail-header">
+    <a href="#state/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">state(key)</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L29" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>See <a href="Flexflow.ProcessStatem.html#state/1"><code class="inline">Flexflow.ProcessStatem.state/1</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="stop/2">
+
+    <span id="stop/1"></span>
+
+  <div class="detail-header">
+    <a href="#stop/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">stop(srv \\ nil, key)</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L26" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+<p>See <a href="Flexflow.ProcessManager.html#stop_child/2"><code class="inline">Flexflow.ProcessManager.stop_child/2</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="version/0">
+
+  <div class="detail-header">
+    <a href="#version/0" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <h1 class="signature">version()</h1>
+
+      <a href="https://github.com/clszzyh/flexflow/blob/v0.2.0/lib/flexflow.ex#L6" class="view-source" rel="help" title="View Source">
+       <span class="icon-code" aria-hidden="true"></span>
+       <span class="sr-only">View Source</span>
+     </a>
+
+
+  </div>
+
+  <section class="docstring">
+
+
+  </section>
+</section>
+
+          </div>
+        </section>
+
+      <footer class="footer">
+        <p>
+          <span class="line">
+            Built using
+            <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener">ExDoc</a> (v0.23.0) for the
+            <a href="https://elixir-lang.org" title="Elixir" target="_blank">Elixir programming language</a>.
+          </span>
+          <span class="line">
+            Designed by
+            <a href="https://twitter.com/dignifiedquire" target="_blank" rel="noopener" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+          </span>
+        </p>
+        <p>
+
+            <a href="api-reference.html" title="API reference" class="line footer-button">API Reference</a>
+
+          <button class="line footer-button display-shortcuts-help">
+            Display keyboard shortcuts
+          </button>
+          <button class="line footer-button night-mode-toggle">
+            Toggle night mode
+          </button>
+          <button class="line footer-button display-quick-switch">
+            Go to a HexDocs package
+          </button>
+          <button class="line footer-button tooltips-toggle">
+            <span class="tooltips-option-disable">Disable tooltips</span>
+            <span class="tooltips-option-enable">Enable tooltips</span>
+          </button>
+        </p>
+      </footer>
+    </div>
+  </div>
+</section>
+</div>
+
+
+  </body>
+</html>
