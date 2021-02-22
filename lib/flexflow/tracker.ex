@@ -9,8 +9,10 @@ defmodule Flexflow.Tracker do
 
   def impls do
     for {t, kind} <- @trackers, into: %{} do
-      {:consolidated, modules} = t.__protocol__(:impls)
-      {kind, Map.new(modules, &{&1, &1.name()})}
+      case t.__protocol__(:impls) do
+        {:consolidated, modules} -> {kind, Map.new(modules, &{&1, &1.name()})}
+        :not_consolidated -> {kind, %{}}
+      end
     end
   end
 
