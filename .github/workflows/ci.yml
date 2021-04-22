@@ -264,7 +264,7 @@ jobs:
             }
       - name: CI Success
         if: success() && contains(github.ref, 'refs/heads')
-        uses: actions/github-script@v3.1
+        uses: actions/github-script@v4.0.1
         env:
           RUN_ID: ${{ steps.get_run_id.outputs.RUN_ID }}
           RUN_NUMBER: ${{ steps.get_run_id.outputs.RUN_NUMBER }}
@@ -425,7 +425,7 @@ jobs:
           keep_latest: 5
       - name: Release failed
         if: failure()
-        uses: actions/github-script@v3.1
+        uses: actions/github-script@v4.0.1
         env:
           RUN_ID: ${{ steps.get_run_id.outputs.RUN_ID }}
           RUN_NUMBER: ${{ steps.get_run_id.outputs.RUN_NUMBER }}
