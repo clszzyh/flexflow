@@ -67,7 +67,7 @@ jobs:
         env:
           VERSION: ${{ steps.get_tag_version.outputs.VERSION }}
       - name: Set up Elixir
-        uses: actions/setup-elixir@v1
+        uses: actions/setup-elixir@v1.5
         with:
           experimental-otp: true
           elixir-version: ${{ matrix.elixir }}
@@ -345,7 +345,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Set up Elixir
-        uses: actions/setup-elixir@v1
+        uses: actions/setup-elixir@v1.5
         with:
           experimental-otp: true
           elixir-version: ${{ matrix.elixir }}
