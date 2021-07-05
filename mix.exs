@@ -72,7 +72,7 @@ defmodule Flexflow.MixProject do
       {:earmark_parser, "~> 1.4", runtime: false},
       {:ex_doc, "~> 0.22", runtime: false},
       {:yamerl, "~> 0.8.0"},
-      {:telemetry, "~> 0.4.0"}
+      {:telemetry, "~> 1.0.0"}
     ]
   end
 
